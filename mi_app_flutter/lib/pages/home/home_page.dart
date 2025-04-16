@@ -23,37 +23,37 @@ class HomePage extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Encabezado con avatar y botón de recarga
+              // Encabezado con avatar y botón de cerrar sesión
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    GestureDetector(
-                      onTap: () => controller.navegarAPerfil(),
-                      child: Obx(() => CircleAvatar(
-                        backgroundImage: controller.profilePhotoUrl.value.isNotEmpty
-                            ? NetworkImage(controller.profilePhotoUrl.value)
-                            : null,
-                        backgroundColor: Colors.grey[300],
-                        radius: 20,
-                        child: controller.profilePhotoUrl.value.isEmpty
-                            ? Text(
-                                sesionControlador.usuarioActual.value?.nombre?.isNotEmpty == true
-                                  ? sesionControlador.usuarioActual.value!.nombre!.substring(0, 1).toUpperCase()
-                                  : "U",
-                                style: TextStyle(color: Colors.white),
-                              )
-                            : null,
-                      )),
-                    ),
-                    IconButton(
-                      icon: Icon(Icons.refresh),
-                      onPressed: () => controller.recargarDatos(),
-                      tooltip: 'Recargar datos',
-                    ),
-                  ],
-                ),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              GestureDetector(
+                onTap: () => controller.navegarAPerfil(),
+                child: Obx(() => CircleAvatar(
+            backgroundImage: controller.profilePhotoUrl.value.isNotEmpty
+                ? NetworkImage(controller.profilePhotoUrl.value)
+                : null,
+            backgroundColor: Colors.grey[300],
+            radius: 20,
+            child: controller.profilePhotoUrl.value.isEmpty
+                ? Text(
+              sesionControlador.usuarioActual.value?.nombre?.isNotEmpty == true
+                ? sesionControlador.usuarioActual.value!.nombre!.substring(0, 1).toUpperCase()
+                : "U",
+              style: TextStyle(color: Colors.white),
+                  )
+                : null,
+                )),
+              ),
+              IconButton(
+                icon: Icon(Icons.logout),
+                onPressed: () => controller.cerrarSesionCompleta(),
+                tooltip: 'Cerrar sesión',
+              ),
+            ],
+          ),
               ),
 
               // Título de la sección principal

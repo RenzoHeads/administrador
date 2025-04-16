@@ -270,4 +270,13 @@ class HomeController extends GetxController {
     }
   }
 
+  //metodo par cerrar la sesion
+  void cerrarSesionCompleta() {
+    _sesion.cerrarSesion();
+    Get.offAllNamed('/sign-in');
+  }
+
+
+  //
+
 }
