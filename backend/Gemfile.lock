@@ -1,0 +1,99 @@
+GEM
+  remote: https://rubygems.org/
+  specs:
+    azure-storage-blob (2.0.3)
+      azure-storage-common (~> 2.0)
+      nokogiri (~> 1, >= 1.10.8)
+    azure-storage-common (2.0.4)
+      faraday (~> 1.0)
+      faraday_middleware (~> 1.0, >= 1.0.0.rc1)
+      net-http-persistent (~> 4.0)
+      nokogiri (~> 1, >= 1.10.8)
+    base64 (0.2.0)
+    bigdecimal (3.1.8)
+    connection_pool (2.5.0)
+    dotenv (3.1.8)
+    faraday (1.10.4)
+      faraday-em_http (~> 1.0)
+      faraday-em_synchrony (~> 1.0)
+      faraday-excon (~> 1.1)
+      faraday-httpclient (~> 1.0)
+      faraday-multipart (~> 1.0)
+      faraday-net_http (~> 1.0)
+      faraday-net_http_persistent (~> 1.0)
+      faraday-patron (~> 1.0)
+      faraday-rack (~> 1.0)
+      faraday-retry (~> 1.0)
+      ruby2_keywords (>= 0.0.4)
+    faraday-em_http (1.0.0)
+    faraday-em_synchrony (1.0.0)
+    faraday-excon (1.1.0)
+    faraday-httpclient (1.0.1)
+    faraday-multipart (1.1.0)
+      multipart-post (~> 2.0)
+    faraday-net_http (1.0.2)
+    faraday-net_http_persistent (1.2.0)
+    faraday-patron (1.0.0)
+    faraday-rack (1.0.0)
+    faraday-retry (1.0.3)
+    faraday_middleware (1.2.1)
+      faraday (~> 1.0)
+    ffi (1.17.1-x64-mingw-ucrt)
+    listen (3.9.0)
+      rb-fsevent (~> 0.10, >= 0.10.3)
+      rb-inotify (~> 0.9, >= 0.9.10)
+    logger (1.7.0)
+    mime-types (3.6.2)
+      logger
+      mime-types-data (~> 3.2015)
+    mime-types-data (3.2025.0408)
+    multipart-post (2.4.1)
+    mustermann (3.0.0)
+      ruby2_keywords (~> 0.0.1)
+    net-http-persistent (4.0.5)
+      connection_pool (~> 2.2)
+    nokogiri (1.18.7-x64-mingw-ucrt)
+      racc (~> 1.4)
+    racc (1.8.1)
+    rack (3.0.11)
+    rack-protection (4.0.0)
+      base64 (>= 0.1.0)
+      rack (>= 3.0.0, < 4)
+    rack-session (2.0.0)
+      rack (>= 3.0.0)
+    rackup (2.1.0)
+      rack (>= 3)
+      webrick (~> 1.8)
+    rb-fsevent (0.11.2)
+    rb-inotify (0.11.1)
+      ffi (~> 1.0)
+    rerun (0.14.0)
+      listen (~> 3.0)
+    ruby2_keywords (0.0.5)
+    sequel (5.79.0)
+      bigdecimal
+    sinatra (4.0.0)
+      mustermann (~> 3.0)
+      rack (>= 3.0.0, < 4)
+      rack-protection (= 4.0.0)
+      rack-session (>= 2.0.0, < 3)
+      tilt (~> 2.0)
+    sqlite3 (2.0.2-x64-mingw-ucrt)
+    tilt (2.3.0)
+    webrick (1.8.1)
+
+PLATFORMS
+  x64-mingw-ucrt
+
+DEPENDENCIES
+  azure-storage-blob
+  dotenv
+  mime-types
+  rackup
+  rerun
+  sequel (~> 5.79.0)
+  sinatra
+  sqlite3
+
+BUNDLED WITH
+   2.5.10

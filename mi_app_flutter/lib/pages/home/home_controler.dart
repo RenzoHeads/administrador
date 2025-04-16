@@ -1,0 +1,273 @@
+import 'package:get/get.dart';
+import 'dart:convert';
+import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import '../../models/lista.dart';
+import '../../models/tarea.dart';
+import '../../services/lista_service.dart';
+import '../../services/tarea_service.dart';
+import '../../services/controladorsesion.dart';
+import '../../services/usuario_service.dart';
+
+class HomeController extends GetxController {
+  final ListaService _listaService = ListaService();
+  final TareaService _tareaService = TareaService();
+  final ControladorSesionUsuario _sesion = Get.find<ControladorSesionUsuario>();
+  final UsuarioService _usuarioService = UsuarioService();
+
+  RxList<Tarea> tareas = <Tarea>[].obs;
+  RxList<Tarea> tareasDeHoy = <Tarea>[].obs;
+  RxList<Lista> listas = <Lista>[].obs;
+  
+  RxBool cargando = true.obs;
+  RxString profilePhotoUrl = RxString('');
+  RxBool loadingPhoto = true.obs;
+  
+  RxInt pestanaSeleccionada = 0.obs;
+  
+  // Para la fecha actual
+  RxString fechaActual = ''.obs;
+
+  @override
+  void onInit() {
+    super.onInit();
+    cargarFechaActual();
+    cargarTareasDelUsuario();
+    cargarListasDelUsuario();
+    cargarFotoPerfil();
+  }
+  
+  void cargarFechaActual() {
+    try {
+      final now = DateTime.now();
+      final formatter = DateFormat('EEEE, d MMMM', 'es_ES');
+      String fecha = formatter.format(now);
+      // Capitalizar primera letra
+      fecha = fecha.substring(0, 1).toUpperCase() + fecha.substring(1);
+      fechaActual.value = fecha;
+      print("Fecha actual cargada: ${fechaActual.value}");
+    } catch (e) {
+      print("Error al cargar fecha: $e");
+      // Fallback simple si hay error con el formato
+      fechaActual.value = DateFormat('yyyy-MM-dd').format(DateTime.now());
+    }
+  }
+  
+  void cambiarPestana(int index) {
+    pestanaSeleccionada.value = index;
+  }
+
+  void cargarTareasDelUsuario() async {
+    final usuario = _sesion.usuarioActual.value;
+    print("Iniciando carga de tareas para usuario: ${usuario?.id}");
+
+    if (usuario != null && usuario.id != null) {
+      try {
+        cargando.value = true;
+        
+        // Cargar todas las tareas
+        final resultado = await _tareaService.obtenerTareasPorUsuario(usuario.id!);
+        
+        // Cargar tareas de hoy directamente desde el servidor
+        final resultadoHoy = await _tareaService.obtenerTareasHoyPorUsuario(usuario.id!);
+        
+        // Procesar todas las tareas
+        if (resultado.status == 200) {
+          // Verificar si el body es una lista de objetos o un string
+          if (resultado.body is List) {
+            final List<dynamic> lista = resultado.body as List;
+            tareas.clear();
+            
+            for (var item in lista) {
+              if (item is Tarea) {
+                tareas.add(item);
+              }
+            }
+          } else if (resultado.body is String) {
+            try {
+              final List<dynamic> jsonData = json.decode(resultado.body as String);
+              tareas.clear();
+              
+              for (var item in jsonData) {
+                final tarea = Tarea.fromMap(item);
+                tareas.add(tarea);
+              }
+            } catch (e) {
+              print("Error al procesar el JSON de tareas: $e");
+            }
+          }
+          print("Tareas cargadas: ${tareas.length}");
+        } else {
+          print("Error al obtener tareas: ${resultado.body}");
+        }
+        
+        // Procesar tareas de hoy
+        if (resultadoHoy.status == 200) {
+          if (resultadoHoy.body is List) {
+            final List<dynamic> lista = resultadoHoy.body as List;
+            tareasDeHoy.clear();
+            
+            for (var item in lista) {
+              if (item is Tarea) {
+                tareasDeHoy.add(item);
+              }
+            }
+          } else if (resultadoHoy.body is String) {
+            try {
+              final List<dynamic> jsonData = json.decode(resultadoHoy.body as String);
+              tareasDeHoy.clear();
+              
+              for (var item in jsonData) {
+                final tarea = Tarea.fromMap(item);
+                tareasDeHoy.add(tarea);
+              }
+            } catch (e) {
+              print("Error al procesar el JSON de tareas de hoy: $e");
+            }
+          }
+          print("Tareas de hoy cargadas: ${tareasDeHoy.length}");
+        } else {
+          print("Error al obtener tareas de hoy: ${resultadoHoy.body}");
+        }
+        
+      } catch (e) {
+        print('Error al cargar tareas: $e');
+      } finally {
+        cargando.value = false;
+      }
+    } else {
+      print("No hay usuario activo para cargar tareas");
+      cargando.value = false;
+    }
+  }
+
+  void cargarListasDelUsuario() async {
+    final usuario = _sesion.usuarioActual.value;
+    print("Iniciando carga de listas para usuario: ${usuario?.id}");
+
+    if (usuario != null && usuario.id != null) {
+      try {
+        final resultado = await _listaService.obtenerListasPorUsuario(usuario.id!);
+        
+        if (resultado.status == 200) {
+          // Verificar si el body es una lista de objetos o un string
+          if (resultado.body is List) {
+            // La respuesta ya es una lista de objetos Lista
+            final List<dynamic> lista = resultado.body as List;
+            listas.clear(); // Limpiamos la lista actual
+            
+            for (var item in lista) {
+              if (item is Lista) {
+                listas.add(item);
+              }
+            }
+          } else if (resultado.body is String) {
+            // Intentar parsear el string a JSON y luego a objetos Lista
+            try {
+              final List<dynamic> jsonData = json.decode(resultado.body as String);
+              listas.clear(); // Limpiamos la lista actual
+              
+              for (var item in jsonData) {
+                final lista = Lista.fromMap(item);
+                listas.add(lista);
+              }
+            } catch (e) {
+              print("Error al procesar el JSON de listas: $e");
+            }
+          }
+          
+          print("Listas cargadas: ${listas.length}");
+        } else {
+          print("Error al obtener listas: ${resultado.body}");
+        }
+      } catch (e) {
+        print('Error al cargar listas: $e');
+      }
+    } else {
+      print("No hay usuario activo para cargar listas");
+    }
+  }
+
+  void cargarFotoPerfil() async {
+    final usuario = _sesion.usuarioActual.value;
+    if (usuario != null && usuario.id != null) {
+      try {
+        loadingPhoto.value = true;
+        final respuesta = await _usuarioService.getProfilePhotoUrl(usuario.id!);
+        
+        if (respuesta != null && respuesta.status == 200) {
+          // Parseamos la respuesta JSON para obtener la URL
+          if (respuesta.body is String) {
+            try {
+              final Map<String, dynamic> data = json.decode(respuesta.body as String);
+              
+              if (data.containsKey('url')) {
+                profilePhotoUrl.value = data['url'];
+                print("URL de foto cargada: ${profilePhotoUrl.value}");
+              } else {
+                print("Respuesta no contiene URL: $data");
+              }
+            } catch (e) {
+              print("Error al parsear JSON de foto: $e");
+            }
+          } else {
+            print("Respuesta de foto no es un string: ${respuesta.body}");
+          }
+        } else {
+          print("Error al obtener la foto de perfil: ${respuesta?.body}");
+          // Dejamos la URL vacía, para que la UI muestre un avatar por defecto
+          profilePhotoUrl.value = '';
+        }
+      } catch (e) {
+        print('Error al cargar foto de perfil: $e');
+        profilePhotoUrl.value = '';
+      } finally {
+        loadingPhoto.value = false;
+      }
+    }
+  }
+  
+  // Método para recargar la foto de perfil, útil después de actualizar
+  void recargarFotoPerfil() {
+    profilePhotoUrl.value = '';
+    loadingPhoto.value = true;
+    cargarFotoPerfil();
+  }
+  
+  // Método para recargar todos los datos
+  void recargarDatos() {
+    cargarTareasDelUsuario();
+    cargarListasDelUsuario();
+    cargarFotoPerfil();
+  }
+  
+  // Método para navegar a la página de perfil
+  void navegarAPerfil() {
+    Get.toNamed('/perfil');
+  }
+  
+  // Método para crear nueva tarea
+  void crearNuevaTarea() {
+    // Implementar lógica para crear nueva tarea
+    Get.toNamed('/nueva-tarea');
+  }
+
+  //Mostrar la cantidad de tareas que hay en una lista
+  // Método para obtener la cantidad de tareas por lista
+  Future<int> obtenerCantidadTareasPorLista(int listaId) async {
+    try {
+      final resultado = await _listaService.obtenerCantidadTareasPorLista(listaId);
+      
+      if (resultado.status == 200) {
+        return resultado.body is int ? resultado.body : 0;
+      } else {
+        print("Error al obtener cantidad de tareas: ${resultado.body}");
+        return 0;
+      }
+    } catch (e) {
+      print('Error al obtener cantidad de tareas: $e');
+      return 0;
+    }
+  }
+
+}

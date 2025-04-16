@@ -1,0 +1,97 @@
+@baseUrl = http://localhost:4567/
+
+#############################################
+
+POST {{baseUrl}}usuario/validar 
+content-type: application/json
+
+{
+  "usuario": "Ana García",
+  "contrasena": "1234"
+}
+
+
+#############################################
+POST {{baseUrl}}usuario/cambiar-contrasenia
+Content-Type: application/x-www-form-urlencoded
+
+usuario=renzito&contrasenia=3972re
+
+#############################################
+POST {{baseUrl}}usuario/crear-usuario
+Content-Type: application/x-www-form-urlencoded
+
+usuario=sapo&contrasenia=3972re
+
+#############################################
+GET {{baseUrl}}tareas/hoy/7
+
+#############################################
+GET {{baseUrl}}adjuntos/1/url
+  ?adjunto_id=1
+
+#############################################
+GET {{baseUrl}}usuario/7/foto-perfil
+  ?usuario_id=7
+#############################################
+
+POST {{baseUrl}}usuario/solicitar-recuperacion
+Content-Type: application/json
+
+{
+  "email": "diazjovita248@gmail.com"
+}
+
+
+
+#############################################
+PUT {{baseUrl}}usuario/restablecer-contrasena
+Content-Type: application/json
+
+{
+  "reset_token": "971bc67c5e5357d5a6dcbe5d40cadfe7",
+  "contrasena": "456123"
+
+}
+
+
+#############################################
+
+DELETE {{baseUrl}}listas/eliminar/6
+
+
+#############################################
+POST {{baseUrl}}adjuntos/subir
+Content-Type: multipart/form-data; boundary=boundary
+
+--boundary
+Content-Disposition: form-data; name="file"; filename="prueba.jpg"
+Content-Type: image/jpeg
+
+< C:\Users\RENZO\Desktop\Progra Movil\backend\backend\requests\prueba.jpg
+--boundary
+Content-Disposition: form-data; name="tarea_id"
+
+1
+--boundary--
+
+#############################################
+curl -X POST {{baseUrl}}adjuntos/subir \
+  -F "file=@prueba.jpg" \
+  -F "tarea_id=1"
+
+#############################################
+
+POST {{baseUrl}}usuario//foto-perfil
+Content-Type: multipart/form-data; boundary=boundary
+
+--boundary
+Content-Disposition: form-data; name="file"; filename="foto_perfil.jpg"
+Content-Type: image/jpeg
+
+< C:\Users\RENZO\Desktop\Progra Movil\backend\backend\requests\prueba.jpg
+--boundary--
+#############################################
+GET {{baseUrl}}tareas/7
+
+#############################################
