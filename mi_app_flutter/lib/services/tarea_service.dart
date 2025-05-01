@@ -125,9 +125,10 @@ class TareaService {
     required String descripcion,
     required String fechaCreacion,
     required String fechaVencimiento,
-    required String prioridad,
-    required String estado,
+
     required int categoriaId,
+    required int estadoId,
+    required int prioridadId,
   }) async {
     final url = Uri.parse('${BASE_URL}tareas/crear');
     final responseWrapper = ServiceHttpResponse();
@@ -143,9 +144,9 @@ class TareaService {
           'descripcion': descripcion,
           'fecha_creacion': fechaCreacion,
           'fecha_vencimiento': fechaVencimiento,
-          'prioridad': prioridad,
-          'estado': estado,
           'categoria_id': categoriaId,
+          'estado_id': estadoId,
+          'prioridad_id': prioridadId,
         }),
       );
 
@@ -173,9 +174,11 @@ class TareaService {
     required String descripcion,
     required String fechaCreacion,
     required String fechaVencimiento,
-    required String prioridad,
-    required String estado,
+    
     required int categoriaId,
+    required int estadoId,
+    required int prioridadId,
+
   }) async {
     final url = Uri.parse('${BASE_URL}tareas/actualizar/$id');
     final responseWrapper = ServiceHttpResponse();
@@ -191,9 +194,9 @@ class TareaService {
           'descripcion': descripcion,
           'fecha_creacion': fechaCreacion,
           'fecha_vencimiento': fechaVencimiento,
-          'prioridad': prioridad,
-          'estado': estado,
           'categoria_id': categoriaId,
+          'estado_id': estadoId,
+          'prioridad_id': prioridadId,
         }),
       );
 
@@ -234,59 +237,7 @@ class TareaService {
     return responseWrapper;
   }
 
-  // Obtener estados de tareas
-  Future<ServiceHttpResponse> obtenerEstadosTareas() async {
-    final url = Uri.parse('${BASE_URL}tareas/emociones');
-    final responseWrapper = ServiceHttpResponse();
-
-    try {
-      final response = await http.get(url);
-      responseWrapper.status = response.statusCode;
-
-      if (response.statusCode == 200) {
-        try {
-          final List<dynamic> jsonData = json.decode(response.body);
-          responseWrapper.body = jsonData;
-        } catch (e) {
-          responseWrapper.body = 'Error al procesar el JSON: $e';
-        }
-      } else {
-        responseWrapper.body = 'Error: ${response.body}';
-      }
-    } catch (e) {
-      responseWrapper.status = 500;
-      responseWrapper.body = 'Ocurrió un error al obtener los estados: $e';
-    }
-
-    return responseWrapper;
-  }
-
-  // Obtener prioridades de tareas
-  Future<ServiceHttpResponse> obtenerPrioridadesTareas() async {
-    final url = Uri.parse('${BASE_URL}tareas/prioridades');
-    final responseWrapper = ServiceHttpResponse();
-
-    try {
-      final response = await http.get(url);
-      responseWrapper.status = response.statusCode;
-
-      if (response.statusCode == 200) {
-        try {
-          final List<dynamic> jsonData = json.decode(response.body);
-          responseWrapper.body = jsonData;
-        } catch (e) {
-          responseWrapper.body = 'Error al procesar el JSON: $e';
-        }
-      } else {
-        responseWrapper.body = 'Error: ${response.body}';
-      }
-    } catch (e) {
-      responseWrapper.status = 500;
-      responseWrapper.body = 'Ocurrió un error al obtener las prioridades: $e';
-    }
-
-    return responseWrapper;
-  }
+  
 
   // Crear etiqueta para tarea
   Future<ServiceHttpResponse> crearTareaEtiqueta(
@@ -427,6 +378,61 @@ class TareaService {
     } catch (e) {
       responseWrapper.status = 500;
       responseWrapper.body = 'Ocurrió un error al obtener las tareas de hoy: $e';
+    }
+
+    return responseWrapper;
+  }
+
+  // Actualizar estado de tarea
+  Future<ServiceHttpResponse> actualizarEstadoTarea(int tareaId, int estadoId) async {
+    final url = Uri.parse('${BASE_URL}tareas/estado/$tareaId');
+    final responseWrapper = ServiceHttpResponse();
+
+    try {
+      final response = await http.put(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'estado': estadoId,
+        }),
+      );
+
+      responseWrapper.status = response.statusCode;
+      if (response.statusCode == 200) {
+        responseWrapper.body = 'Estado actualizado';
+      } else {
+        responseWrapper.body = 'Error: ${response.body}';
+      }
+    } catch (e) {
+      responseWrapper.status = 500;
+      responseWrapper.body = 'Ocurrió un error al actualizar el estado de la tarea: $e';
+    }
+
+    return responseWrapper;
+  }
+
+  // Obtener estado de una tarea
+  Future<ServiceHttpResponse> obtenerEstadoTarea(int tareaId) async {
+    final url = Uri.parse('${BASE_URL}tareas/estado/$tareaId');
+    final responseWrapper = ServiceHttpResponse();
+
+    try {
+      final response = await http.get(url);
+      responseWrapper.status = response.statusCode;
+
+      if (response.statusCode == 200) {
+        try {
+          final jsonData = json.decode(response.body);
+          responseWrapper.body = jsonData;
+        } catch (e) {
+          responseWrapper.body = 'Error al procesar el JSON: $e';
+        }
+      } else {
+        responseWrapper.body = 'Error: ${response.body}';
+      }
+    } catch (e) {
+      responseWrapper.status = 500;
+      responseWrapper.body = 'Ocurrió un error al obtener el estado de la tarea: $e';
     }
 
     return responseWrapper;

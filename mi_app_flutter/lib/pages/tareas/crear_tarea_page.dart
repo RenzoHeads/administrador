@@ -5,6 +5,8 @@ import 'dart:io';
 import 'crear_tarea_controller.dart';
 import '../../models/lista.dart';
 import '../../models/categoria.dart';
+import '../../models/estado.dart';
+import '../../models/prioridad.dart';
 
 class CrearTareaPage extends StatelessWidget {
   final CrearTareaController controller = Get.put(CrearTareaController());
@@ -331,78 +333,108 @@ class CrearTareaPage extends StatelessWidget {
     );
   }
 
-  Widget _buildDropdownPrioridades() {
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 16),
-      decoration: BoxDecoration(
-        border: Border.all(color: Colors.grey),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Obx(() => DropdownButton<String>(
-        value: controller.prioridadSeleccionada.value,
-        isExpanded: true,
-        underline: SizedBox(),
-        hint: Text('Seleccione una prioridad'),
-        items: controller.prioridades.map((String prioridad) {
-          return DropdownMenuItem<String>(
-            value: prioridad,
-            child: Row(
-              children: [
-                Icon(
-                  Icons.flag,
-                  color: _getPrioridadColor(prioridad),
-                  size: 18,
+Widget _buildDropdownPrioridades() {
+  return Container(
+    padding: EdgeInsets.symmetric(horizontal: 16),
+    decoration: BoxDecoration(
+      border: Border.all(color: Colors.grey),
+      borderRadius: BorderRadius.circular(8),
+    ),
+    child: Obx(() => DropdownButton<Prioridad>(
+      value: controller.prioridadSeleccionada.value,
+      isExpanded: true,
+      underline: SizedBox(),
+      hint: Text('Seleccione una prioridad'),
+      items: controller.prioridades.map((Prioridad prioridad) {
+        return DropdownMenuItem<Prioridad>(
+          value: prioridad,
+          child: Row(
+            children: [
+              Icon(
+                Icons.flag,
+                color: _getPrioridadColor(prioridad),
+                size: 18,
+              ),
+              SizedBox(width: 8),
+              Text(prioridad.nombre ?? 'Sin nombre'),
+            ],
+          ),
+        );
+      }).toList(),
+      onChanged: (Prioridad? newValue) {
+        controller.prioridadSeleccionada.value = newValue;
+      },
+    )),
+  );
+}
+
+Color _getPrioridadColor(Prioridad prioridad) {
+  String nombre = prioridad.nombre?.toLowerCase() ?? '';
+  switch (nombre) {
+    case 'alta':
+      return Colors.red;
+    case 'media':
+      return Colors.orange;
+    case 'baja':
+      return Colors.green;
+    default:
+      return Colors.grey;
+  }
+}
+
+Widget _buildDropdownEstados() {
+  return Container(
+    padding: EdgeInsets.symmetric(horizontal: 16),
+    decoration: BoxDecoration(
+      border: Border.all(color: Colors.grey),
+      borderRadius: BorderRadius.circular(8),
+    ),
+    child: Obx(() => DropdownButton<Estado>(
+      value: controller.estadoSeleccionado.value,
+      isExpanded: true,
+      underline: SizedBox(),
+      hint: Text('Seleccione un estado'),
+      items: controller.estados.map((Estado estado) {
+        return DropdownMenuItem<Estado>(
+          value: estado,
+          child: Row(
+            children: [
+              Container(
+                width: 12,
+                height: 12,
+                margin: EdgeInsets.only(right: 8),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: _getEstadoColor(estado),
                 ),
-                SizedBox(width: 8),
-                Text(prioridad),
-              ],
-            ),
-          );
-        }).toList(),
-        onChanged: (String? newValue) {
-          controller.prioridadSeleccionada.value = newValue;
-        },
-      )),
-    );
-  }
+              ),
+              Text(estado.nombre ?? 'Sin nombre'),
+            ],
+          ),
+        );
+      }).toList(),
+      onChanged: (Estado? newValue) {
+        controller.estadoSeleccionado.value = newValue;
+      },
+    )),
+  );
+}
 
-  Color _getPrioridadColor(String prioridad) {
-    switch (prioridad.toLowerCase()) {
-      case 'alta':
-        return Colors.red;
-      case 'media':
-        return Colors.orange;
-      case 'baja':
-        return Colors.green;
-      default:
-        return Colors.grey;
-    }
+Color _getEstadoColor(Estado estado) {
+  String nombre = estado.nombre?.toLowerCase() ?? '';
+  switch (nombre) {
+    case 'pendiente':
+      return Colors.grey;
+    case 'en progreso':
+      return Colors.blue;
+    case 'completado':
+      return Colors.green;
+    case 'cancelado':
+      return Colors.red;
+    default:
+      return Colors.grey.shade400;
   }
-
-  Widget _buildDropdownEstados() {
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 16),
-      decoration: BoxDecoration(
-        border: Border.all(color: Colors.grey),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Obx(() => DropdownButton<String>(
-        value: controller.estadoSeleccionado.value,
-        isExpanded: true,
-        underline: SizedBox(),
-        hint: Text('Seleccione un estado'),
-        items: controller.estados.map((String estado) {
-          return DropdownMenuItem<String>(
-            value: estado,
-            child: Text(estado),
-          );
-        }).toList(),
-        onChanged: (String? newValue) {
-          controller.estadoSeleccionado.value = newValue;
-        },
-      )),
-    );
-  }
+}
 
   Widget _buildEtiquetasSeleccionadas() {
     return Obx(() {

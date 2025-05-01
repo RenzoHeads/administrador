@@ -165,4 +165,60 @@ class ListaService {
 
     return responseWrapper;
   }
+
+  // Obtener cantidad de tareas pendientes por lista
+  Future<ServiceHttpResponse> obtenerCantidadTareasPendientesPorLista(int listaId) async {
+    final url = Uri.parse('${BASE_URL}listas/cantidad_tareas_pendientes/$listaId');
+    final responseWrapper = ServiceHttpResponse();
+
+    try {
+      final response = await http.get(url);
+      responseWrapper.status = response.statusCode;
+
+      if (response.statusCode == 200) {
+        try {
+          final jsonData = json.decode(response.body);
+          responseWrapper.body = jsonData['cantidad_tareas_pendientes'];
+        } catch (e) {
+          responseWrapper.body = 'Error al procesar el JSON: $e';
+        }
+      } else {
+        responseWrapper.body = 'Error: ${response.body}';
+      }
+    } catch (e) {
+      responseWrapper.status = 500;
+      responseWrapper.body = 'Ocurrió un error al obtener la cantidad de tareas pendientes: $e';
+    }
+
+    return responseWrapper;
+  }
+
+  // Obtener cantidad de tareas completadas por lista
+  Future<ServiceHttpResponse> obtenerCantidadTareasCompletadasPorLista(int listaId) async {
+    final url = Uri.parse('${BASE_URL}listas/cantidad_tareas_completadas/$listaId');
+    final responseWrapper = ServiceHttpResponse();
+
+    try {
+      final response = await http.get(url);
+      responseWrapper.status = response.statusCode;
+
+      if (response.statusCode == 200) {
+        try {
+          final jsonData = json.decode(response.body);
+          responseWrapper.body = jsonData['cantidad_tareas_completadas'];
+        } catch (e) {
+          responseWrapper.body = 'Error al procesar el JSON: $e';
+        }
+      } else {
+        responseWrapper.body = 'Error: ${response.body}';
+      }
+    } catch (e) {
+      responseWrapper.status = 500;
+      responseWrapper.body = 'Ocurrió un error al obtener la cantidad de tareas completadas: $e';
+    }
+
+    return responseWrapper;
+  }
+
+
 }

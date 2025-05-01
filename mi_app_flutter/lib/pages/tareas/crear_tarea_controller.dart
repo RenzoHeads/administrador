@@ -18,6 +18,12 @@ import '../../services/categoria_service.dart';
 import '../../services/adjunto_service.dart';
 import '../../services/lista_service.dart';
 import '../../services/controladorsesion.dart';
+import '../../models/etiqueta.dart';
+import '../../models/prioridad.dart';
+import '../../services/prioridad_service.dart';
+import '../../services/estado_service.dart';
+
+import '../../models/estado.dart';
 
 class CrearTareaController extends GetxController {
   final HomeController _homeController = Get.find<HomeController>();
@@ -28,6 +34,8 @@ class CrearTareaController extends GetxController {
   final ListaService _listaService = ListaService();
   final ControladorSesionUsuario _sesion = Get.find<ControladorSesionUsuario>();
   final ImagePicker _imagePicker = ImagePicker();
+  final PrioridadService _prioridadService = PrioridadService();
+  final EstadoService _estadoService = EstadoService();
 
   // TextEditingControllers
   final tituloController = TextEditingController();
@@ -38,8 +46,8 @@ class CrearTareaController extends GetxController {
   RxBool cargando = false.obs;
   RxList<Lista> listas = <Lista>[].obs;
   RxList<Categoria> categorias = <Categoria>[].obs;
-  RxList<String> prioridades = <String>[].obs;
-  RxList<String> estados = <String>[].obs;
+  RxList<Prioridad> prioridades = <Prioridad>[].obs;
+  RxList<Estado> estados = <Estado>[].obs;
   RxList<Etiqueta> etiquetas = <Etiqueta>[].obs;
   RxList<Etiqueta> etiquetasSeleccionadas = <Etiqueta>[].obs;
   RxList<File> archivosSeleccionados = <File>[].obs;
@@ -48,8 +56,8 @@ class CrearTareaController extends GetxController {
   // Selecciones
   Rx<Lista?> listaSeleccionada = Rx<Lista?>(null);
   Rx<Categoria?> categoriaSeleccionada = Rx<Categoria?>(null);
-  Rx<String?> prioridadSeleccionada = Rx<String?>(null);
-  Rx<String?> estadoSeleccionado = Rx<String?>(null);
+  Rx<Prioridad?> prioridadSeleccionada = Rx<Prioridad?>(null);
+  Rx<Estado?> estadoSeleccionado = Rx<Estado?>(null);
   
   // Fechas de vencimiento
   Rx<DateTime> fechaVencimiento = DateTime.now().obs;
@@ -121,23 +129,15 @@ class CrearTareaController extends GetxController {
       }
 
       // Cargar prioridades
-      final resultadoPrioridades = await _tareaService.obtenerPrioridadesTareas();
-      if (resultadoPrioridades.status == 200 && resultadoPrioridades.body is List) {
-        List<dynamic> data = resultadoPrioridades.body;
-        prioridades.assignAll(data.map((e) => e.toString()).toList());
-        if (prioridades.isNotEmpty) {
-          prioridadSeleccionada.value = prioridades.first;
-        }
+      final resultadoPrioridades = await _prioridadService.obtenerPrioridades();
+      if (resultadoPrioridades.status == 200 && resultadoPrioridades.body is List<Prioridad>) {
+        prioridades.assignAll(resultadoPrioridades.body);
       }
 
       // Cargar estados
-      final resultadoEstados = await _tareaService.obtenerEstadosTareas();
-      if (resultadoEstados.status == 200 && resultadoEstados.body is List) {
-        List<dynamic> data = resultadoEstados.body;
-        estados.assignAll(data.map((e) => e.toString()).toList());
-        if (estados.isNotEmpty) {
-          estadoSeleccionado.value = estados.first;
-        }
+      final resultadoEstados = await _estadoService.obtenerEstados();
+      if (resultadoEstados.status == 200 && resultadoEstados.body is List<Estado>) {
+        estados.assignAll(resultadoEstados.body);
       }
     } catch (e) {
       print('Error al cargar datos: $e');
@@ -488,106 +488,115 @@ Future<void> seleccionarFechaCreacion() async {
  
   
 
-  Future<void> crearTarea() async {
-    if (tituloController.text.isEmpty) {
-      Get.snackbar(
-        'Error',
-        'El título es obligatorio',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
-      return;
-    }
-
-    if (listaSeleccionada.value == null) {
-      Get.snackbar(
-        'Error',
-        'Debe seleccionar una lista',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
-      return;
-    }
-
-    if (categoriaSeleccionada.value == null) {
-      Get.snackbar(
-        'Error',
-        'Debe seleccionar una categoría',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
-      return;
-    }
-
-    try {
-      cargando.value = true;
-      final usuario = _sesion.usuarioActual.value;
-      if (usuario == null || usuario.id == null) {
-        throw Exception('No hay usuario autenticado');
-      }
-
-      // Formatear fechas para la API
-      final fechaCreacionCompleta = obtenerFechaHoraCreacionCompleta();
-      final fechaCreacionFormateada = DateFormat('yyyy-MM-dd HH:mm:ss').format(fechaCreacionCompleta);
-      final fechaVencimientoCompleta = obtenerFechaHoraVencimientoCompleta();
-      final fechaVencimientoFormateada = DateFormat('yyyy-MM-dd HH:mm:ss').format(fechaVencimientoCompleta);
-
-      // Crear la tarea
-      final resultadoTarea = await _tareaService.crearTarea(
-        usuarioId: usuario.id!,
-        listaId: listaSeleccionada.value!.id!,
-        titulo: tituloController.text,
-        descripcion: descripcionController.text,
-        fechaCreacion: fechaCreacionFormateada,
-        fechaVencimiento: fechaVencimientoFormateada,
-        prioridad: prioridadSeleccionada.value ?? 'Media',
-        estado: estadoSeleccionado.value ?? 'Pendiente',
-        categoriaId: categoriaSeleccionada.value!.id!,
-      );
-
-      if (resultadoTarea.status != 200 || !(resultadoTarea.body is Tarea)) {
-        throw Exception('No se pudo crear la tarea');
-      }
-
-      final Tarea tareaCreada = resultadoTarea.body;
-
-      // Agregar etiquetas
-      for (var etiqueta in etiquetasSeleccionadas) {
-        await _tareaService.crearTareaEtiqueta(tareaCreada.id!, etiqueta.id!);
-      }
-
-      // Subir adjuntos
-      for (var archivo in archivosSeleccionados) {
-        await _adjuntoService.subirAdjunto(tareaCreada.id!, archivo);
-      }
-          // Option 1: Pass refresh parameter to the route
-      
-    
-      //recargar datos
-      _homeController.recargarDatos();
-      // Navegar a la pantalla de tareas
-      Get.offNamed('/home', arguments: {'refresh': true});
-      Get.snackbar(
-        'Éxito',
-        'Tarea creada correctamente',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.green,
-        colorText: Colors.white,
-      );
-    } catch (e) {
-      print('Error al crear la tarea: $e');
-      Get.snackbar(
-        'Error',
-        'No se pudo crear la tarea: ${e.toString()}',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
-    } finally {
-      cargando.value = false;
-    }
+Future<void> crearTarea() async {
+  if (tituloController.text.isEmpty) {
+    Get.snackbar(
+      'Error',
+      'El título es obligatorio',
+      snackPosition: SnackPosition.BOTTOM,
+      backgroundColor: Colors.red,
+      colorText: Colors.white,
+    );
+    return;
   }
+
+  if (listaSeleccionada.value == null) {
+    Get.snackbar(
+      'Error',
+      'Debe seleccionar una lista',
+      snackPosition: SnackPosition.BOTTOM,
+      backgroundColor: Colors.red,
+      colorText: Colors.white,
+    );
+    return;
+  }
+
+  if (categoriaSeleccionada.value == null) {
+    Get.snackbar(
+      'Error',
+      'Debe seleccionar una categoría',
+      snackPosition: SnackPosition.BOTTOM,
+      backgroundColor: Colors.red,
+      colorText: Colors.white,
+    );
+    return;
+  }
+
+  try {
+    cargando.value = true;
+    final usuario = _sesion.usuarioActual.value;
+    if (usuario == null || usuario.id == null) {
+      throw Exception('No hay usuario autenticado');
+    }
+
+    // Formatear fechas para la API
+    final fechaCreacionCompleta = obtenerFechaHoraCreacionCompleta();
+    final fechaCreacionFormateada = DateFormat('yyyy-MM-dd HH:mm:ss').format(fechaCreacionCompleta);
+    final fechaVencimientoCompleta = obtenerFechaHoraVencimientoCompleta();
+    final fechaVencimientoFormateada = DateFormat('yyyy-MM-dd HH:mm:ss').format(fechaVencimientoCompleta);
+
+    // Crear la tarea
+    final resultadoTarea = await _tareaService.crearTarea(
+      usuarioId: usuario.id!,
+      listaId: listaSeleccionada.value!.id!,
+      titulo: tituloController.text,
+      descripcion: descripcionController.text,
+      fechaCreacion: fechaCreacionFormateada,
+      fechaVencimiento: fechaVencimientoFormateada,
+      categoriaId: categoriaSeleccionada.value!.id!,
+      estadoId: estadoSeleccionado.value!.id!,
+      prioridadId: prioridadSeleccionada.value!.id!,
+    );
+
+    if (resultadoTarea.status != 200 || !(resultadoTarea.body is Tarea)) {
+      throw Exception('No se pudo crear la tarea');
+    }
+
+    final Tarea tareaCreada = resultadoTarea.body;
+
+    // Agregar etiquetas (solo si la lista no está vacía)
+    if (etiquetasSeleccionadas.isNotEmpty) {
+      for (var etiqueta in etiquetasSeleccionadas) {
+        if (etiqueta.id != null) {
+          await _tareaService.crearTareaEtiqueta(tareaCreada.id!, etiqueta.id!);
+        }
+      }
+    }
+
+    // Subir adjuntos (solo si la lista no está vacía)
+    if (archivosSeleccionados.isNotEmpty) {
+      for (var archivo in archivosSeleccionados) {
+        if (archivo != null) {
+          await _adjuntoService.subirAdjunto(tareaCreada.id!, archivo);
+        }
+      }
+    }
+    
+    // Recargar datos
+    _homeController.recargarDatos();
+    
+    Get.back(result: true); 
+
+    
+    Get.snackbar(
+      'Éxito',
+      'Tarea creada correctamente',
+      snackPosition: SnackPosition.BOTTOM,
+      backgroundColor: Colors.green,
+      colorText: Colors.white,
+    );
+  } catch (e, stackTrace) {
+    print('Error al crear la tarea: $e');
+    print('Stack trace: $stackTrace');
+    Get.snackbar(
+      'Error',
+      'No se pudo crear la tarea: ${e.toString()}',
+      snackPosition: SnackPosition.BOTTOM,
+      backgroundColor: Colors.red,
+      colorText: Colors.white,
+    );
+  } finally {
+    cargando.value = false;
+  }
+}
 }

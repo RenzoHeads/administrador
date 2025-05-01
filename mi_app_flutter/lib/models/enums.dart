@@ -1,4 +1,2 @@
-// enums.dart
-enum Prioridad { BAJA, MEDIA, ALTA, URGENTE }
-enum Estado { PENDIENTE, EN_PROGRESO, COMPLETADA, POSPUESTA, CANCELADA }
+
 enum TipoArchivo { IMAGEN, DOCUMENTO, AUDIO, VIDEO, OTRO }

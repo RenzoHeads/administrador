@@ -11,7 +11,15 @@ class Lista < Sequel::Model(DB[:listas])
   many_to_one :usuario
   one_to_many :tareas
 end
+#Prioridades
+class Prioridad < Sequel::Model(DB[:prioridades])
+  one_to_many :tareas
+end
 
+# Estado
+class Estado < Sequel::Model(DB[:estados])
+  one_to_many :tareas
+end
 # Categoria
 class Categoria < Sequel::Model(DB[:categorias])
   one_to_many :tareas

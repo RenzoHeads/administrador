@@ -11,9 +11,9 @@ post '/tareas/crear' do
       descripcion: data['descripcion'],
       fecha_creacion: data['fecha_creacion'],
       fecha_vencimiento: data['fecha_vencimiento'],
-      prioridad: data['prioridad'],
-      estado: data['estado'],
-      categoria_id: data['categoria_id']
+      categoria_id: data['categoria_id'],
+      estado_id: data['estado_id'],
+      prioridad_id: data['prioridad_id']
     )
     tarea.save
     [200, tarea.to_json]
@@ -25,16 +25,16 @@ put '/tareas/actualizar/:id' do
     tarea = Tarea.first(id: params[:id])
     if tarea
       tarea.update(
-        usuario_id: data['usuario_id'],
-        lista_id: data['lista_id'],
-        titulo: data['titulo'],
-        descripcion: data['descripcion'],
-        fecha_creacion: data['fecha_creacion'],
-        fecha_vencimiento: data['fecha_vencimiento'],
-        prioridad: data['prioridad'],
-        estado: data['estado'],
-        categoria_id: data['categoria_id']
-      )
+          usuario_id: data['usuario_id'],
+          lista_id: data['lista_id'],
+          titulo: data['titulo'],
+          descripcion: data['descripcion'],
+          fecha_creacion: data['fecha_creacion'],
+          fecha_vencimiento: data['fecha_vencimiento'], 
+          categoria_id: data['categoria_id'],
+          estado_id: data['estado_id'],
+          prioridad_id: data['prioridad_id']
+        )
       [200, tarea.to_json]
     else
       [404, 'Tarea no encontrada']
@@ -52,19 +52,6 @@ delete '/tareas/eliminar/:id' do
     end
 end
 
-#Mostrar todos los estadsos de las tareas
-get '/tareas/emociones' do
-  content_type :json
-  estados = DB.fetch("SELECT unnest(enum_range(NULL::estado_enum)) AS estado").map { |row| row[:estado] }
-  estados.to_json
-end
-
-#Mostrar todas las prioridades de las tareas
-get '/tareas/prioridades' do
-  content_type :json
-  prioridades = DB.fetch("SELECT unnest(enum_range(NULL::prioridad_enum)) AS prioridad").map { |row| row[:prioridad] }
-  prioridades.to_json
-end
 
 # Obtener tareas por usuario (GET está bien)
 get '/tareas/:usuario_id' do
@@ -94,7 +81,6 @@ get '/tareas/obtener/:id' do
     end
 end
 
-#mostrar tareas de inician hoy de un usuario
 get '/tareas/hoy/:usuario_id' do
   fecha = Date.today
   inicio_dia = Time.new(fecha.year, fecha.month, fecha.day, 0, 0, 0)
@@ -102,11 +88,47 @@ get '/tareas/hoy/:usuario_id' do
 
   tareas = Tarea.where(
     usuario_id: params[:usuario_id],
-    fecha_vencimiento: inicio_dia..fin_dia
-  ).all
+    fecha_creacion: inicio_dia..fin_dia
+  )
 
   tareas.empty? ? [404, 'Sin tareas'] : [200, tareas.to_json]
 end
+
+
+
+#mostrar estado de una tarea
+get '/tareas/estado/:id' do
+  tarea = Tarea.first(id: params[:id])
+  if tarea
+    estado = Estado.first(id: tarea.estado)
+    if estado
+      [200, estado.to_json]
+    else
+      [404, 'Estado no encontrado']
+    end
+  else
+    [404, 'Tarea no encontrada']
+  end
+end
+
+#actualizar estado de una tarea
+put '/tareas/estado/:id' do
+  data = JSON.parse(request.body.read)
+  tarea = Tarea.first(id: params[:id])
+  if tarea
+    estado = Estado.first(id: data['estado'])
+    if estado
+      tarea.update(estado: estado.id)
+      [200, 'Estado actualizado']
+    else
+      [404, 'Estado no encontrado']
+    end
+  else
+    [404, 'Tarea no encontrada']
+  end
+end
+
+#mostrar prioridad de una tarea
 
 
 

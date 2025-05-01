@@ -1,6 +1,4 @@
 import 'dart:convert';
-import 'enums.dart';
-
 
 // Clase Tarea
 class Tarea {
@@ -9,11 +7,11 @@ class Tarea {
   final String descripcion;
   final DateTime fechaCreacion;
   final DateTime fechaVencimiento;
-  final Prioridad prioridad;
-  final Estado estado;
+  final int prioridadId;
+  final int estadoId;
   final int categoriaId;
   final int usuarioId;
-  final int? listaId;  // Añadido campo lista_id que estaba faltando
+  final int? listaId;
 
   Tarea({
     this.id,
@@ -21,16 +19,16 @@ class Tarea {
     required this.descripcion,
     required this.fechaCreacion,
     required this.fechaVencimiento,
-    required this.prioridad,
-    required this.estado,
+    required this.prioridadId,
+    required this.estadoId,
     required this.categoriaId,
     required this.usuarioId,
-    this.listaId,  // Opcional ya que podría ser null
+    this.listaId,
   });
 
   @override
   String toString() {
-    return 'Tarea{id: $id, titulo: $titulo, fechaVencimiento: $fechaVencimiento, prioridad: $prioridad, estado: $estado, listaId: $listaId}';
+    return 'Tarea{id: $id, titulo: $titulo,fechaCreacion: $fechaCreacion ,fechaVencimiento: $fechaVencimiento, prioridadId: $prioridadId, estadoId: $estadoId, listaId: $listaId}';
   }
 
   Map<String, dynamic> toJson() {
@@ -40,8 +38,8 @@ class Tarea {
       'descripcion': descripcion,
       'fecha_creacion': fechaCreacion.toIso8601String(),
       'fecha_vencimiento': fechaVencimiento.toIso8601String(),
-      'prioridad': prioridad.toString().split('.').last,
-      'estado': estado.toString().split('.').last,
+      'prioridad_id': prioridadId,
+      'estado_id': estadoId,
       'categoria_id': categoriaId,
       'usuario_id': usuarioId,
       'lista_id': listaId,
@@ -55,8 +53,8 @@ class Tarea {
       descripcion: map['descripcion'],
       fechaCreacion: DateTime.parse(map['fecha_creacion'] ?? map['fechaCreacion']),
       fechaVencimiento: DateTime.parse(map['fecha_vencimiento'] ?? map['fechaVencimiento']),
-      prioridad: _mapStringToPrioridad(map['prioridad']),
-      estado: _mapStringToEstado(map['estado']),
+      prioridadId: map['prioridad_id'] ?? map['prioridadId'],
+      estadoId: map['estado_id'] ?? map['estadoId'],
       categoriaId: map['categoria_id'] ?? map['categoriaId'],
       usuarioId: map['usuario_id'] ?? map['usuarioId'],
       listaId: map['lista_id'] ?? map['listaId'],
@@ -68,31 +66,6 @@ class Tarea {
     return Tarea.fromMap(map);
   }
 
-  // Métodos auxiliares para mapear strings a enums
-  static Prioridad _mapStringToPrioridad(String? value) {
-    if (value == null) return Prioridad.MEDIA; // Valor por defecto
-    
-    try {
-      return Prioridad.values.firstWhere(
-        (e) => e.toString().split('.').last == value,
-      );
-    } catch (e) {
-      return Prioridad.MEDIA; // Valor por defecto si hay error
-    }
-  }
-
-  static Estado _mapStringToEstado(String? value) {
-    if (value == null) return Estado.PENDIENTE; // Valor por defecto
-    
-    try {
-      return Estado.values.firstWhere(
-        (e) => e.toString().split('.').last == value,
-      );
-    } catch (e) {
-      return Estado.PENDIENTE; // Valor por defecto si hay error
-    }
-  }
-
   // Método para crear una copia con algunas propiedades modificadas
   Tarea copyWith({
     int? id,
@@ -100,8 +73,8 @@ class Tarea {
     String? descripcion,
     DateTime? fechaCreacion,
     DateTime? fechaVencimiento,
-    Prioridad? prioridad,
-    Estado? estado,
+    int? prioridadId,
+    int? estadoId,
     int? categoriaId,
     int? usuarioId,
     int? listaId,
@@ -112,8 +85,8 @@ class Tarea {
       descripcion: descripcion ?? this.descripcion,
       fechaCreacion: fechaCreacion ?? this.fechaCreacion,
       fechaVencimiento: fechaVencimiento ?? this.fechaVencimiento,
-      prioridad: prioridad ?? this.prioridad,
-      estado: estado ?? this.estado,
+      prioridadId: prioridadId ?? this.prioridadId,
+      estadoId: estadoId ?? this.estadoId,
       categoriaId: categoriaId ?? this.categoriaId,
       usuarioId: usuarioId ?? this.usuarioId,
       listaId: listaId ?? this.listaId,

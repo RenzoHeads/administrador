@@ -62,3 +62,31 @@ get '/listas/cantidad_tareas/:id' do
     { error: 'Lista no encontrada' }.to_json
   end
 end
+
+#Obtener cantidad de tareas en estado pendiente por lista
+get '/listas/cantidad_tareas_pendientes/:id' do
+  content_type :json
+  lista = Lista.first(id: params[:id])
+  if lista
+    cantidad_tareas_pendientes = Tarea.where(lista_id: lista.id, estado_id: 1).count # Asumiendo que el estado "pendiente" tiene id 1
+    { cantidad_tareas_pendientes: cantidad_tareas_pendientes }.to_json
+  else
+    status 404
+    { error: 'Lista no encontrada' }.to_json
+  end
+end
+
+#Obtener cantidad de tareas en estado completada por lista
+get '/listas/cantidad_tareas_completadas/:id' do
+  content_type :json
+  lista = Lista.first(id: params[:id])
+  if lista
+    cantidad_tareas_completadas = Tarea.where(lista_id: lista.id, estado_id: 2).count # Asumiendo que el estado "completada" tiene id 2
+    { cantidad_tareas_completadas: cantidad_tareas_completadas }.to_json
+  else
+    status 404
+    { error: 'Lista no encontrada' }.to_json
+  end
+end
+
+

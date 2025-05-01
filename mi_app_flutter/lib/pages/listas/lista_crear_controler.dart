@@ -88,11 +88,11 @@ class CrearListaController extends GetxController {
       }
 
       final Lista listaCreada = resultado.body;
-      _homeController.recargarDatos();
-      // Navegar a la pantalla de tareas
-      Get.offNamed('/home', arguments: {'refresh': true});
-    // Option 1: Pass refresh parameter to the route
-
+      
+         // Recargar datos
+    _homeController.recargarDatos();
+    
+    Get.back(result: true); 
     
     
       

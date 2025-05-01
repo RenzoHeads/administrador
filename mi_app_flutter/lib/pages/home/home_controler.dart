@@ -19,6 +19,9 @@ class HomeController extends GetxController {
   RxList<Tarea> tareasDeHoy = <Tarea>[].obs;
   RxList<Lista> listas = <Lista>[].obs;
   
+  // Mapa para almacenar la cantidad de tareas por lista
+  final RxMap<int, int> cantidadTareasPorLista = <int, int>{}.obs;
+  
   RxBool cargando = true.obs;
   RxString profilePhotoUrl = RxString('');
   RxBool loadingPhoto = true.obs;
@@ -27,16 +30,33 @@ class HomeController extends GetxController {
   
   // Para la fecha actual
   RxString fechaActual = ''.obs;
+  // Variables para evitar recargas innecesarias
+  bool _tareasCargadas = false;
+  bool _listasCargadas = false;
+  bool _fotoCargada = false;
 
   @override
   void onInit() {
     super.onInit();
     cargarFechaActual();
-    cargarTareasDelUsuario();
-    cargarListasDelUsuario();
-    cargarFotoPerfil();
+    _cargarDatosIniciales();
   }
-  
+
+  void _cargarDatosIniciales() {
+    if (!_tareasCargadas) {
+      cargarTareasDelUsuario();
+      _tareasCargadas = true;
+    }
+    if (!_listasCargadas) {
+      cargarListasDelUsuario();
+      _listasCargadas = true;
+    }
+    if (!_fotoCargada) {
+      cargarFotoPerfil();
+      _fotoCargada = true;
+    }
+  }
+
   void cargarFechaActual() {
     try {
       final now = DateTime.now();
@@ -59,73 +79,55 @@ class HomeController extends GetxController {
 
   void cargarTareasDelUsuario() async {
     final usuario = _sesion.usuarioActual.value;
-    print("Iniciando carga de tareas para usuario: ${usuario?.id}");
+    print("Iniciando carga de tareas de hoy para usuario: ${usuario?.id}");
 
     if (usuario != null && usuario.id != null) {
       try {
         cargando.value = true;
         
-        // Cargar todas las tareas
-        final resultado = await _tareaService.obtenerTareasPorUsuario(usuario.id!);
-        
-        // Cargar tareas de hoy directamente desde el servidor
+        // Cargar solo tareas de hoy desde el servidor
         final resultadoHoy = await _tareaService.obtenerTareasHoyPorUsuario(usuario.id!);
-        
-        // Procesar todas las tareas
-        if (resultado.status == 200) {
-          // Verificar si el body es una lista de objetos o un string
-          if (resultado.body is List) {
-            final List<dynamic> lista = resultado.body as List;
-            tareas.clear();
-            
-            for (var item in lista) {
-              if (item is Tarea) {
-                tareas.add(item);
-              }
-            }
-          } else if (resultado.body is String) {
-            try {
-              final List<dynamic> jsonData = json.decode(resultado.body as String);
-              tareas.clear();
-              
-              for (var item in jsonData) {
-                final tarea = Tarea.fromMap(item);
-                tareas.add(tarea);
-              }
-            } catch (e) {
-              print("Error al procesar el JSON de tareas: $e");
-            }
-          }
-          print("Tareas cargadas: ${tareas.length}");
-        } else {
-          print("Error al obtener tareas: ${resultado.body}");
-        }
         
         // Procesar tareas de hoy
         if (resultadoHoy.status == 200) {
+          List<Tarea> tareasTemporales = [];
+          
           if (resultadoHoy.body is List) {
             final List<dynamic> lista = resultadoHoy.body as List;
-            tareasDeHoy.clear();
             
             for (var item in lista) {
               if (item is Tarea) {
-                tareasDeHoy.add(item);
+                tareasTemporales.add(item);
               }
             }
           } else if (resultadoHoy.body is String) {
             try {
               final List<dynamic> jsonData = json.decode(resultadoHoy.body as String);
-              tareasDeHoy.clear();
               
               for (var item in jsonData) {
                 final tarea = Tarea.fromMap(item);
-                tareasDeHoy.add(tarea);
+                tareasTemporales.add(tarea);
               }
             } catch (e) {
               print("Error al procesar el JSON de tareas de hoy: $e");
             }
           }
-          print("Tareas de hoy cargadas: ${tareasDeHoy.length}");
+          
+          // Ordenar tareas por hora (de menor a mayor)
+          tareasTemporales.sort((a, b) {
+            if (a.fechaCreacion == null || b.fechaCreacion == null) {
+              return 0;
+            }
+            final horaA = a.fechaCreacion!.hour;
+            final horaB = b.fechaCreacion!.hour;
+            return horaA.compareTo(horaB);
+          });
+          
+          // Actualizar la lista observable con las tareas ordenadas
+          tareasDeHoy.clear();
+          tareasDeHoy.addAll(tareasTemporales);
+          
+          print("Tareas de hoy cargadas y ordenadas: ${tareasDeHoy.length}");
         } else {
           print("Error al obtener tareas de hoy: ${resultadoHoy.body}");
         }
@@ -177,6 +179,9 @@ class HomeController extends GetxController {
           }
           
           print("Listas cargadas: ${listas.length}");
+          
+          // Una vez que tenemos las listas, cargamos la cantidad de tareas para cada una
+          cargarCantidadTareasPorListas();
         } else {
           print("Error al obtener listas: ${resultado.body}");
         }
@@ -185,6 +190,53 @@ class HomeController extends GetxController {
       }
     } else {
       print("No hay usuario activo para cargar listas");
+    }
+  }
+  
+  // Método para cargar la cantidad de tareas para todas las listas de una vez
+  void cargarCantidadTareasPorListas() async {
+    for (var lista in listas) {
+      if (lista.id != null) {
+        try {
+          final cantidad = await _obtenerCantidadTareasPorLista(lista.id!);
+          cantidadTareasPorLista[lista.id!] = cantidad;
+        } catch (e) {
+          print('Error al cargar cantidad de tareas para lista ${lista.id}: $e');
+          cantidadTareasPorLista[lista.id!] = 0;
+        }
+      }
+    }
+  }
+  
+  // Método interno para obtener la cantidad de tareas por lista
+  Future<int> _obtenerCantidadTareasPorLista(int listaId) async {
+    try {
+      final resultado = await _listaService.obtenerCantidadTareasPorLista(listaId);
+      
+      if (resultado.status == 200) {
+        return resultado.body is int ? resultado.body : 0;
+      } else {
+        print("Error al obtener cantidad de tareas: ${resultado.body}");
+        return 0;
+      }
+    } catch (e) {
+      print('Error al obtener cantidad de tareas: $e');
+      return 0;
+    }
+  }
+  
+  // Método público para obtener la cantidad de tareas por lista
+  int getCantidadTareasPorLista(int listaId) {
+    return cantidadTareasPorLista[listaId] ?? 0;
+  }
+  
+  // Método para actualizar la cantidad de tareas de una lista específica
+  Future<void> actualizarCantidadTareasPorLista(int listaId) async {
+    try {
+      final cantidad = await _obtenerCantidadTareasPorLista(listaId);
+      cantidadTareasPorLista[listaId] = cantidad;
+    } catch (e) {
+      print('Error al actualizar cantidad de tareas para lista $listaId: $e');
     }
   }
 
@@ -237,7 +289,7 @@ class HomeController extends GetxController {
   // Método para recargar todos los datos
   void recargarDatos() {
     cargarTareasDelUsuario();
-    cargarListasDelUsuario();
+    cargarListasDelUsuario(); // Esto también recargará las cantidades de tareas
     cargarFotoPerfil();
   }
   
@@ -252,31 +304,23 @@ class HomeController extends GetxController {
     Get.toNamed('/nueva-tarea');
   }
 
-  //Mostrar la cantidad de tareas que hay en una lista
-  // Método para obtener la cantidad de tareas por lista
-  Future<int> obtenerCantidadTareasPorLista(int listaId) async {
+  Color colorDesdeString(String colorString, {int alpha = 80}) {
     try {
-      final resultado = await _listaService.obtenerCantidadTareasPorLista(listaId);
-      
-      if (resultado.status == 200) {
-        return resultado.body is int ? resultado.body : 0;
-      } else {
-        print("Error al obtener cantidad de tareas: ${resultado.body}");
-        return 0;
+      String hex = colorString.replaceAll('#', '');
+      if (hex.length == 6) {
+        // Agregar opacidad personalizada
+        return Color(int.parse('0x${alpha.toRadixString(16).padLeft(2, '0')}$hex'));
+      } else if (hex.length == 8) {
+        // Ya incluye opacidad, se respeta
+        return Color(int.parse('0x$hex'));
       }
-    } catch (e) {
-      print('Error al obtener cantidad de tareas: $e');
-      return 0;
-    }
+    } catch (_) {}
+    return Colors.white; // fallback
   }
 
-  //metodo par cerrar la sesion
+  // Método para cerrar la sesión
   void cerrarSesionCompleta() {
     _sesion.cerrarSesion();
     Get.offAllNamed('/sign-in');
   }
-
-
-  //
-
 }
