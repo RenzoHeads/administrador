@@ -6,7 +6,7 @@ import '../../models/service_http_response.dart';
 import '../../models/index.dart';
 import '../../services/controladorsesion.dart';
 import '../../services/usuario_service.dart';
-import '../home/home_page.dart';
+import '../../main.dart';
 
 
 class SignInController extends GetxController {
@@ -78,7 +78,7 @@ void goHome(BuildContext context) async {
             // Navegar a la página de inicio
             Navigator.of(context).pushAndRemoveUntil(
               MaterialPageRoute(
-                builder: (context) => HomePage(),
+                builder: (context) => MainLayout(), // Cambia a tu página de inicio
                 settings: RouteSettings(arguments: usuarioResponse.toJson()),
               ),
               (Route<dynamic> route) => false,
