@@ -472,3 +472,66 @@ get '/usuario/:id/foto-perfil' do
   end
 end
 
+
+#Actualizar nombre de usuario que no exista
+put '/usuario/actualizar-nombre/:id' do
+  status = 500
+  resp = ''
+  begin
+    data = JSON.parse(request.body.read)
+    nuevo_nombre = data['nombre']
+    usuario = Usuario.first(id: params[:id])
+    if usuario
+      if Usuario.where(nombre: nuevo_nombre).count == 0
+        usuario.update(
+          nombre: nuevo_nombre
+        )
+        resp = usuario.to_json
+        status = 200
+      else
+        status = 409
+        resp = 'Nombre de usuario ya en uso'
+      end
+    else
+      status = 404
+      resp = 'Usuario no encontrado'
+    end
+  rescue => e
+    resp = 'Error al actualizar nombre de usuario'
+    puts e.message
+  end
+  status status
+  resp
+end
+
+
+#Actualizar correo de usuario que no exista 
+put '/usuario/actualizar-correo/:id' do
+  status = 500
+  resp = ''
+  begin
+    data = JSON.parse(request.body.read)
+    nuevo_correo = data['email']
+    usuario = Usuario.first(id: params[:id])
+    if usuario
+      if Usuario.where(email: nuevo_correo).count == 0
+        usuario.update(
+          email: nuevo_correo
+        )
+        resp = usuario.to_json
+        status = 200
+      else
+        status = 409
+        resp = 'Correo ya en uso'
+      end
+    else
+      status = 404
+      resp = 'Usuario no encontrado'
+    end
+  rescue => e
+    resp = 'Error al actualizar correo de usuario'
+    puts e.message
+  end
+  status status
+  resp
+end

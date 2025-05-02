@@ -52,7 +52,22 @@ class ControladorSesionUsuario extends GetxController {
     }
     }
 
-    
+    //Metodo para actualizar el usuario
+    Future<void> actualizarUsuario(Usuario usuario) async {
+        usuarioActual.value = usuario;
+        
+        // Guardar en SharedPreferences
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('usuarioData', jsonEncode(usuario.toJson()));
+    }
+
+    // Obtener el usuario actual
+
+    Usuario? obtenerUsuarioActual() {
+        return usuarioActual.value;
+    }
+
+
     // Cerrar sesión
     Future<void> cerrarSesion() async {
         usuarioActual.value = null;

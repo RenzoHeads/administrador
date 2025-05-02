@@ -328,4 +328,51 @@ class UsuarioService {
 
     return serviceResponse;
   }
+
+
+  // Actualizar nombre de usuario
+  Future<ServiceHttpResponse?> updateUserName(int id, String newName) async {
+    ServiceHttpResponse serviceResponse = ServiceHttpResponse();
+    final url = Uri.parse('${BASE_URL}usuario/actualizar-nombre/$id');
+
+    try {
+      final response = await http.put(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({'nombre': newName}),
+      );
+
+      serviceResponse.status = response.statusCode;
+      serviceResponse.body = response.body;
+    } catch (e) {
+      print('Error: $e');
+      serviceResponse.status = 500;
+      serviceResponse.body = 'Error al actualizar el nombre de usuario';
+    }
+
+    return serviceResponse;
+  }
+
+  // Actualizar correo de usuario
+  Future<ServiceHttpResponse?> updateUserEmail(int id, String newEmail) async {
+    ServiceHttpResponse serviceResponse = ServiceHttpResponse();
+    final url = Uri.parse('${BASE_URL}usuario/actualizar-correo/$id');
+
+    try {
+      final response = await http.put(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({'email': newEmail}),
+      );
+
+      serviceResponse.status = response.statusCode;
+      serviceResponse.body = response.body;
+    } catch (e) {
+      print('Error: $e');
+      serviceResponse.status = 500;
+      serviceResponse.body = 'Error al actualizar el correo de usuario';
+    }
+
+    return serviceResponse;
+  }
 }

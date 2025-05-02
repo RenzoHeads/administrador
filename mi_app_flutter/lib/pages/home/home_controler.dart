@@ -1,5 +1,6 @@
 import 'package:get/get.dart';
 import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../models/lista.dart';
@@ -8,7 +9,7 @@ import '../../services/lista_service.dart';
 import '../../services/tarea_service.dart';
 import '../../services/controladorsesion.dart';
 import '../../services/usuario_service.dart';
-
+import '../../models/usuario.dart';
 class HomeController extends GetxController {
   final ListaService _listaService = ListaService();
   final TareaService _tareaService = TareaService();
@@ -322,5 +323,192 @@ class HomeController extends GetxController {
   void cerrarSesionCompleta() {
     _sesion.cerrarSesion();
     Get.offAllNamed('/sign-in');
+  }
+
+
+  // Método para actualizar el nombre del usuario actual
+  Future<bool> actualizarNombreUsuario(String nuevoNombre) async {
+    final usuario = _sesion.usuarioActual.value;
+    if (usuario != null && usuario.id != null) {
+      try {
+        final respuesta = await _usuarioService.updateUserName(usuario.id!, nuevoNombre);
+        if (respuesta != null && respuesta.status == 200) {
+          // Actualizar el nombre en el usuario actual
+                    // Actualizar el correo en el usuario actual
+        Usuario usuarioActual = _sesion.obtenerUsuarioActual()!;
+      
+      // Crear un nuevo usuario con el nombre actualizado
+      Usuario usuarioActualizado = Usuario(
+        id: usuarioActual.id,
+        nombre: nuevoNombre,
+        contrasena: usuarioActual.contrasena,
+        email: usuarioActual.email,
+        token: usuarioActual.token,
+        foto: usuarioActual.foto
+      );
+          
+          _sesion.actualizarUsuario(usuarioActualizado);
+          Get.snackbar(
+            'Éxito',
+            'Nombre actualizado correctamente',
+            snackPosition: SnackPosition.BOTTOM,
+            backgroundColor: Colors.green,
+            colorText: Colors.white,
+          );
+          return true;
+        } else {
+          Get.snackbar(
+            'Error',
+            'No se pudo actualizar el nombre',
+            snackPosition: SnackPosition.BOTTOM,
+            backgroundColor: Colors.red,
+            colorText: Colors.white,
+          );
+        }
+      } catch (e) {
+        print('Error al actualizar nombre: $e');
+        Get.snackbar(
+          'Error',
+          'Ocurrió un error al actualizar el nombre',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+        );
+      }
+    }
+    return false;
+  }
+
+  // Método para actualizar el correo del usuario actual
+  Future<bool> actualizarCorreoUsuario(String nuevoCorreo) async {
+    final usuario = _sesion.usuarioActual.value;
+    if (usuario != null && usuario.id != null) {
+      try {
+        final respuesta = await _usuarioService.updateUserEmail(usuario.id!, nuevoCorreo);
+        if (respuesta != null && respuesta.status == 200) {
+          // Actualizar el correo en el usuario actual
+        Usuario usuarioActual = _sesion.obtenerUsuarioActual()!;
+      
+      // Crear un nuevo usuario con el nombre actualizado
+      Usuario usuarioActualizado = Usuario(
+        id: usuarioActual.id,
+        nombre: usuarioActual.nombre,
+        contrasena: usuarioActual.contrasena,
+        email: nuevoCorreo,
+        token: usuarioActual.token,
+        foto: usuarioActual.foto
+      );
+          
+          _sesion.actualizarUsuario(usuarioActualizado);
+          Get.snackbar(
+            'Éxito',
+            'Correo actualizado correctamente',
+            snackPosition: SnackPosition.BOTTOM,
+            backgroundColor: Colors.green,
+            colorText: Colors.white,
+          );
+          return true;
+        } else {
+          Get.snackbar(
+            'Error',
+            'No se pudo actualizar el correo',
+            snackPosition: SnackPosition.BOTTOM,
+            backgroundColor: Colors.red,
+            colorText: Colors.white,
+          );
+        }
+      } catch (e) {
+        print('Error al actualizar correo: $e');
+        Get.snackbar(
+          'Error',
+          'Ocurrió un error al actualizar el correo',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+        );
+      }
+    }
+    return false;
+  }
+
+  // Método para subir una nueva foto de perfil
+  Future<bool> subirFotoPerfil(File foto) async {
+    final usuario = _sesion.usuarioActual.value;
+    if (usuario != null && usuario.id != null) {
+      try {
+        final respuesta = await _usuarioService.uploadProfilePhoto(usuario.id!, foto);
+        if (respuesta != null && respuesta.status == 200) {
+          // Recargar la foto de perfil para mostrar la nueva
+          recargarFotoPerfil();
+          Get.snackbar(
+            'Éxito',
+            'Foto de perfil actualizada',
+            snackPosition: SnackPosition.BOTTOM,
+            backgroundColor: Colors.green,
+            colorText: Colors.white,
+          );
+          return true;
+        } else {
+          Get.snackbar(
+            'Error',
+            'No se pudo subir la foto de perfil',
+            snackPosition: SnackPosition.BOTTOM,
+            backgroundColor: Colors.red,
+            colorText: Colors.white,
+          );
+        }
+      } catch (e) {
+        print('Error al subir foto: $e');
+        Get.snackbar(
+          'Error',
+          'Ocurrió un error al subir la foto',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+        );
+      }
+    }
+    return false;
+  }
+
+  // Método para eliminar la foto de perfil
+  Future<bool> eliminarFotoPerfil() async {
+    final usuario = _sesion.usuarioActual.value;
+    if (usuario != null && usuario.id != null) {
+      try {
+        final respuesta = await _usuarioService.deleteProfilePhoto(usuario.id!);
+        if (respuesta != null && respuesta.status == 200) {
+          // Limpiar la URL de la foto y recargar
+          profilePhotoUrl.value = '';
+          cargarFotoPerfil();
+          Get.snackbar(
+            'Éxito',
+            'Foto de perfil eliminada',
+            snackPosition: SnackPosition.BOTTOM,
+            backgroundColor: Colors.green,
+            colorText: Colors.white,
+          );
+          return true;
+        } else {
+          Get.snackbar(
+            'Error',
+            'No se pudo eliminar la foto de perfil',
+            snackPosition: SnackPosition.BOTTOM,
+            backgroundColor: Colors.red,
+            colorText: Colors.white,
+          );
+        }
+      } catch (e) {
+        print('Error al eliminar foto: $e');
+        Get.snackbar(
+          'Error',
+          'Ocurrió un error al eliminar la foto',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+        );
+      }
+    }
+    return false;
   }
 }
