@@ -28,7 +28,7 @@ class ListaService {
       );
 
       responseWrapper.status = response.statusCode;
-      
+
       if (response.statusCode == 200) {
         try {
           final jsonData = json.decode(response.body);
@@ -99,7 +99,7 @@ class ListaService {
       );
 
       responseWrapper.status = response.statusCode;
-      
+
       if (response.statusCode == 200) {
         try {
           final jsonData = json.decode(response.body);
@@ -139,6 +139,7 @@ class ListaService {
 
     return responseWrapper;
   }
+
   // Obtener cantidad de tareas por lista
   Future<ServiceHttpResponse> obtenerCantidadTareasPorLista(int listaId) async {
     final url = Uri.parse('${BASE_URL}listas/cantidad_tareas/$listaId');
@@ -160,15 +161,20 @@ class ListaService {
       }
     } catch (e) {
       responseWrapper.status = 500;
-      responseWrapper.body = 'Ocurrió un error al obtener la cantidad de tareas: $e';
+      responseWrapper.body =
+          'Ocurrió un error al obtener la cantidad de tareas: $e';
     }
 
     return responseWrapper;
   }
 
   // Obtener cantidad de tareas pendientes por lista
-  Future<ServiceHttpResponse> obtenerCantidadTareasPendientesPorLista(int listaId) async {
-    final url = Uri.parse('${BASE_URL}listas/cantidad_tareas_pendientes/$listaId');
+  Future<ServiceHttpResponse> obtenerCantidadTareasPendientesPorLista(
+    int listaId,
+  ) async {
+    final url = Uri.parse(
+      '${BASE_URL}listas/cantidad_tareas_pendientes/$listaId',
+    );
     final responseWrapper = ServiceHttpResponse();
 
     try {
@@ -187,15 +193,20 @@ class ListaService {
       }
     } catch (e) {
       responseWrapper.status = 500;
-      responseWrapper.body = 'Ocurrió un error al obtener la cantidad de tareas pendientes: $e';
+      responseWrapper.body =
+          'Ocurrió un error al obtener la cantidad de tareas pendientes: $e';
     }
 
     return responseWrapper;
   }
 
   // Obtener cantidad de tareas completadas por lista
-  Future<ServiceHttpResponse> obtenerCantidadTareasCompletadasPorLista(int listaId) async {
-    final url = Uri.parse('${BASE_URL}listas/cantidad_tareas_completadas/$listaId');
+  Future<ServiceHttpResponse> obtenerCantidadTareasCompletadasPorLista(
+    int listaId,
+  ) async {
+    final url = Uri.parse(
+      '${BASE_URL}listas/cantidad_tareas_completadas/$listaId',
+    );
     final responseWrapper = ServiceHttpResponse();
 
     try {
@@ -214,11 +225,42 @@ class ListaService {
       }
     } catch (e) {
       responseWrapper.status = 500;
-      responseWrapper.body = 'Ocurrió un error al obtener la cantidad de tareas completadas: $e';
+      responseWrapper.body =
+          'Ocurrió un error al obtener la cantidad de tareas completadas: $e';
     }
 
     return responseWrapper;
   }
 
+  // Obtener lista por id
+  Future<ServiceHttpResponse> obtenerListaPorId(int id) async {
+    final url = Uri.parse('${BASE_URL}listas/obtener/$id');
+    final responseWrapper = ServiceHttpResponse();
 
+    try {
+      final response = await http.get(url);
+      responseWrapper.status = response.statusCode;
+
+      if (response.statusCode == 200) {
+        try {
+          final jsonData = json.decode(response.body);
+          // La respuesta tiene un formato anidado con la lista como JSON string
+          final listaJson = jsonData['lista'];
+          final listaMap = json.decode(listaJson);
+          responseWrapper.body = Lista.fromMap(listaMap);
+        } catch (e) {
+          responseWrapper.body = 'Error al procesar el JSON: $e';
+        }
+      } else if (response.statusCode == 404) {
+        responseWrapper.body = 'Lista no encontrada';
+      } else {
+        responseWrapper.body = 'Error: ${response.body}';
+      }
+    } catch (e) {
+      responseWrapper.status = 500;
+      responseWrapper.body = 'Ocurrió un error al obtener la lista: $e';
+    }
+
+    return responseWrapper;
+  }
 }

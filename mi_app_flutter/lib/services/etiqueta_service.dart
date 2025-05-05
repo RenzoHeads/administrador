@@ -17,14 +17,11 @@ class EtiquetaService {
       final response = await http.post(
         url,
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'nombre': nombre,
-          'color': color,
-        }),
+        body: jsonEncode({'nombre': nombre, 'color': color}),
       );
 
       responseWrapper.status = response.statusCode;
-      
+
       if (response.statusCode == 200) {
         try {
           final jsonData = json.decode(response.body);
@@ -56,14 +53,11 @@ class EtiquetaService {
       final response = await http.put(
         url,
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'nombre': nombre,
-          'color': color,
-        }),
+        body: jsonEncode({'nombre': nombre, 'color': color}),
       );
 
       responseWrapper.status = response.statusCode;
-      
+
       if (response.statusCode == 200) {
         try {
           final jsonData = json.decode(response.body);
@@ -126,6 +120,68 @@ class EtiquetaService {
     } catch (e) {
       responseWrapper.status = 500;
       responseWrapper.body = 'Ocurrió un error al obtener la etiqueta: $e';
+    }
+
+    return responseWrapper;
+  }
+
+  // Obtener etiqueta por ID
+  Future<ServiceHttpResponse> obtenerEtiquetaPorId(int id) async {
+    final url = Uri.parse('${BASE_URL}etiquetas/$id');
+    final responseWrapper = ServiceHttpResponse();
+
+    try {
+      final response = await http.get(url);
+      responseWrapper.status = response.statusCode;
+
+      if (response.statusCode == 200) {
+        try {
+          final jsonData = json.decode(response.body);
+          responseWrapper.body = Etiqueta.fromMap(jsonData);
+        } catch (e) {
+          responseWrapper.body = 'Error al procesar el JSON: $e';
+        }
+      } else {
+        responseWrapper.body = 'Error: ${response.body}';
+      }
+    } catch (e) {
+      responseWrapper.status = 500;
+      responseWrapper.body = 'Ocurrió un error al obtener la etiqueta: $e';
+    }
+
+    return responseWrapper;
+  }
+
+  // Obtener etiquetas de una tarea
+  Future<ServiceHttpResponse> obtenerEtiquetasDeTarea(int tareaId) async {
+    final url = Uri.parse('${BASE_URL}tareas/$tareaId/etiquetas');
+    final responseWrapper = ServiceHttpResponse();
+
+    try {
+      final response = await http.get(url);
+      responseWrapper.status = response.statusCode;
+
+      if (response.statusCode == 200) {
+        try {
+          final jsonData = json.decode(response.body);
+          if (jsonData is List) {
+            responseWrapper.body =
+                jsonData.map((json) => Etiqueta.fromMap(json)).toList();
+          } else {
+            responseWrapper.body = 'Error: Respuesta no es una lista';
+          }
+        } catch (e) {
+          responseWrapper.body = 'Error al procesar el JSON: $e';
+        }
+      } else if (response.statusCode == 404) {
+        responseWrapper.body =
+            []; // Lista vacía en caso de no encontrar etiquetas
+      } else {
+        responseWrapper.body = 'Error: ${response.body}';
+      }
+    } catch (e) {
+      responseWrapper.status = 500;
+      responseWrapper.body = 'Ocurrió un error al obtener las etiquetas: $e';
     }
 
     return responseWrapper;

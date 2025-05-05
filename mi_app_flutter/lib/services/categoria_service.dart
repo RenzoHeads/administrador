@@ -17,14 +17,11 @@ class CategoriaService {
       final response = await http.post(
         url,
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'nombre': nombre,
-          'color': color,
-        }),
+        body: jsonEncode({'nombre': nombre, 'color': color}),
       );
 
       responseWrapper.status = response.statusCode;
-      
+
       if (response.statusCode == 200) {
         try {
           final jsonData = json.decode(response.body);
@@ -55,7 +52,8 @@ class CategoriaService {
       if (response.statusCode == 200) {
         try {
           final List<dynamic> jsonData = json.decode(response.body);
-          final categorias = jsonData.map((json) => Categoria.fromMap(json)).toList();
+          final categorias =
+              jsonData.map((json) => Categoria.fromMap(json)).toList();
           responseWrapper.body = categorias;
         } catch (e) {
           responseWrapper.body = 'Error al procesar el JSON: $e';
@@ -84,14 +82,11 @@ class CategoriaService {
       final response = await http.put(
         url,
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'nombre': nombre,
-          'color': color,
-        }),
+        body: jsonEncode({'nombre': nombre, 'color': color}),
       );
 
       responseWrapper.status = response.statusCode;
-      
+
       if (response.statusCode == 200) {
         try {
           final jsonData = json.decode(response.body);
@@ -127,6 +122,34 @@ class CategoriaService {
     } catch (e) {
       responseWrapper.status = 500;
       responseWrapper.body = 'Ocurrió un error al eliminar la categoría: $e';
+    }
+
+    return responseWrapper;
+  }
+
+  //Creame este servicio
+  // Obtener categoría por ID de tarea
+  Future<ServiceHttpResponse> obtenerCategoriaPorTareaId(int tareaId) async {
+    final url = Uri.parse('${BASE_URL}categorias/tarea/$tareaId');
+    final responseWrapper = ServiceHttpResponse();
+
+    try {
+      final response = await http.get(url);
+      responseWrapper.status = response.statusCode;
+
+      if (response.statusCode == 200) {
+        try {
+          final jsonData = json.decode(response.body);
+          responseWrapper.body = Categoria.fromMap(jsonData);
+        } catch (e) {
+          responseWrapper.body = 'Error al procesar el JSON: $e';
+        }
+      } else {
+        responseWrapper.body = 'Error: ${response.body}';
+      }
+    } catch (e) {
+      responseWrapper.status = 500;
+      responseWrapper.body = 'Ocurrió un error al obtener la categoría: $e';
     }
 
     return responseWrapper;

@@ -41,17 +41,16 @@ put '/tareas/actualizar/:id' do
     end
 end
 
-# Eliminar tarea (Se debe usar DELETE)
 delete '/tareas/eliminar/:id' do
-    tarea = Tarea.first(id: params[:id])
-    if tarea
-      tarea.destroy
-      [200, 'Tarea eliminada']
-    else
-      [404, 'Tarea no encontrada']
-    end
+  content_type :json  # Establecer el tipo de contenido como JSON
+  tarea = Tarea.first(id: params[:id])
+  if tarea
+    tarea.destroy
+    { status: 200, mensaje: 'Tarea eliminada' }.to_json  # Devolver un objeto JSON
+  else
+    { status: 404, mensaje: 'Tarea no encontrada' }.to_json  # Devolver un objeto JSON
+  end
 end
-
 
 # Obtener tareas por usuario (GET está bien)
 get '/tareas/:usuario_id' do
@@ -111,24 +110,26 @@ get '/tareas/estado/:id' do
   end
 end
 
-#actualizar estado de una tarea
+#actualizar estado de una tarea por estadoid
 put '/tareas/estado/:id' do
   data = JSON.parse(request.body.read)
-  tarea = Tarea.first(id: params[:id])
+  tarea = Tarea.first(id: params[:id].to_i)
+
   if tarea
-    estado = Estado.first(id: data['estado'])
+    estado_id = data['estado_id'].to_i
+    estado = Estado.first(id: estado_id)
+    
     if estado
-      tarea.update(estado: estado.id)
-      [200, 'Estado actualizado']
+      tarea.update(estado_id: estado.id)
+      [200, tarea.to_json]
     else
-      [404, 'Estado no encontrado']
+      [404, { error: 'Estado no encontrado' }.to_json]
     end
   else
-    [404, 'Tarea no encontrada']
+    [404, { error: 'Tarea no encontrada' }.to_json]
   end
 end
 
-#mostrar prioridad de una tarea
 
 
 

@@ -3,7 +3,6 @@ import 'dart:io';
 import '../../configs/contants.dart';
 import '../../models/service_http_response.dart';
 import 'package:http/http.dart' as http;
-import 'package:flutter/services.dart' show rootBundle;
 import '../../models/usuario.dart';
 
 class UsuarioService {

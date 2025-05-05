@@ -51,8 +51,12 @@ class Tarea {
       id: map['id'],
       titulo: map['titulo'],
       descripcion: map['descripcion'],
-      fechaCreacion: DateTime.parse(map['fecha_creacion'] ?? map['fechaCreacion']),
-      fechaVencimiento: DateTime.parse(map['fecha_vencimiento'] ?? map['fechaVencimiento']),
+      fechaCreacion: DateTime.parse(
+        map['fecha_creacion'] ?? map['fechaCreacion'],
+      ),
+      fechaVencimiento: DateTime.parse(
+        map['fecha_vencimiento'] ?? map['fechaVencimiento'],
+      ),
       prioridadId: map['prioridad_id'] ?? map['prioridadId'],
       estadoId: map['estado_id'] ?? map['estadoId'],
       categoriaId: map['categoria_id'] ?? map['categoriaId'],
@@ -60,7 +64,7 @@ class Tarea {
       listaId: map['lista_id'] ?? map['listaId'],
     );
   }
-  
+
   factory Tarea.fromJson(String jsonString) {
     Map<String, dynamic> map = json.decode(jsonString);
     return Tarea.fromMap(map);

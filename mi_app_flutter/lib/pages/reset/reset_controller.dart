@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../../models/service_http_response.dart';
 import '../../services/usuario_service.dart';
-import '../../models/usuario.dart';
 
 class ResetController extends GetxController {
   TextEditingController txtEmail = TextEditingController();
@@ -12,8 +10,10 @@ class ResetController extends GetxController {
   RxInt step = 1.obs; // 1: Email step, 2: Password step
   RxBool isLoading = false.obs; // Añadido para manejar estados de carga
 
-  void goSignIn(BuildContext context) => Navigator.pushNamed(context, '/sign-in');
-  void goSignUp(BuildContext context) => Navigator.pushNamed(context, '/sign-up');
+  void goSignIn(BuildContext context) =>
+      Navigator.pushNamed(context, '/sign-in');
+  void goSignUp(BuildContext context) =>
+      Navigator.pushNamed(context, '/sign-up');
 
   Future<void> checkEmail(BuildContext context) async {
     mensaje.value = '';
@@ -29,7 +29,7 @@ class ResetController extends GetxController {
 
     final response = await UsuarioService().verifyEmail(txtEmail.text);
     isLoading.value = false;
-    
+
     if (response == null) {
       _showError('Error de conexión con el servidor');
       return;
@@ -48,7 +48,7 @@ class ResetController extends GetxController {
     mensaje.value = '';
     hayError.value = false;
     isLoading.value = true;
-    
+
     // Validación de contraseña
     if (txtNewPassword.text.length < 8) {
       _showError('La contraseña debe tener al menos 8 caracteres');
@@ -58,7 +58,7 @@ class ResetController extends GetxController {
 
     final response = await UsuarioService().updatePasswordByEmail(
       txtEmail.text,
-      txtNewPassword.text
+      txtNewPassword.text,
     );
 
     isLoading.value = false;
@@ -90,7 +90,9 @@ class ResetController extends GetxController {
       return;
     }
 
-    final response = await UsuarioService().requestPasswordRecovery(txtEmail.text);
+    final response = await UsuarioService().requestPasswordRecovery(
+      txtEmail.text,
+    );
     isLoading.value = false;
 
     if (response == null) {
@@ -99,12 +101,16 @@ class ResetController extends GetxController {
     }
 
     if (response.status == 200) {
-      mensaje.value = 'Se ha enviado un correo con instrucciones para recuperar tu contraseña';
+      mensaje.value =
+          'Se ha enviado un correo con instrucciones para recuperar tu contraseña';
       hayError.value = false;
       //Redirigir a la pagina de reset page token
       await Future.delayed(const Duration(seconds: 2));
-      Navigator.pushNamed(context, '/reset-with-token', arguments: {'email': txtEmail.text});
-      
+      Navigator.pushNamed(
+        context,
+        '/reset-with-token',
+        arguments: {'email': txtEmail.text},
+      );
     } else if (response.status == 404) {
       _showError('Correo no registrado');
     } else {
@@ -116,7 +122,8 @@ class ResetController extends GetxController {
     mensaje.value = message;
     hayError.value = true;
     Future.delayed(const Duration(seconds: 3), () {
-      if (mensaje.value == message) { // Solo limpiar si sigue siendo el mismo mensaje
+      if (mensaje.value == message) {
+        // Solo limpiar si sigue siendo el mismo mensaje
         mensaje.value = '';
       }
     });

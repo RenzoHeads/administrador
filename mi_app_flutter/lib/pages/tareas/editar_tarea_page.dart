@@ -2,20 +2,38 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
-import 'crear_tarea_controller.dart';
+import 'editar_tarea_controller.dart';
 import '../../models/lista.dart';
 import '../../models/categoria.dart';
 import '../../models/prioridad.dart';
 
-class CrearTareaPage extends StatelessWidget {
-  final CrearTareaController controller = Get.put(CrearTareaController());
+class EditarTareaPage extends StatefulWidget {
+  final int tareaId;
+
+  EditarTareaPage({required this.tareaId});
+
+  @override
+  _EditarTareaPageState createState() => _EditarTareaPageState();
+}
+
+class _EditarTareaPageState extends State<EditarTareaPage> {
+  late EditarTareaController controller;
+
+  @override
+  void initState() {
+    super.initState();
+    controller = Get.put(EditarTareaController());
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      controller.cargarTarea(widget.tareaId);
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          'Crear tarea',
+          'Editar tarea',
           style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
         ),
         leading: IconButton(
@@ -30,6 +48,14 @@ class CrearTareaPage extends StatelessWidget {
       body: Obx(() {
         if (controller.cargando.value) {
           return Center(child: CircularProgressIndicator());
+        }
+
+        // Solo cargar los datos del formulario cuando la tarea esté disponible
+        if (controller.tarea.value != null) {
+          _cargarDatosEnFormulario();
+        } else {
+          // Si no hay tarea, mostrar un mensaje o un loader adicional
+          return Center(child: Text('Cargando información de la tarea...'));
         }
 
         return SingleChildScrollView(
@@ -73,8 +99,7 @@ class CrearTareaPage extends StatelessWidget {
                               controller.fechaCreacionText.value,
                               style: TextStyle(
                                 color:
-                                    controller.fechaCreacionText.value ==
-                                            'Ingresa la fecha'
+                                    controller.fechaCreacionText.value.isEmpty
                                         ? Colors.grey[400]
                                         : Colors.black,
                                 fontWeight: FontWeight.bold,
@@ -302,7 +327,7 @@ class CrearTareaPage extends StatelessWidget {
                     SizedBox(width: 16),
                     Expanded(
                       child: ElevatedButton(
-                        onPressed: () => controller.crearTarea(),
+                        onPressed: () => controller.actualizarTarea(),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Color(0xFF4CAF50),
                           foregroundColor: Colors.white,
@@ -315,15 +340,10 @@ class CrearTareaPage extends StatelessWidget {
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            SvgPicture.asset(
-                              'assets/icons/icon_crear_tarea.svg',
-                              width: 20,
-                              height: 20,
-                              color: Colors.white,
-                            ),
+                            Icon(Icons.save, size: 20),
                             SizedBox(width: 8),
                             Text(
-                              'Crear',
+                              'Guardar',
                               style: TextStyle(fontWeight: FontWeight.bold),
                             ),
                           ],
@@ -338,6 +358,51 @@ class CrearTareaPage extends StatelessWidget {
         );
       }),
     );
+  }
+
+  void _cargarDatosEnFormulario() {
+    // Solo cargar los datos si no se han cargado ya o cuando se actualiza la tarea
+    if (controller.tarea.value != null) {
+      final tarea = controller.tarea.value!;
+
+      // Establecer título y descripción
+      controller.tituloController.text = tarea.titulo;
+      controller.descripcionController.text = tarea.descripcion;
+
+      // Establecer lista
+      if (controller.lista.value != null && controller.listas.isNotEmpty) {
+        controller.listaSeleccionada.value = controller.listas.firstWhere(
+          (lista) => lista.id == controller.lista.value!.id,
+          orElse: () => controller.listas.first,
+        );
+      }
+
+      // Establecer categoría
+      if (controller.categoria.value != null &&
+          controller.categorias.isNotEmpty) {
+        controller.categoriaSeleccionada.value = controller.categorias
+            .firstWhere(
+              (cat) => cat.id == controller.categoria.value!.id,
+              orElse: () => controller.categorias.first,
+            );
+      }
+
+      // Establecer prioridad
+      if (controller.priori.value != null &&
+          controller.prioridades.isNotEmpty) {
+        controller.prioridadSeleccionada.value = controller.prioridades
+            .firstWhere(
+              (p) => p.id == controller.priori.value!.id,
+              orElse: () => controller.prioridades.first,
+            );
+      }
+
+      // Limpiar etiquetas actuales y cargar etiquetas seleccionadas
+      controller.etiquetasSeleccionadas.clear();
+      if (controller.etiquetas.isNotEmpty) {
+        controller.etiquetasSeleccionadas.assignAll(controller.etiquetas);
+      }
+    }
   }
 
   Widget _buildFieldLabel(String label) {
@@ -492,7 +557,7 @@ class CrearTareaPage extends StatelessWidget {
             value: controller.categoriaSeleccionada.value,
             isExpanded: true,
             hint: Text(
-              'Ingrese las categorías',
+              'Seleccione una categoría',
               style: TextStyle(color: Colors.grey[400]),
             ),
             icon: Icon(Icons.keyboard_arrow_down, color: Colors.black),

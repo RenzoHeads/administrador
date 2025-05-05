@@ -39,3 +39,13 @@ post '/categorias/crear' do
       [404, 'Categoría no encontrada']
     end
   end
+
+##Cargar categoria por id de tarea
+get '/categorias/tarea/:tarea_id' do
+    tarea = Tarea.first(id: params[:tarea_id])
+    if tarea && tarea.categoria
+      [200, tarea.categoria.to_json]
+    else
+      [404, 'Categoría no encontrada']
+    end
+  end

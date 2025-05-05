@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'dart:io';
-import '../home/home_controler.dart';
 import '../../models/categoria.dart';
 import '../../models/etiqueta.dart';
 import '../../models/lista.dart';
@@ -14,19 +13,15 @@ import '../../services/lista_service.dart';
 import '../../services/controladorsesion.dart';
 import '../../models/prioridad.dart';
 import '../../services/prioridad_service.dart';
-import '../../services/estado_service.dart';
+import '../../pages/widgets/eventos_controlador.dart';
 
-import '../../models/estado.dart';
-
-class CrearTareaController extends GetxController {
-  final HomeController _homeController = Get.find<HomeController>();
+class EditarTareaController extends GetxController {
   final TareaService _tareaService = TareaService();
   final EtiquetaService _etiquetaService = EtiquetaService();
   final CategoriaService _categoriaService = CategoriaService();
   final ListaService _listaService = ListaService();
   final ControladorSesionUsuario _sesion = Get.find<ControladorSesionUsuario>();
   final PrioridadService _prioridadService = PrioridadService();
-  final EstadoService _estadoService = EstadoService();
 
   // TextEditingControllers
   final tituloController = TextEditingController();
@@ -38,16 +33,18 @@ class CrearTareaController extends GetxController {
   RxList<Lista> listas = <Lista>[].obs;
   RxList<Categoria> categorias = <Categoria>[].obs;
   RxList<Prioridad> prioridades = <Prioridad>[].obs;
-  RxList<Estado> estados = <Estado>[].obs;
   RxList<Etiqueta> etiquetas = <Etiqueta>[].obs;
   RxList<Etiqueta> etiquetasSeleccionadas = <Etiqueta>[].obs;
   RxList<File> archivosSeleccionados = <File>[].obs;
-
+  Rx<Prioridad?> priori = Rx<Prioridad?>(null);
+  // Tarea actual
+  Rx<Tarea?> tarea = Rx<Tarea?>(null);
+  Rx<Categoria?> categoria = Rx<Categoria?>(null);
+  Rx<Lista?> lista = Rx<Lista?>(null);
   // Selecciones
   Rx<Lista?> listaSeleccionada = Rx<Lista?>(null);
   Rx<Categoria?> categoriaSeleccionada = Rx<Categoria?>(null);
   Rx<Prioridad?> prioridadSeleccionada = Rx<Prioridad?>(null);
-  Rx<Estado?> estadoSeleccionado = Rx<Estado?>(null);
 
   // Fechas y horas
   Rx<DateTime> fechaCreacion = DateTime.now().obs;
@@ -63,7 +60,6 @@ class CrearTareaController extends GetxController {
   void onInit() {
     super.onInit();
     cargarDatos();
-    actualizarTextoFechaHora();
   }
 
   @override
@@ -72,6 +68,95 @@ class CrearTareaController extends GetxController {
     descripcionController.dispose();
     etiquetaController.dispose();
     super.onClose();
+  }
+
+  // Cargar todos los datos de la tarea
+  Future<void> cargarTarea(int tareaId) async {
+    try {
+      cargando.value = true;
+
+      // 1. Cargar datos básicos de la tarea
+      final resultadoTarea = await _tareaService.obtenerTareaPorId(tareaId);
+
+      if (resultadoTarea.status == 200 && resultadoTarea.body is Tarea) {
+        tarea.value = resultadoTarea.body;
+
+        // Formatear fechas
+
+        if (tarea.value != null) {
+          // Cargar la categoría de la tarea
+          final resultadoCategoria = await _categoriaService
+              .obtenerCategoriaPorTareaId(tarea.value!.categoriaId);
+          if (resultadoCategoria.status == 200 &&
+              resultadoCategoria.body is Categoria) {
+            categoria.value = resultadoCategoria.body;
+          }
+
+          // Cargar la lista de la tarea
+          final resultadoLista = await _listaService.obtenerListaPorId(
+            tarea.value!.listaId!,
+          );
+          if (resultadoLista.status == 200 && resultadoLista.body is Lista) {
+            lista.value = resultadoLista.body;
+          }
+        }
+
+        // 2. Cargar etiquetas de la tarea
+        final resultadoEtiquetas = await _etiquetaService
+            .obtenerEtiquetasDeTarea(tareaId);
+
+        // Verificar si el resultado es una lista de etiquetas
+        print('Resultado etiquetas: ${resultadoEtiquetas.body}');
+        if (resultadoEtiquetas.status == 200 &&
+            resultadoEtiquetas.body is List) {
+          // Directamente asignar la lista de Etiqueta objetos
+          List<Etiqueta> listaEtiquetas = resultadoEtiquetas.body;
+          etiquetas.assignAll(listaEtiquetas);
+        } else if (resultadoEtiquetas.status == 404) {
+          // Lista vacía en caso de no encontrar etiquetas
+          etiquetas.clear();
+        } else {
+          Get.snackbar(
+            'Error',
+            'No se pudieron cargar las etiquetas',
+            snackPosition: SnackPosition.BOTTOM,
+            backgroundColor: Colors.red,
+            colorText: Colors.white,
+          );
+        }
+
+        //Cargar la prioridad de la tarea
+        final resultadoPrioridad = await _prioridadService
+            .obtenerPrioridadPorId(tarea.value!.prioridadId);
+        if (resultadoPrioridad.status == 200 &&
+            resultadoPrioridad.body is Prioridad) {
+          priori.value = resultadoPrioridad.body;
+        }
+      } else {
+        Get.snackbar(
+          'Error',
+          'No se pudo cargar la tarea',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+        );
+        // Volver atrás si no se puede cargar la tarea
+        Get.back();
+      }
+    } catch (e) {
+      print('Error al cargar tarea: $e');
+      Get.snackbar(
+        'Error',
+        'No se pudo cargar la información de la tarea',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+      // Volver atrás en caso de error
+      Get.back();
+    } finally {
+      cargando.value = false;
+    }
   }
 
   void actualizarTextoFechaHora() {
@@ -104,9 +189,6 @@ class CrearTareaController extends GetxController {
         if (resultadoListas.status == 200 &&
             resultadoListas.body is List<Lista>) {
           listas.assignAll(resultadoListas.body);
-          if (listas.isNotEmpty) {
-            listaSeleccionada.value = listas.first;
-          }
         }
       }
 
@@ -122,18 +204,6 @@ class CrearTareaController extends GetxController {
       if (resultadoPrioridades.status == 200 &&
           resultadoPrioridades.body is List<Prioridad>) {
         prioridades.assignAll(resultadoPrioridades.body);
-      }
-
-      // Cargar estados para tener la referencia, aunque siempre usaremos ID 1
-      final resultadoEstados = await _estadoService.obtenerEstados();
-      if (resultadoEstados.status == 200 &&
-          resultadoEstados.body is List<Estado>) {
-        estados.assignAll(resultadoEstados.body);
-        // Establecer el estado con ID 1 como el seleccionado
-        estadoSeleccionado.value = estados.firstWhere(
-          (estado) => estado.id == 1,
-          orElse: () => estados.first,
-        );
       }
     } catch (e) {
       print('Error al cargar datos: $e');
@@ -296,7 +366,18 @@ class CrearTareaController extends GetxController {
     etiquetasSeleccionadas.remove(etiqueta);
   }
 
-  Future<void> crearTarea() async {
+  Future<void> actualizarTarea() async {
+    if (tarea.value == null) {
+      Get.snackbar(
+        'Error',
+        'No hay una tarea seleccionada para editar',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+      return;
+    }
+
     if (tituloController.text.isEmpty) {
       Get.snackbar(
         'Error',
@@ -330,6 +411,17 @@ class CrearTareaController extends GetxController {
       return;
     }
 
+    if (prioridadSeleccionada.value == null) {
+      Get.snackbar(
+        'Error',
+        'Debe seleccionar una prioridad',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+      return;
+    }
+
     try {
       cargando.value = true;
       final usuario = _sesion.usuarioActual.value;
@@ -348,23 +440,9 @@ class CrearTareaController extends GetxController {
         'yyyy-MM-dd HH:mm:ss',
       ).format(fechaVencimientoCompleta);
 
-      // Debug prints para fecha y hora
-      print('DEBUG - Fecha/Hora de creación:');
-      print(
-        '  Raw: ${fechaCreacion.value}, ${horaCreacion.value.format(Get.context!)}',
-      );
-      print('  Objeto completo: $fechaCreacionCompleta');
-      print('  Formateado: $fechaCreacionFormateada');
-
-      print('DEBUG - Fecha/Hora de vencimiento:');
-      print(
-        '  Raw: ${fechaCreacion.value}, ${horaVencimiento.value.format(Get.context!)}',
-      );
-      print('  Objeto completo: $fechaVencimientoCompleta');
-      print('  Formateado: $fechaVencimientoFormateada');
-
-      // Crear la tarea con estado ID 1 fijo
-      final resultadoTarea = await _tareaService.crearTarea(
+      // Actualizar la tarea
+      final resultadoTarea = await _tareaService.actualizarTarea(
+        id: tarea.value!.id!,
         usuarioId: usuario.id!,
         listaId: listaSeleccionada.value!.id!,
         titulo: tituloController.text,
@@ -372,22 +450,29 @@ class CrearTareaController extends GetxController {
         fechaCreacion: fechaCreacionFormateada,
         fechaVencimiento: fechaVencimientoFormateada,
         categoriaId: categoriaSeleccionada.value!.id!,
-        estadoId: 1, // Siempre usamos estado con ID 1
+        estadoId: tarea.value!.estadoId, // Mantener el estado actual
         prioridadId: prioridadSeleccionada.value!.id!,
       );
 
       if (resultadoTarea.status != 200 || !(resultadoTarea.body is Tarea)) {
-        throw Exception('No se pudo crear la tarea');
+        throw Exception('No se pudo actualizar la tarea');
       }
 
-      final Tarea tareaCreada = resultadoTarea.body;
+      final Tarea tareaActualizada = resultadoTarea.body;
 
-      // Agregar etiquetas (solo si la lista no está vacía)
+      // Eliminar todas las etiquetas actuales de la tarea
+      for (var tareaEtiqueta in etiquetas) {
+        if (tareaEtiqueta.id != null) {
+          await _tareaService.eliminarTareaEtiqueta(tareaEtiqueta.id!);
+        }
+      }
+
+      // Agregar las nuevas etiquetas seleccionadas
       if (etiquetasSeleccionadas.isNotEmpty) {
         for (var etiqueta in etiquetasSeleccionadas) {
           if (etiqueta.id != null) {
             await _tareaService.crearTareaEtiqueta(
-              tareaCreada.id!,
+              tareaActualizada.id!,
               etiqueta.id!,
             );
           }
@@ -395,23 +480,16 @@ class CrearTareaController extends GetxController {
       }
 
       // Recargar datos
-      _homeController.recargarDatos();
+      EventosControlador.solicitarRecarga();
 
+      // Return updated task data to previous screen
       Get.back(result: true);
-
-      Get.snackbar(
-        'Éxito',
-        'Tarea creada correctamente',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.green,
-        colorText: Colors.white,
-      );
     } catch (e, stackTrace) {
-      print('Error al crear la tarea: $e');
+      print('Error al actualizar la tarea: $e');
       print('Stack trace: $stackTrace');
       Get.snackbar(
         'Error',
-        'No se pudo crear la tarea: ${e.toString()}',
+        'No se pudo actualizar la tarea: ${e.toString()}',
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: Colors.red,
         colorText: Colors.white,

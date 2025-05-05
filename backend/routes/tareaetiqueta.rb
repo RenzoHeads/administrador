@@ -1,16 +1,23 @@
 require 'json'
 require 'securerandom'
 
-### Crear una nueva etiqueta para una tarea
-post '/tareaetiqueta/crear' do
-    data = JSON.parse(request.body.read)
+#Asignar etiqueta a una tarea por id de tarea y id de etiqueta
+post '/tareaetiqueta/:tarea_id/:etiqueta_id' do
+    # Eliminar esta línea si no usas el body
+    # data = JSON.parse(request.body.read)
+    
     tareaetiqueta = TareaEtiqueta.new(
-        tarea_id: data['tarea_id'],
-        etiqueta_id: data['etiqueta_id']
+        tarea_id: params[:tarea_id],
+        etiqueta_id: params[:etiqueta_id]
     )
     tareaetiqueta.save
     [200, tareaetiqueta.to_json]
-    end
+end
+
+
+
+
+
 
 ### Obtener etiquetas de una tarea
 get '/tareaetiqueta/:tarea_id' do

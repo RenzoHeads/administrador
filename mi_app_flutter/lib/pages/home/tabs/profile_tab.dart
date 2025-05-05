@@ -8,7 +8,8 @@ import '../../../services/controladorsesion.dart';
 
 class ProfileTab extends StatelessWidget {
   final HomeController controller = Get.find<HomeController>();
-  final ControladorSesionUsuario sesionControlador = Get.find<ControladorSesionUsuario>();
+  final ControladorSesionUsuario sesionControlador =
+      Get.find<ControladorSesionUsuario>();
 
   @override
   Widget build(BuildContext context) {
@@ -22,13 +23,11 @@ class ProfileTab extends StatelessWidget {
               // Título principal
               const Text(
                 'Cuenta',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               ),
-              const SizedBox(height: 6), // Espacio reducido entre título y opciones
-              
+              const SizedBox(
+                height: 6,
+              ), // Espacio reducido entre título y opciones
               // Opciones de cuenta
               _buildOptionItem(
                 'Cambiar nombre',
@@ -37,7 +36,7 @@ class ProfileTab extends StatelessWidget {
                 () => mostrarModalCambiarNombre(context, controller),
               ),
               _buildDivider(),
-              
+
               _buildOptionItem(
                 'Cambiar imagen de perfil',
                 'Sube o modifica tu foto de perfil',
@@ -45,26 +44,23 @@ class ProfileTab extends StatelessWidget {
                 () => mostrarModalCambiarImagen(context, controller),
               ),
               _buildDivider(),
-              
+
               _buildOptionItem(
                 'Cambiar correo electrónico',
                 'Actualiza tu email de contacto',
                 Icons.chevron_right,
                 () => mostrarModalCambiarCorreo(context, controller),
               ),
-              
+
               const SizedBox(height: 20), // Espacio entre secciones
-              
               // Título de sección Notificaciones
               const Text(
                 'Notificaciones',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               ),
-              const SizedBox(height: 6), // Espacio reducido entre título y opciones
-              
+              const SizedBox(
+                height: 6,
+              ), // Espacio reducido entre título y opciones
               // Opciones de notificaciones
               _buildSwitchItem(
                 'Notificaciones del sistema',
@@ -73,7 +69,7 @@ class ProfileTab extends StatelessWidget {
                 (value) {},
               ),
               _buildDivider(),
-              
+
               _buildSwitchItem(
                 'Mostrar solo notificaciones urgentes',
                 'Filtra las alertas para tareas de alta prioridad',
@@ -87,11 +83,18 @@ class ProfileTab extends StatelessWidget {
     );
   }
 
-  Widget _buildOptionItem(String title, String subtitle, IconData icon, VoidCallback onTap) {
+  Widget _buildOptionItem(
+    String title,
+    String subtitle,
+    IconData icon,
+    VoidCallback onTap,
+  ) {
     return InkWell(
       onTap: onTap,
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 8.0), // Reducido de 12.0 a 8.0
+        padding: const EdgeInsets.symmetric(
+          vertical: 8.0,
+        ), // Reducido de 12.0 a 8.0
         child: Row(
           children: [
             Expanded(
@@ -108,10 +111,7 @@ class ProfileTab extends StatelessWidget {
                   const SizedBox(height: 2), // Reducido de 4 a 2
                   Text(
                     subtitle,
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.grey[600],
-                    ),
+                    style: TextStyle(fontSize: 14, color: Colors.grey[600]),
                   ),
                 ],
               ),
@@ -123,9 +123,16 @@ class ProfileTab extends StatelessWidget {
     );
   }
 
-  Widget _buildSwitchItem(String title, String subtitle, bool initialValue, Function(bool) onChanged) {
+  Widget _buildSwitchItem(
+    String title,
+    String subtitle,
+    bool initialValue,
+    Function(bool) onChanged,
+  ) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0), // Reducido de 12.0 a 8.0
+      padding: const EdgeInsets.symmetric(
+        vertical: 8.0,
+      ), // Reducido de 12.0 a 8.0
       child: Row(
         children: [
           Expanded(
@@ -142,10 +149,7 @@ class ProfileTab extends StatelessWidget {
                 const SizedBox(height: 2), // Reducido de 4 a 2
                 Text(
                   subtitle,
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey[600],
-                  ),
+                  style: TextStyle(fontSize: 14, color: Colors.grey[600]),
                 ),
               ],
             ),
@@ -161,16 +165,15 @@ class ProfileTab extends StatelessWidget {
   }
 
   Widget _buildDivider() {
-    return Divider(
-      height: 1,
-      thickness: 0.5,
-      color: Colors.grey[300],
-    );
+    return Divider(height: 1, thickness: 0.5, color: Colors.grey[300]);
   }
 }
 
 // Modal para cambiar nombre
-void mostrarModalCambiarNombre(BuildContext context, HomeController controller) {
+void mostrarModalCambiarNombre(
+  BuildContext context,
+  HomeController controller,
+) {
   final TextEditingController nombreController = TextEditingController();
   final formKey = GlobalKey<FormState>();
 
@@ -195,10 +198,7 @@ void mostrarModalCambiarNombre(BuildContext context, HomeController controller) 
               children: [
                 const Text(
                   'Cambiar nombre',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 20),
                 Column(
@@ -263,7 +263,8 @@ void mostrarModalCambiarNombre(BuildContext context, HomeController controller) 
                       child: ElevatedButton(
                         onPressed: () async {
                           if (formKey.currentState!.validate()) {
-                            final resultado = await controller.actualizarNombreUsuario(nombreController.text);
+                            final resultado = await controller
+                                .actualizarNombreUsuario(nombreController.text);
                             if (resultado) {
                               Navigator.pop(context);
                             }
@@ -291,7 +292,10 @@ void mostrarModalCambiarNombre(BuildContext context, HomeController controller) 
 }
 
 // Modal para cambiar imagen de perfil
-void mostrarModalCambiarImagen(BuildContext context, HomeController controller) {
+void mostrarModalCambiarImagen(
+  BuildContext context,
+  HomeController controller,
+) {
   final ImagePicker _picker = ImagePicker();
 
   void _procesarImagen(XFile? imagen) async {
@@ -328,10 +332,7 @@ void mostrarModalCambiarImagen(BuildContext context, HomeController controller) 
           children: [
             const Text(
               'Cambiar imagen de perfil',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 20),
             Center(
@@ -345,27 +346,28 @@ void mostrarModalCambiarImagen(BuildContext context, HomeController controller) 
                       color: Colors.grey[200],
                       shape: BoxShape.circle,
                     ),
-                    child: controller.profilePhotoUrl.value.isNotEmpty
-                        ? ClipOval(
-                            child: Image.network(
-                              controller.profilePhotoUrl.value,
-                              fit: BoxFit.cover,
-                              errorBuilder: (context, error, stackTrace) {
-                                return SvgPicture.asset(
-                                  'assets/icons/icon_user.svg',
-                                  width: 50,
-                                  height: 50,
-                                );
-                              },
+                    child:
+                        controller.profilePhotoUrl.value.isNotEmpty
+                            ? ClipOval(
+                              child: Image.network(
+                                controller.profilePhotoUrl.value,
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) {
+                                  return SvgPicture.asset(
+                                    'assets/icons/icon_user.svg',
+                                    width: 50,
+                                    height: 50,
+                                  );
+                                },
+                              ),
+                            )
+                            : Center(
+                              child: SvgPicture.asset(
+                                'assets/icons/icon_user.svg',
+                                width: 50,
+                                height: 50,
+                              ),
                             ),
-                          )
-                        : Center(
-                            child: SvgPicture.asset(
-                              'assets/icons/icon_user.svg',
-                              width: 50,
-                              height: 50,
-                            ),
-                          ),
                   ),
                   if (controller.loadingPhoto.value)
                     CircularProgressIndicator(
@@ -445,7 +447,7 @@ void mostrarModalCambiarImagen(BuildContext context, HomeController controller) 
                 ),
               ],
             ),
-            if (controller.profilePhotoUrl.value.isNotEmpty) 
+            if (controller.profilePhotoUrl.value.isNotEmpty)
               Padding(
                 padding: const EdgeInsets.only(top: 10),
                 child: TextButton(
@@ -471,7 +473,10 @@ void mostrarModalCambiarImagen(BuildContext context, HomeController controller) 
 }
 
 // Modal para cambiar correo electrónico
-void mostrarModalCambiarCorreo(BuildContext context, HomeController controller) {
+void mostrarModalCambiarCorreo(
+  BuildContext context,
+  HomeController controller,
+) {
   final TextEditingController correoController = TextEditingController();
   final formKey = GlobalKey<FormState>();
 
@@ -496,10 +501,7 @@ void mostrarModalCambiarCorreo(BuildContext context, HomeController controller) 
               children: [
                 const Text(
                   'Cambiar correo electrónico',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 20),
                 Column(
@@ -568,7 +570,8 @@ void mostrarModalCambiarCorreo(BuildContext context, HomeController controller) 
                       child: ElevatedButton(
                         onPressed: () async {
                           if (formKey.currentState!.validate()) {
-                            final resultado = await controller.actualizarCorreoUsuario(correoController.text);
+                            final resultado = await controller
+                                .actualizarCorreoUsuario(correoController.text);
                             if (resultado) {
                               Navigator.pop(context);
                             }

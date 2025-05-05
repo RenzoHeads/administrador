@@ -1,2 +1,0 @@
-
-enum TipoArchivo { IMAGEN, DOCUMENTO, AUDIO, VIDEO, OTRO }

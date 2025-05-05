@@ -9,13 +9,16 @@ class DeepLinkingHandler {
     final appLinks = AppLinks();
 
     // Manejar enlaces entrantes con la app en foreground/background
-    appLinks.uriLinkStream.listen((Uri? uri) {
-      if (uri != null) {
-        _handleDeepLink(context, uri);
-      }
-    }, onError: (err) {
-      debugPrint('Error en stream de links: $err');
-    });
+    appLinks.uriLinkStream.listen(
+      (Uri? uri) {
+        if (uri != null) {
+          _handleDeepLink(context, uri);
+        }
+      },
+      onError: (err) {
+        debugPrint('Error en stream de links: $err');
+      },
+    );
 
     // Manejar enlace inicial al abrir la app
     if (!_initialUriHandled) {
@@ -36,16 +39,15 @@ class DeepLinkingHandler {
 
   static void _handleDeepLink(BuildContext context, Uri uri) {
     debugPrint('Deep Link Recibido: ${uri.toString()}');
-    
+
     if (uri.scheme == 'miappflutter' && uri.host == 'recuperar') {
       final token = uri.queryParameters['token'];
-      
+
       if (token != null && token.isNotEmpty) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
-          Navigator.of(context).pushNamed(
-            '/reset-with-token',
-            arguments: {'token': token}
-          );
+          Navigator.of(
+            context,
+          ).pushNamed('/reset-with-token', arguments: {'token': token});
         });
       }
     }

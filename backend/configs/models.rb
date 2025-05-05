@@ -45,6 +45,8 @@ end
 
 # TareaEtiqueta (tabla intermedia)
 class TareaEtiqueta < Sequel::Model(DB[:tarea_etiquetas])
+  many_to_one :tareas
+  many_to_one :etiquetas
 end
 
 # Recordatorio

@@ -117,7 +117,6 @@ class TareaService {
     return responseWrapper;
   }
 
-  // Crear tarea
   Future<ServiceHttpResponse> crearTarea({
     required int usuarioId,
     required int listaId,
@@ -125,7 +124,6 @@ class TareaService {
     required String descripcion,
     required String fechaCreacion,
     required String fechaVencimiento,
-
     required int categoriaId,
     required int estadoId,
     required int prioridadId,
@@ -134,30 +132,66 @@ class TareaService {
     final responseWrapper = ServiceHttpResponse();
 
     try {
+      // Crear el mapa de datos explícitamente
+      Map<String, dynamic> payload = {
+        'usuario_id': usuarioId,
+        'lista_id': listaId,
+        'titulo': titulo,
+        'descripcion': descripcion,
+        'fecha_creacion': fechaCreacion,
+        'fecha_vencimiento': fechaVencimiento,
+        'categoria_id': categoriaId,
+        'estado_id': estadoId,
+        'prioridad_id': prioridadId,
+      };
+
+      // Imprimir el payload para depuración
+      print('Payload que se enviará: ${jsonEncode(payload)}');
+
+      // Asegúrate de que los encabezados estén correctos
+      final headers = {
+        'Content-Type': 'application/json; charset=UTF-8',
+        'Accept': 'application/json',
+      };
+
+      // Enviar la solicitud
       final response = await http.post(
         url,
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'usuario_id': usuarioId,
-          'lista_id': listaId,
-          'titulo': titulo,
-          'descripcion': descripcion,
-          'fecha_creacion': fechaCreacion,
-          'fecha_vencimiento': fechaVencimiento,
-          'categoria_id': categoriaId,
-          'estado_id': estadoId,
-          'prioridad_id': prioridadId,
-        }),
+        headers: headers,
+        body: jsonEncode(payload),
+      );
+
+      print(
+        'Respuesta del servidor (código ${response.statusCode}): ${response.body}',
       );
 
       responseWrapper.status = response.statusCode;
       if (response.statusCode == 200) {
-        final jsonData = json.decode(response.body);
-        responseWrapper.body = Tarea.fromMap(jsonData);
+        // Verificar que la respuesta no esté vacía
+        if (response.body.isNotEmpty) {
+          final jsonData = json.decode(response.body);
+          responseWrapper.body = Tarea.fromMap(jsonData);
+        } else {
+          print('Advertencia: El servidor devolvió un cuerpo vacío');
+          // Crea una tarea ficticia con los datos enviados
+          responseWrapper.body = Tarea(
+            titulo: titulo,
+            descripcion: descripcion,
+            fechaCreacion: DateTime.parse(fechaCreacion),
+            fechaVencimiento: DateTime.parse(fechaVencimiento),
+            prioridadId: prioridadId,
+            estadoId: estadoId,
+            categoriaId: categoriaId,
+            usuarioId: usuarioId,
+            listaId: listaId,
+          );
+        }
       } else {
         responseWrapper.body = 'Error: ${response.body}';
       }
-    } catch (e) {
+    } catch (e, stackTrace) {
+      print('Error en crearTarea: $e');
+      print('Stack trace: $stackTrace');
       responseWrapper.status = 500;
       responseWrapper.body = 'Ocurrió un error al crear la tarea: $e';
     }
@@ -174,11 +208,10 @@ class TareaService {
     required String descripcion,
     required String fechaCreacion,
     required String fechaVencimiento,
-    
+
     required int categoriaId,
     required int estadoId,
     required int prioridadId,
-
   }) async {
     final url = Uri.parse('${BASE_URL}tareas/actualizar/$id');
     final responseWrapper = ServiceHttpResponse();
@@ -215,21 +248,36 @@ class TareaService {
     return responseWrapper;
   }
 
-  // Eliminar tarea
+  // Servicio corregido para eliminar tarea
   Future<ServiceHttpResponse> eliminarTarea(int id) async {
     final url = Uri.parse('${BASE_URL}tareas/eliminar/$id');
     final responseWrapper = ServiceHttpResponse();
 
     try {
+      print('Enviando solicitud DELETE a: $url'); // Log para debug
       final response = await http.delete(url);
       responseWrapper.status = response.statusCode;
+      print(
+        'Respuesta recibida: ${response.statusCode} - ${response.body}',
+      ); // Log para debug
 
       if (response.statusCode == 200) {
-        responseWrapper.body = 'Tarea eliminada con éxito';
+        // Manejo seguro del cuerpo de la respuesta
+        try {
+          // Intentar decodificar como JSON primero
+          final jsonData = json.decode(response.body);
+          responseWrapper.body =
+              jsonData[1] ?? jsonData['mensaje'] ?? response.body;
+        } catch (e) {
+          // Si no es JSON, usar el cuerpo de la respuesta como texto plano
+          print('No se pudo decodificar como JSON: $e');
+          responseWrapper.body = response.body;
+        }
       } else {
         responseWrapper.body = 'Error: ${response.body}';
       }
     } catch (e) {
+      print('Error en solicitud HTTP: $e'); // Log detallado
       responseWrapper.status = 500;
       responseWrapper.body = 'Ocurrió un error al eliminar la tarea: $e';
     }
@@ -237,24 +285,19 @@ class TareaService {
     return responseWrapper;
   }
 
-  
-
   // Crear etiqueta para tarea
   Future<ServiceHttpResponse> crearTareaEtiqueta(
-    int tareaId, 
-    int etiquetaId
+    int tareaId,
+    int etiquetaId,
   ) async {
-    final url = Uri.parse('${BASE_URL}tareaetiqueta/crear');
+    final url = Uri.parse('${BASE_URL}tareaetiqueta/$tareaId/$etiquetaId');
     final responseWrapper = ServiceHttpResponse();
 
     try {
       final response = await http.post(
         url,
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'tarea_id': tareaId,
-          'etiqueta_id': etiquetaId,
-        }),
+        // No body needed as IDs are in the URL path
       );
 
       responseWrapper.status = response.statusCode;
@@ -266,7 +309,8 @@ class TareaService {
       }
     } catch (e) {
       responseWrapper.status = 500;
-      responseWrapper.body = 'Ocurrió un error al crear la etiqueta para la tarea: $e';
+      responseWrapper.body =
+          'Ocurrió un error al crear la etiqueta para la tarea: $e';
     }
 
     return responseWrapper;
@@ -284,7 +328,8 @@ class TareaService {
       if (response.statusCode == 200) {
         try {
           final List<dynamic> jsonData = json.decode(response.body);
-          final tareaEtiquetas = jsonData.map((json) => TareaEtiqueta.fromMap(json)).toList();
+          final tareaEtiquetas =
+              jsonData.map((json) => TareaEtiqueta.fromMap(json)).toList();
           responseWrapper.body = tareaEtiquetas;
         } catch (e) {
           responseWrapper.body = 'Error al procesar el JSON: $e';
@@ -303,8 +348,8 @@ class TareaService {
   // Actualizar etiqueta de tarea
   Future<ServiceHttpResponse> actualizarTareaEtiqueta(
     int id,
-    int tareaId, 
-    int etiquetaId
+    int tareaId,
+    int etiquetaId,
   ) async {
     final url = Uri.parse('${BASE_URL}tareaetiqueta/actualizar/$id');
     final responseWrapper = ServiceHttpResponse();
@@ -313,10 +358,7 @@ class TareaService {
       final response = await http.put(
         url,
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'tarea_id': tareaId,
-          'etiqueta_id': etiquetaId,
-        }),
+        body: jsonEncode({'tarea_id': tareaId, 'etiqueta_id': etiquetaId}),
       );
 
       responseWrapper.status = response.statusCode;
@@ -355,6 +397,7 @@ class TareaService {
 
     return responseWrapper;
   }
+
   // Obtener tareas que inician hoy para un usuario
   Future<ServiceHttpResponse> obtenerTareasHoyPorUsuario(int usuarioId) async {
     final url = Uri.parse('${BASE_URL}tareas/hoy/$usuarioId');
@@ -377,14 +420,18 @@ class TareaService {
       }
     } catch (e) {
       responseWrapper.status = 500;
-      responseWrapper.body = 'Ocurrió un error al obtener las tareas de hoy: $e';
+      responseWrapper.body =
+          'Ocurrió un error al obtener las tareas de hoy: $e';
     }
 
     return responseWrapper;
   }
 
   // Actualizar estado de tarea
-  Future<ServiceHttpResponse> actualizarEstadoTarea(int tareaId, int estadoId) async {
+  Future<ServiceHttpResponse> actualizarEstadoTarea(
+    int tareaId,
+    int estadoId,
+  ) async {
     final url = Uri.parse('${BASE_URL}tareas/estado/$tareaId');
     final responseWrapper = ServiceHttpResponse();
 
@@ -392,20 +439,28 @@ class TareaService {
       final response = await http.put(
         url,
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'estado': estadoId,
-        }),
+        body: jsonEncode({'estado_id': estadoId}),
       );
 
       responseWrapper.status = response.statusCode;
+
       if (response.statusCode == 200) {
-        responseWrapper.body = 'Estado actualizado';
+        try {
+          final jsonData = json.decode(response.body);
+          responseWrapper.body = Tarea.fromMap(jsonData);
+        } catch (e) {
+          responseWrapper.body = 'Error al procesar la respuesta: $e';
+        }
+      } else if (response.statusCode == 404) {
+        final errorData = json.decode(response.body);
+        responseWrapper.body = 'Error: ${errorData['error'] ?? response.body}';
       } else {
         responseWrapper.body = 'Error: ${response.body}';
       }
     } catch (e) {
       responseWrapper.status = 500;
-      responseWrapper.body = 'Ocurrió un error al actualizar el estado de la tarea: $e';
+      responseWrapper.body =
+          'Ocurrió un error al actualizar el estado de la tarea: $e';
     }
 
     return responseWrapper;
@@ -432,7 +487,8 @@ class TareaService {
       }
     } catch (e) {
       responseWrapper.status = 500;
-      responseWrapper.body = 'Ocurrió un error al obtener el estado de la tarea: $e';
+      responseWrapper.body =
+          'Ocurrió un error al obtener el estado de la tarea: $e';
     }
 
     return responseWrapper;

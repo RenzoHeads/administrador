@@ -1,21 +1,17 @@
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
-
 
 // Página de Calendario
 class CalendarioPage extends StatelessWidget {
- @override
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Text('Calendario'),
         automaticallyImplyLeading: false, // Quita la flecha de retroceso
       ),
-      body: Center(
-        child: Text('Contenido del Calendario'),
-      ),
+      body: Center(child: Text('Contenido del Calendario')),
+
       // La barra de navegación con el índice 1 seleccionado (Calendario)
-      
     );
   }
 }

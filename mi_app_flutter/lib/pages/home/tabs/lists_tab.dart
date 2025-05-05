@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../home_controler.dart';
 import '../../../models/lista.dart';
+import '../../widgets/lista/lista_item.dart';
 
 class ListsTab extends StatelessWidget {
   final HomeController controller = Get.find<HomeController>();
@@ -37,42 +38,12 @@ class ListsTab extends StatelessWidget {
   }
 
   Widget _buildListaItem(Lista lista) {
-    if (lista.id == null) return SizedBox.shrink();
-
-    final int cantidadTareas = controller.cantidadTareasPorLista[lista.id!] ?? 0;
-
-    return Container(
-      margin: EdgeInsets.only(bottom: 12),
-      decoration: BoxDecoration(
-        color: controller.colorDesdeString(lista.color ?? 'FFFFFF'),
-        borderRadius: BorderRadius.circular(8),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 5,
-            offset: Offset(0, 2),
-          ),
-        ],
-      ),
-      child: ListTile(
-        title: Text(
-          lista.nombre ?? 'Sin nombre',
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
-        subtitle: Text(
-          '$cantidadTareas ${cantidadTareas == 1 ? 'tarea' : 'tareas'}',
-          style: TextStyle(color: Colors.grey[600], fontSize: 12),
-        ),
-        trailing: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.chevron_right),
-          ],
-        ),
-        onTap: () {
-          Get.toNamed('/detalles-lista', arguments: lista.id);
-        },
-      ),
+    return ListaItemWidget(
+      listaId: lista.id!, // Asegúrate de que el ID no sea nulo
+      onTap: () {
+        // Aquí puedes navegar a la pantalla de detalle de la lista
+        Get.toNamed('/lista/detalle/${lista.id}');
+      },
     );
   }
 }

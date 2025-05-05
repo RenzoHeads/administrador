@@ -90,3 +90,17 @@ get '/listas/cantidad_tareas_completadas/:id' do
 end
 
 
+#Obtener lista por id 
+
+get '/listas/obtener/:id' do
+  content_type :json
+  lista = Lista.first(id: params[:id])
+  if lista
+    { lista: lista.to_json }.to_json
+  else
+    status 404
+    { error: 'Lista no encontrada' }.to_json
+  end
+end
+
+

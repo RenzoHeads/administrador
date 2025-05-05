@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 
 import '../../models/service_http_response.dart';
 import '../../services/usuario_service.dart';
-import '../../models/usuario.dart';
 
 class SignUpController extends GetxController {
   TextEditingController txtUsuario = TextEditingController();
@@ -48,9 +47,12 @@ class SignUpController extends GetxController {
           enabled.value = true;
         });
       } else {
-        ServiceHttpResponse? response =
-            await usuarioService.signUp(usuario, contrasenia, email);
-            
+        ServiceHttpResponse? response = await usuarioService.signUp(
+          usuario,
+          contrasenia,
+          email,
+        );
+
         if (response != null) {
           if (response.status == 200) {
             mensaje.value = 'Usuario Creado';

@@ -47,4 +47,26 @@ put '/etiquetas/actualizar/:id' do
       [404, 'Etiqueta no encontrada']
     end
   end
- 
+
+  ##Obtener etiqueta por id
+  get '/etiquetas/:id' do
+    etiqueta = Etiqueta.first(id: params[:id])
+    if etiqueta
+      [200, etiqueta.to_json]
+    else
+      [404, 'Etiqueta no encontrada']
+    end
+  end
+  
+
+  
+  ##Obtener etiquetas completas de una tarea
+  get '/tareas/:tarea_id/etiquetas' do
+    tareaetiquetas = TareaEtiqueta.where(tarea_id: params[:tarea_id]).all
+    if tareaetiquetas.empty?
+      [404, 'Sin etiquetas']
+    else
+      etiquetas = tareaetiquetas.map { |te| Etiqueta.first(id: te.etiqueta_id) }.compact
+      [200, etiquetas.to_json]
+    end
+  end

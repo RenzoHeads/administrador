@@ -5,12 +5,12 @@ import '../../services/controladorsesion.dart';
 import 'tabs/tasks_tab.dart';
 import 'tabs/lists_tab.dart';
 import 'tabs/profile_tab.dart';
-
-import '../widgets/custom_fab.dart';
+import '../../pages/widgets/eventos_controlador.dart';
 
 class HomePage extends StatelessWidget {
   final HomeController controller = Get.put(HomeController());
-  final ControladorSesionUsuario sesionControlador = Get.find<ControladorSesionUsuario>();
+  final ControladorSesionUsuario sesionControlador =
+      Get.find<ControladorSesionUsuario>();
 
   @override
   Widget build(BuildContext context) {
@@ -27,32 +27,57 @@ class HomePage extends StatelessWidget {
             children: [
               // Encabezado con avatar y botón de cerrar sesión
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     GestureDetector(
                       onTap: () => controller.navegarAPerfil(),
-                      child: Obx(() => CircleAvatar(
-                        backgroundImage: controller.profilePhotoUrl.value.isNotEmpty
-                            ? NetworkImage(controller.profilePhotoUrl.value)
-                            : null,
-                        backgroundColor: Colors.grey[300],
-                        radius: 20,
-                        child: controller.profilePhotoUrl.value.isEmpty
-                            ? Text(
-                          sesionControlador.usuarioActual.value?.nombre?.isNotEmpty == true
-                            ? sesionControlador.usuarioActual.value!.nombre!.substring(0, 1).toUpperCase()
-                            : "U",
-                          style: TextStyle(color: Colors.white),
-                        )
-                            : null,
-                      )),
+                      child: Obx(
+                        () => CircleAvatar(
+                          backgroundImage:
+                              controller.profilePhotoUrl.value.isNotEmpty
+                                  ? NetworkImage(
+                                    controller.profilePhotoUrl.value,
+                                  )
+                                  : null,
+                          backgroundColor: Colors.grey[300],
+                          radius: 20,
+                          child:
+                              controller.profilePhotoUrl.value.isEmpty
+                                  ? Text(
+                                    sesionControlador
+                                                .usuarioActual
+                                                .value
+                                                ?.nombre
+                                                .isNotEmpty ==
+                                            true
+                                        ? sesionControlador
+                                            .usuarioActual
+                                            .value!
+                                            .nombre
+                                            .substring(0, 1)
+                                            .toUpperCase()
+                                        : "U",
+                                    style: TextStyle(color: Colors.white),
+                                  )
+                                  : null,
+                        ),
+                      ),
                     ),
                     IconButton(
                       icon: Icon(Icons.logout),
                       onPressed: () => controller.cerrarSesionCompleta(),
                       tooltip: 'Cerrar sesión',
+                    ),
+                    //Agrega boton de recarga
+                    IconButton(
+                      icon: Icon(Icons.refresh),
+                      onPressed: () => EventosControlador.solicitarRecarga(),
+                      tooltip: 'Recargar datos',
                     ),
                   ],
                 ),
@@ -60,12 +85,20 @@ class HomePage extends StatelessWidget {
 
               // Título de la sección principal
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-                child: Obx(() => Text(
-                  controller.pestanaSeleccionada.value == 0 ? 'Principal' : 
-                  controller.pestanaSeleccionada.value == 1 ? 'Objetivos' : 'Perfil',
-                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                )),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16.0,
+                  vertical: 8.0,
+                ),
+                child: Obx(
+                  () => Text(
+                    controller.pestanaSeleccionada.value == 0
+                        ? 'Principal'
+                        : controller.pestanaSeleccionada.value == 1
+                        ? 'Objetivos'
+                        : 'Perfil',
+                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                  ),
+                ),
               ),
 
               // Pestañas personalizadas
@@ -92,10 +125,8 @@ class HomePage extends StatelessWidget {
       }),
 
       // Botón flotante para agregar tarea o lista
-     
+
       // Barra de navegación inferior
-      
-     
     );
   }
 
@@ -109,24 +140,32 @@ class HomePage extends StatelessWidget {
           Expanded(
             child: GestureDetector(
               onTap: () => controller.cambiarPestana(0),
-              child: Obx(() => Container(
-                decoration: BoxDecoration(
-                  color: controller.pestanaSeleccionada.value == 0 
-                      ? Colors.green[400] : Colors.grey[200],
-                  borderRadius: BorderRadius.circular(30),
-                ),
-                padding: EdgeInsets.symmetric(vertical: 8),
-                alignment: Alignment.center,
-                child: Text(
-                  "Tareas",
-                  style: TextStyle(
-                    color: controller.pestanaSeleccionada.value == 0 
-                        ? Colors.white : Colors.grey[600],
-                    fontWeight: controller.pestanaSeleccionada.value == 0 
-                        ? FontWeight.bold : FontWeight.normal,
+              child: Obx(
+                () => Container(
+                  decoration: BoxDecoration(
+                    color:
+                        controller.pestanaSeleccionada.value == 0
+                            ? Colors.green[400]
+                            : Colors.grey[200],
+                    borderRadius: BorderRadius.circular(30),
+                  ),
+                  padding: EdgeInsets.symmetric(vertical: 8),
+                  alignment: Alignment.center,
+                  child: Text(
+                    "Tareas",
+                    style: TextStyle(
+                      color:
+                          controller.pestanaSeleccionada.value == 0
+                              ? Colors.white
+                              : Colors.grey[600],
+                      fontWeight:
+                          controller.pestanaSeleccionada.value == 0
+                              ? FontWeight.bold
+                              : FontWeight.normal,
+                    ),
                   ),
                 ),
-              )),
+              ),
             ),
           ),
           SizedBox(width: 8),
@@ -134,24 +173,32 @@ class HomePage extends StatelessWidget {
           Expanded(
             child: GestureDetector(
               onTap: () => controller.cambiarPestana(1),
-              child: Obx(() => Container(
-                decoration: BoxDecoration(
-                  color: controller.pestanaSeleccionada.value == 1 
-                      ? Colors.green[400] : Colors.grey[200],
-                  borderRadius: BorderRadius.circular(30),
-                ),
-                padding: EdgeInsets.symmetric(vertical: 8),
-                alignment: Alignment.center,
-                child: Text(
-                  "Objetivos",
-                  style: TextStyle(
-                    color: controller.pestanaSeleccionada.value == 1 
-                        ? Colors.white : Colors.grey[600],
-                    fontWeight: controller.pestanaSeleccionada.value == 1 
-                        ? FontWeight.bold : FontWeight.normal,
+              child: Obx(
+                () => Container(
+                  decoration: BoxDecoration(
+                    color:
+                        controller.pestanaSeleccionada.value == 1
+                            ? Colors.green[400]
+                            : Colors.grey[200],
+                    borderRadius: BorderRadius.circular(30),
+                  ),
+                  padding: EdgeInsets.symmetric(vertical: 8),
+                  alignment: Alignment.center,
+                  child: Text(
+                    "Objetivos",
+                    style: TextStyle(
+                      color:
+                          controller.pestanaSeleccionada.value == 1
+                              ? Colors.white
+                              : Colors.grey[600],
+                      fontWeight:
+                          controller.pestanaSeleccionada.value == 1
+                              ? FontWeight.bold
+                              : FontWeight.normal,
+                    ),
                   ),
                 ),
-              )),
+              ),
             ),
           ),
           SizedBox(width: 8),
@@ -159,30 +206,36 @@ class HomePage extends StatelessWidget {
           Expanded(
             child: GestureDetector(
               onTap: () => controller.cambiarPestana(2),
-              child: Obx(() => Container(
-                decoration: BoxDecoration(
-                  color: controller.pestanaSeleccionada.value == 2 
-                      ? Colors.green[400] : Colors.grey[200],
-                  borderRadius: BorderRadius.circular(30),
-                ),
-                padding: EdgeInsets.symmetric(vertical: 8),
-                alignment: Alignment.center,
-                child: Text(
-                  "Perfil",
-                  style: TextStyle(
-                    color: controller.pestanaSeleccionada.value == 2 
-                        ? Colors.white : Colors.grey[600],
-                    fontWeight: controller.pestanaSeleccionada.value == 2 
-                        ? FontWeight.bold : FontWeight.normal,
+              child: Obx(
+                () => Container(
+                  decoration: BoxDecoration(
+                    color:
+                        controller.pestanaSeleccionada.value == 2
+                            ? Colors.green[400]
+                            : Colors.grey[200],
+                    borderRadius: BorderRadius.circular(30),
+                  ),
+                  padding: EdgeInsets.symmetric(vertical: 8),
+                  alignment: Alignment.center,
+                  child: Text(
+                    "Perfil",
+                    style: TextStyle(
+                      color:
+                          controller.pestanaSeleccionada.value == 2
+                              ? Colors.white
+                              : Colors.grey[600],
+                      fontWeight:
+                          controller.pestanaSeleccionada.value == 2
+                              ? FontWeight.bold
+                              : FontWeight.normal,
+                    ),
                   ),
                 ),
-              )),
+              ),
             ),
           ),
         ],
       ),
     );
   }
-
-
 }

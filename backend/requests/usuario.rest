@@ -24,7 +24,17 @@ Content-Type: application/x-www-form-urlencoded
 usuario=sapo&contrasenia=3972re
 
 #############################################
-GET {{baseUrl}}tareas/hoy/7
+GET {{baseUrl}}tareas/85/etiquetas
+
+
+#############################################
+#############################################
+POST {{baseUrl}}tareaetiqueta/85/18
+Content-Type: application/json
+
+{}
+
+
 
 #############################################
 GET {{baseUrl}}adjuntos/1/url
@@ -57,7 +67,7 @@ Content-Type: application/json
 
 #############################################
 
-DELETE {{baseUrl}}listas/eliminar/6
+DELETE {{baseUrl}}tareas/eliminar/71
 
 
 #############################################
@@ -95,3 +105,10 @@ Content-Type: image/jpeg
 GET {{baseUrl}}tareas/7
 
 #############################################
+
+PUT {{baseUrl}}tareas/estado/80
+Content-Type: application/json
+
+{
+  "estado_id": 1
+}

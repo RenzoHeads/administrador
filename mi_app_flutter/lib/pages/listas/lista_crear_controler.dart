@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:intl/intl.dart';
 import '../home/home_controler.dart';
 import '../../models/lista.dart';
 import '../../services/lista_service.dart';
@@ -13,11 +12,12 @@ class CrearListaController extends GetxController {
   // TextEditingControllers
   final nombreController = TextEditingController();
   final descripcionController = TextEditingController();
-  
+
   // Variables observables
   RxBool cargando = false.obs;
-  Rx<Color> colorSeleccionado = Color(0xFF4CAF50).obs; // Color verde por defecto
-  
+  Rx<Color> colorSeleccionado =
+      Color(0xFF4CAF50).obs; // Color verde por defecto
+
   // Lista de colores predefinidos
   final List<Color> coloresPredefinidos = [
     Color(0xFF4CAF50), // Verde
@@ -87,15 +87,11 @@ class CrearListaController extends GetxController {
         throw Exception('No se pudo crear la lista');
       }
 
-      final Lista listaCreada = resultado.body;
-      
-         // Recargar datos
-    _homeController.recargarDatos();
-    
-    Get.back(result: true); 
-    
-    
-      
+      // Recargar datos
+      _homeController.recargarDatos();
+
+      Get.back(result: true);
+
       Get.snackbar(
         'Éxito',
         'Lista creada correctamente',
