@@ -129,6 +129,24 @@ put '/tareas/estado/:id' do
     [404, { error: 'Tarea no encontrada' }.to_json]
   end
 end
+ 
+
+get '/tareas/buscar/:usuario_id/:titulo' do
+  begin
+    tareas = Tarea.where(usuario_id: params[:usuario_id])
+                  .where(Sequel.ilike(:titulo, "%#{params[:titulo]}%"))
+                  .all
+
+    if tareas.empty?
+      halt 404, { mensaje: 'Sin tareas' }.to_json
+    else
+      content_type :json
+      tareas.to_json
+    end
+  rescue => e
+    halt 500, { error: "Error en el servidor: #{e.message}" }.to_json
+  end
+end
 
 
 

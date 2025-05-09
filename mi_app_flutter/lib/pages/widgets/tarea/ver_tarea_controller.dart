@@ -1,3 +1,4 @@
+// =============== ver_tarea_controller.dart (modificado) ===============
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
@@ -14,7 +15,8 @@ import '../../../services/prioridad_service.dart';
 import '../../../services/estado_service.dart';
 import '../../../services/categoria_service.dart';
 import '../../../services/lista_service.dart';
-import '../../../pages/widgets/eventos_controlador.dart';
+import '../../widgets/lista/lista_item_controller.dart';
+import '../../home/home_controler.dart';
 
 class VerTareaController extends GetxController {
   final TareaService _tareaService = TareaService();
@@ -23,95 +25,104 @@ class VerTareaController extends GetxController {
   final EtiquetaService _etiquetaService = EtiquetaService();
   final PrioridadService _prioridadService = PrioridadService();
   final EstadoService _estadoService = EstadoService();
+  final HomeController _homeController = Get.find<HomeController>();
 
-  // Variables observables
-  RxBool cargando = false.obs;
-  RxBool editando = false.obs;
-  Rx<Tarea?> tarea = Rx<Tarea?>(null);
-  Rx<Categoria?> categoria = Rx<Categoria?>(null);
-  Rx<Lista?> lista = Rx<Lista?>(null);
-  RxList<Etiqueta> etiquetas = <Etiqueta>[].obs;
-  Rx<Prioridad?> priori = Rx<Prioridad?>(null);
-  Rx<Estado?> estado = Rx<Estado?>(null);
+  // Variables observables (ya no son RxBool, son valores simples)
+  bool cargando = false;
+  bool editando = false;
+  Tarea? tarea;
+  Categoria? categoria;
+  Lista? lista;
+  List<Etiqueta> etiquetas = [];
+  Prioridad? priori;
+  Estado? estado;
   Color colorPrioridad = Colors.transparent; // Color de prioridad
   Color colorEstado = Colors.transparent; // Color de estado
+  bool datosYaCargados =
+      false; // Nueva bandera para controlar si ya se cargaron datos
+
+  // ID de tarea para identificar este controlador específico
+  final int tareaId;
 
   // Formateo de fechas
-  RxString fechaCreacion = ''.obs;
-  RxString horaCreacion = ''.obs;
-  RxString fechaVencimiento = ''.obs;
-  RxString horaVencimiento = ''.obs;
+  String fechaCreacion = '';
+  String horaCreacion = '';
+  String fechaVencimiento = '';
+  String horaVencimiento = '';
 
-  // Constructor con ID de tarea opcional
-  VerTareaController({int? tareaId}) {
-    if (tareaId != null) {
+  // Constructor con ID de tarea obligatorio
+  VerTareaController({required this.tareaId});
+
+  @override
+  void onInit() {
+    super.onInit();
+    // Solo cargamos los datos si no se han cargado previamente
+    if (!datosYaCargados) {
       cargarTarea(tareaId);
     }
   }
 
   @override
-  void onInit() {
-    super.onInit();
-    // Verificar si argumentos es un entero directamente o un mapa con clave tareaId
-    if (Get.arguments != null) {
-      if (Get.arguments is int) {
-        cargarTarea(Get.arguments);
-      } else if (Get.arguments is Map && Get.arguments['tareaId'] != null) {
-        cargarTarea(Get.arguments['tareaId']);
-      }
-    }
+  void onClose() {
+    // Limpiar recursos si es necesario
+    super.onClose();
   }
 
-  //metodo para recargar la tarea
-  void recargarTarea(tareaId) {
-    cargarTarea(tareaId);
+  // Método estático para actualizar una tarea específica
+  static void actualizarTarea(int tareaId) {
+    // Buscar el controlador por su tag único
+    final String tag = 'tarea_$tareaId';
+    if (Get.isRegistered<VerTareaController>(tag: tag)) {
+      final controller = Get.find<VerTareaController>(tag: tag);
+      controller.cargarTarea(tareaId);
+    }
   }
 
   // Cargar todos los datos de la tarea
   Future<void> cargarTarea(int tareaId) async {
     try {
-      cargando.value = true;
+      if (cargando) return; // Evitar múltiples cargas simultáneas
+
+      cargando = true;
+      // Notificar solo a los widgets con ID específico
+      update(['tarea_$tareaId']);
 
       // 1. Cargar datos básicos de la tarea
       final resultadoTarea = await _tareaService.obtenerTareaPorId(tareaId);
 
+      print('Resultado tarea: ${resultadoTarea.body}');
       if (resultadoTarea.status == 200 && resultadoTarea.body is Tarea) {
-        tarea.value = resultadoTarea.body;
-        print('Tarea cargada: ${tarea.value}');
+        tarea = resultadoTarea.body;
+        print('Tarea cargada: $tarea');
 
         // Formatear fechas
-        if (tarea.value != null) {
+        if (tarea != null) {
           // Formatear fecha de creación
-          final DateTime fechaCreacionDt = tarea.value!.fechaCreacion.toLocal();
-          fechaCreacion.value = DateFormat(
-            'dd/MM/yyyy',
-          ).format(fechaCreacionDt);
-          horaCreacion.value = DateFormat('HH:mm').format(fechaCreacionDt);
+          final DateTime fechaCreacionDt = tarea!.fechaCreacion.toLocal();
+          fechaCreacion = DateFormat('dd/MM/yyyy').format(fechaCreacionDt);
+          horaCreacion = DateFormat('HH:mm').format(fechaCreacionDt);
 
           // Formatear fecha de vencimiento
-          final DateTime fechaVencimientoDt =
-              tarea.value!.fechaVencimiento.toLocal();
-          fechaVencimiento.value = DateFormat(
+          final DateTime fechaVencimientoDt = tarea!.fechaVencimiento.toLocal();
+          fechaVencimiento = DateFormat(
             'dd/MM/yyyy',
           ).format(fechaVencimientoDt);
-          horaVencimiento.value = DateFormat(
-            'HH:mm',
-          ).format(fechaVencimientoDt);
+          horaVencimiento = DateFormat('HH:mm').format(fechaVencimientoDt);
 
           // Cargar la categoría de la tarea
           final resultadoCategoria = await _categoriaService
-              .obtenerCategoriaPorTareaId(tarea.value!.categoriaId);
+              .obtenerCategoriaPorTareaId(tarea!.categoriaId);
           if (resultadoCategoria.status == 200 &&
               resultadoCategoria.body is Categoria) {
-            categoria.value = resultadoCategoria.body;
+            categoria = resultadoCategoria.body;
           }
 
           // Cargar la lista de la tarea
           final resultadoLista = await _listaService.obtenerListaPorId(
-            tarea.value!.listaId!,
+            tarea!.listaId!,
           );
           if (resultadoLista.status == 200 && resultadoLista.body is Lista) {
-            lista.value = resultadoLista.body;
+            lista = resultadoLista.body;
           }
         }
 
@@ -125,10 +136,10 @@ class VerTareaController extends GetxController {
             resultadoEtiquetas.body is List) {
           // Directamente asignar la lista de Etiqueta objetos
           List<Etiqueta> listaEtiquetas = resultadoEtiquetas.body;
-          etiquetas.assignAll(listaEtiquetas);
+          etiquetas = listaEtiquetas;
         } else if (resultadoEtiquetas.status == 404) {
           // Lista vacía en caso de no encontrar etiquetas
-          etiquetas.clear();
+          etiquetas = [];
         } else {
           Get.snackbar(
             'Error',
@@ -141,19 +152,22 @@ class VerTareaController extends GetxController {
 
         //Cargar la prioridad de la tarea
         final resultadoPrioridad = await _prioridadService
-            .obtenerPrioridadPorId(tarea.value!.prioridadId);
+            .obtenerPrioridadPorId(tarea!.prioridadId);
         if (resultadoPrioridad.status == 200 &&
             resultadoPrioridad.body is Prioridad) {
-          priori.value = resultadoPrioridad.body;
+          priori = resultadoPrioridad.body;
         }
 
         // Cargar el estado de la tarea
         final resultadoEstado = await _estadoService.obtenerEstadoPorId(
-          tarea.value!.estadoId,
+          tarea!.estadoId,
         );
         if (resultadoEstado.status == 200 && resultadoEstado.body is Estado) {
-          estado.value = resultadoEstado.body;
+          estado = resultadoEstado.body;
         }
+
+        // Marcar que los datos ya se cargaron para evitar recargas innecesarias
+        datosYaCargados = true;
       } else {
         Get.snackbar(
           'Error',
@@ -177,7 +191,35 @@ class VerTareaController extends GetxController {
       // Volver atrás en caso de error
       Get.back();
     } finally {
-      cargando.value = false;
+      cargando = false;
+      // Notificar específicamente a los widgets con este ID
+      update(['tarea_$tareaId']);
+    }
+  }
+
+  // Método para actualizar selectivamente solo ciertos datos
+  Future<void> actualizarDatos() async {
+    if (tarea?.id == null) return;
+
+    try {
+      // Actualizar estado de la tarea sin recargar todo
+      final resultadoTarea = await _tareaService.obtenerTareaPorId(tarea!.id!);
+      if (resultadoTarea.status == 200 && resultadoTarea.body is Tarea) {
+        tarea = resultadoTarea.body;
+
+        // Actualizar el estado si cambió
+        final resultadoEstado = await _estadoService.obtenerEstadoPorId(
+          tarea!.estadoId,
+        );
+        if (resultadoEstado.status == 200 && resultadoEstado.body is Estado) {
+          estado = resultadoEstado.body;
+        }
+
+        // Notificar específicamente a los widgets con este ID
+        update(['tarea_$tareaId']);
+      }
+    } catch (e) {
+      print('Error al actualizar datos: $e');
     }
   }
 
@@ -187,16 +229,21 @@ class VerTareaController extends GetxController {
     bool confirmar =
         await Get.dialog(
           AlertDialog(
-            title: Text('Confirmar eliminación'),
-            content: Text('¿Estás seguro de que deseas eliminar esta tarea?'),
+            title: const Text('Confirmar eliminación'),
+            content: const Text(
+              '¿Estás seguro de que deseas eliminar esta tarea?',
+            ),
             actions: [
               TextButton(
                 onPressed: () => Get.back(result: false),
-                child: Text('Cancelar'),
+                child: const Text('Cancelar'),
               ),
               TextButton(
                 onPressed: () => Get.back(result: true),
-                child: Text('Eliminar', style: TextStyle(color: Colors.red)),
+                child: const Text(
+                  'Eliminar',
+                  style: TextStyle(color: Colors.red),
+                ),
               ),
             ],
           ),
@@ -211,10 +258,13 @@ class VerTareaController extends GetxController {
 
       // Si la eliminación fue exitosa
       if (resultado.status == 200) {
-        // Notificar a otros controladores para que recarguen sus datos
-        EventosControlador.solicitarRecarga();
-        // O si prefieres notificar a un controlador específico:
-        // EventosControlador.solicitarRecargaControlador('home_controller');
+        // Notificar a los widgets que escuchan este controller
+        if (tarea?.listaId != null) {
+          ListaItemController.actualizarLista(tarea!.listaId!);
+        }
+        _homeController.cargarTareasDelUsuario();
+        // Usar el nuevo método estático para acceder al controlador
+        // y eliminar la tarea visualmente
 
         return true;
       }
@@ -255,9 +305,10 @@ class VerTareaController extends GetxController {
       case 1:
         return Colors.blue; // Pendiente
       case 2:
-        return Colors.orange; // En progreso
+        return Colors
+            .green; // En progreso (cambiado a verde para indicar completa)
       case 3:
-        return Colors.green; // Completada
+        return Colors.orange; // Completada (cambiado a naranja)
       default:
         return Colors.transparent; // Sin color definido
     }
@@ -265,7 +316,7 @@ class VerTareaController extends GetxController {
 
   // Método para cambiar el estado de la tarea
   Future<bool> cambiarEstadoTarea(int nuevoEstadoId) async {
-    if (tarea.value?.id == null) {
+    if (tarea?.id == null) {
       Get.snackbar(
         'Error',
         'No hay una tarea cargada para actualizar',
@@ -277,7 +328,7 @@ class VerTareaController extends GetxController {
     }
 
     try {
-      final tareaId = tarea.value?.id;
+      final tareaId = tarea?.id;
       if (tareaId == null) {
         Get.snackbar(
           'Error',
@@ -300,11 +351,19 @@ class VerTareaController extends GetxController {
           nuevoEstadoId,
         );
         if (resultadoEstado.status == 200 && resultadoEstado.body is Estado) {
-          estado.value = resultadoEstado.body;
+          estado = resultadoEstado.body;
 
           // Actualizar el modelo de tarea
-          tarea.value = tarea.value!.copyWith(estadoId: nuevoEstadoId);
+          tarea = tarea!.copyWith(estadoId: nuevoEstadoId);
 
+          // Notificar específicamente a los widgets con este ID
+          update(['tarea_$tareaId']);
+
+          // Si se desea actualizar la lista asociada
+          if (tarea?.listaId != null) {
+            ListaItemController.actualizarLista(tarea!.listaId!);
+          }
+          // Recargar tareas del usuario
           return true;
         }
       }
@@ -330,11 +389,10 @@ class VerTareaController extends GetxController {
     }
   }
 
-  //Metodo para obtener el nombre de estado
   // Método para obtener el nombre del estado
   String obtenerNombreEstado() {
-    if (estado.value != null) {
-      return estado.value!.nombre;
+    if (estado != null) {
+      return estado!.nombre;
     }
     return 'Desconocido';
   }

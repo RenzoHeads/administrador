@@ -2,28 +2,65 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'lista_crear_controler.dart';
 
-class CrearListaPage extends StatelessWidget {
+class CrearListaModal extends StatelessWidget {
   final CrearListaController controller = Get.put(CrearListaController());
+  final VoidCallback? onBack;
+  final VoidCallback? onClose;
+
+  CrearListaModal({Key? key, this.onBack, this.onClose}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('Crear nueva lista'),
-        backgroundColor: Colors.green,
-        foregroundColor: Colors.white,
-        elevation: 0,
-      ),
-      body: Obx(() {
-        if (controller.cargando.value) {
-          return Center(child: CircularProgressIndicator());
-        }
+    // Para ajustar el padding cuando el teclado está visible
+    final bottomInset = MediaQuery.of(context).viewInsets.bottom;
 
-        return SingleChildScrollView(
-          padding: EdgeInsets.all(16),
-          child: Column(
+    return Container(
+      padding: EdgeInsets.only(bottom: bottomInset),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      child: Padding(
+        padding: EdgeInsets.symmetric(horizontal: 16),
+        child: Obx(() {
+          if (controller.cargando.value) {
+            return Container(
+              height: 300,
+              child: Center(child: CircularProgressIndicator()),
+            );
+          }
+
+          return Column(
+            mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // Header con título y botones
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                child: Row(
+                  children: [
+                    if (onBack != null)
+                      IconButton(
+                        icon: Icon(Icons.arrow_back),
+                        onPressed: onBack,
+                      ),
+                    Text(
+                      'Crear nueva lista',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    Spacer(),
+                    IconButton(
+                      icon: Icon(Icons.close),
+                      onPressed: onClose ?? () => Navigator.pop(context),
+                    ),
+                  ],
+                ),
+              ),
+
+              // Formulario
               // Nombre
               _buildSectionTitle('Nombre'),
               TextField(
@@ -33,10 +70,13 @@ class CrearListaPage extends StatelessWidget {
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  contentPadding: EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
                 ),
               ),
-              SizedBox(height: 20),
+              SizedBox(height: 16),
 
               // Descripción
               _buildSectionTitle('Descripción'),
@@ -47,41 +87,51 @@ class CrearListaPage extends StatelessWidget {
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  contentPadding: EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
                 ),
                 maxLines: 3,
               ),
-              SizedBox(height: 20),
+              SizedBox(height: 16),
 
               // Selección de color
               _buildSectionTitle('Color'),
               _buildColorSelector(),
-              SizedBox(height: 30),
+              SizedBox(height: 20),
 
               // Botón Crear Lista
               SizedBox(
                 width: double.infinity,
                 height: 50,
-                child: Obx(() => ElevatedButton(
-                  onPressed: () => controller.crearLista(),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: controller.colorSeleccionado.value,
-                    foregroundColor: _contrastColor(controller.colorSeleccionado.value),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
+                child: Obx(
+                  () => ElevatedButton(
+                    onPressed: () => controller.crearLista(),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: controller.colorSeleccionado.value,
+                      foregroundColor: _contrastColor(
+                        controller.colorSeleccionado.value,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                    child: Text(
+                      'CREAR LISTA',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
-                  child: Text(
-                    'CREAR LISTA',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                  ),
-                )),
+                ),
               ),
-              SizedBox(height: 30),
+              SizedBox(height: 20),
             ],
-          ),
-        );
-      }),
+          );
+        }),
+      ),
     );
   }
 
@@ -122,22 +172,21 @@ class CrearListaPage extends StatelessWidget {
                     color: isSelected ? Colors.white : Colors.transparent,
                     width: 3,
                   ),
-                  boxShadow: isSelected
-                      ? [
-                          BoxShadow(
-                            color: Colors.black26,
-                            blurRadius: 5,
-                            spreadRadius: 2,
-                          ),
-                        ]
-                      : [],
+                  boxShadow:
+                      isSelected
+                          ? [
+                            BoxShadow(
+                              color: Colors.black26,
+                              blurRadius: 5,
+                              spreadRadius: 2,
+                            ),
+                          ]
+                          : [],
                 ),
-                child: isSelected
-                    ? Icon(
-                        Icons.check,
-                        color: _contrastColor(color),
-                      )
-                    : null,
+                child:
+                    isSelected
+                        ? Icon(Icons.check, color: _contrastColor(color))
+                        : null,
               ),
             );
           });

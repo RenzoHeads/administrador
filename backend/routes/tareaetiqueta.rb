@@ -15,10 +15,6 @@ post '/tareaetiqueta/:tarea_id/:etiqueta_id' do
 end
 
 
-
-
-
-
 ### Obtener etiquetas de una tarea
 get '/tareaetiqueta/:tarea_id' do
     tareaetiquetas = TareaEtiqueta.where(tarea_id: params[:tarea_id]).all
@@ -41,12 +37,15 @@ put '/tareaetiqueta/actualizar/:id' do
 end
 
 ## Eliminar una etiqueta de una tarea
-delete '/tareaetiqueta/eliminar/:id' do
-    tareaetiqueta = TareaEtiqueta.first(id: params[:id])
+delete '/tareaetiqueta/:tarea_id/:etiqueta_id' do
+    tareaetiqueta = TareaEtiqueta.first(
+        tarea_id: params[:tarea_id],
+        etiqueta_id: params[:etiqueta_id]
+    )
     if tareaetiqueta
         tareaetiqueta.destroy
-        [200, 'Etiqueta eliminada']
+        [200, 'Etiqueta eliminada de la tarea']
     else
-        [404, 'Etiqueta no encontrada']
+        [404, 'Relación entre tarea y etiqueta no encontrada']
     end
 end

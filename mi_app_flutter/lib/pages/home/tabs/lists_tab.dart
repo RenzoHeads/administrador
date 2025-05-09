@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../home_controler.dart';
-import '../../../models/lista.dart';
-import '../../widgets/lista/lista_item.dart';
+
+import '../../widgets/ListLista/List_lista_item.dart';
 
 class ListsTab extends StatelessWidget {
   final HomeController controller = Get.find<HomeController>();
@@ -10,6 +10,11 @@ class ListsTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Obx(() {
+      // Verificamos que tengamos el controlador y datos
+      if (controller.cargando.value) {
+        return Center(child: CircularProgressIndicator());
+      }
+
       if (controller.listas.isEmpty) {
         return Center(
           child: Column(
@@ -25,25 +30,8 @@ class ListsTab extends StatelessWidget {
           ),
         );
       } else {
-        return ListView.builder(
-          padding: EdgeInsets.symmetric(horizontal: 16),
-          itemCount: controller.listas.length,
-          itemBuilder: (context, index) {
-            final lista = controller.listas[index];
-            return _buildListaItem(lista);
-          },
-        );
+        return ListasGridWidget(listas: controller.listas, onTap: (index) {});
       }
     });
-  }
-
-  Widget _buildListaItem(Lista lista) {
-    return ListaItemWidget(
-      listaId: lista.id!, // Asegúrate de que el ID no sea nulo
-      onTap: () {
-        // Aquí puedes navegar a la pantalla de detalle de la lista
-        Get.toNamed('/lista/detalle/${lista.id}');
-      },
-    );
   }
 }

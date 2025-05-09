@@ -9,7 +9,6 @@ import 'pages/reset/reset_page.dart';
 import 'manejador_token.dart';
 import 'pages/reset/reset_token.dart';
 import 'pages/tareas/crear_tarea_page.dart';
-import 'pages/listas/lista_crear.dart';
 import 'pages/home/home_page.dart';
 import 'pages/calendario/calendario_page.dart';
 import 'pages/buscador/buscador_page.dart';
@@ -71,15 +70,7 @@ class _MyAppState extends State<MyApp> {
         GetPage(name: '/reset', page: () => ResetPage()),
         GetPage(name: '/reset-with-token', page: () => ResetTokenPage()),
         GetPage(name: '/crear-tarea', page: () => CrearTareaPage()),
-        GetPage(name: '/crear-lista', page: () => CrearListaPage()),
-        //editar tarea con tarea id de paraametro
-        GetPage(
-          name: '/editar-tarea/:id',
-          page:
-              () => EditarTareaPage(
-                tareaId: int.tryParse(Get.parameters['id'] ?? '') ?? 0,
-              ),
-        ),
+        GetPage(name: '/editar-tarea', page: () => EditarTareaPage()),
       ],
     );
   }

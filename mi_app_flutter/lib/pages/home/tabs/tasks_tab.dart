@@ -2,15 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import '../home_controler.dart';
-import '../../../models/tarea.dart';
-import '../../widgets/tarea/tarea_item.dart';
+import '../../../pages/widgets/ListTarea/List_tarea_item.dart';
 
 class TasksTab extends StatelessWidget {
   final HomeController controller = Get.find<HomeController>();
 
   @override
   Widget build(BuildContext context) {
-    // Quitar el Expanded exterior
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -27,9 +25,11 @@ class TasksTab extends StatelessWidget {
         // Lista de tareas del día con Debug
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: Text(
-            'Tareas encontradas: ${controller.tareasDeHoy.length}',
-            style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+          child: Obx(
+            () => Text(
+              'Tareas encontradas: ${controller.tareasDeHoy.length}',
+              style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+            ),
           ),
         ),
         SizedBox(height: 8),
@@ -56,14 +56,13 @@ class TasksTab extends StatelessWidget {
                 ),
               );
             } else {
-              // Imprime las tareas de hoy para debug
-              print('Tareas encontradas: ${controller.tareasDeHoy.length}');
-              return ListView.builder(
-                padding: EdgeInsets.symmetric(horizontal: 16),
-                itemCount: controller.tareasDeHoy.length,
-                itemBuilder: (context, index) {
-                  final tarea = controller.tareasDeHoy[index];
-                  return _buildTareaItem(tarea);
+              // Extraer los IDs de las tareas
+
+              return TareasGridWidget(
+                tareas: controller.tareasDeHoy,
+                onTap: (id) {
+                  // Aquí puedes manejar la acción al tocar una tarea
+                  print('Tarea seleccionada: $id');
                 },
               );
             }
@@ -71,10 +70,5 @@ class TasksTab extends StatelessWidget {
         ),
       ],
     );
-  }
-
-  // Widget para mostrar cada tarea
-  Widget _buildTareaItem(Tarea tarea) {
-    return TareaItem(tareaId: tarea.id!);
   }
 }

@@ -18,7 +18,6 @@ class ListaItemController extends GetxController {
   void onInit() {
     super.onInit();
     cargarDatos();
-    // No hay suscripciones a eventos aquí, se manejan en el widget
   }
 
   Future<void> cargarDatos() async {
@@ -50,6 +49,18 @@ class ListaItemController extends GetxController {
       print('Error al cargar datos del ítem de lista $listaId: $e');
     } finally {
       isLoading.value = false;
+
+      // Notifica explícitamente a los widgets que escuchan por este ID específico
+      update(['lista_$listaId']);
+    }
+  }
+
+  // Método estático para actualizar una lista específica desde cualquier lugar
+  static void actualizarLista(int? listaId) {
+    final String tag = 'lista_$listaId';
+    if (Get.isRegistered<ListaItemController>(tag: tag)) {
+      final controller = Get.find<ListaItemController>(tag: tag);
+      controller.cargarDatos();
     }
   }
 }

@@ -14,11 +14,55 @@ class TareaDetalleModal extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Obx(() {
-      if (controller.cargando.value) {
+    // Usamos GetBuilder en lugar de Obx para escuchar actualizaciones específicas
+    return GetBuilder<VerTareaController>(
+      init: controller,
+      tag: 'tarea_${controller.tareaId}',
+      id: 'tarea_${controller.tareaId}',
+      builder: (controller) {
+        if (controller.cargando) {
+          return Container(
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.of(context).size.height * 0.3,
+            ),
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(20),
+                topRight: Radius.circular(20),
+              ),
+            ),
+            child: const Center(
+              child: Padding(
+                padding: EdgeInsets.all(20.0),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    CircularProgressIndicator(),
+                    SizedBox(height: 16),
+                    Text(
+                      'Cargando...',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        }
+
+        if (controller.tarea == null) {
+          return const SizedBox.shrink();
+        }
+
+        final tarea = controller.tarea!;
+
         return Container(
           constraints: BoxConstraints(
-            maxHeight: MediaQuery.of(context).size.height * 0.3,
+            maxHeight: MediaQuery.of(context).size.height * 0.9,
           ),
           decoration: const BoxDecoration(
             color: Colors.white,
@@ -27,78 +71,43 @@ class TareaDetalleModal extends StatelessWidget {
               topRight: Radius.circular(20),
             ),
           ),
-          child: const Center(
-            child: Padding(
-              padding: EdgeInsets.all(20.0),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  CircularProgressIndicator(),
-                  SizedBox(height: 16),
-                  Text(
-                    'Cargando...',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Flexible(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(20.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _Header(tarea: tarea, controller: controller),
+                      const SizedBox(height: 24),
+                      _Descripcion(tarea: tarea),
+                      const SizedBox(height: 24),
+                      _FechaHorario(controller: controller),
+                      const SizedBox(height: 24),
+                      _Categoria(controller: controller),
+                      const SizedBox(height: 24),
+                      _Etiquetas(controller: controller),
+                    ],
                   ),
-                ],
-              ),
-            ),
-          ),
-        );
-      }
-
-      if (controller.tarea.value == null) {
-        return const SizedBox.shrink();
-      }
-
-      final tarea = controller.tarea.value!;
-
-      return Container(
-        constraints: BoxConstraints(
-          maxHeight: MediaQuery.of(context).size.height * 0.9,
-        ),
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.only(
-            topLeft: Radius.circular(20),
-            topRight: Radius.circular(20),
-          ),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Flexible(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(20.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _Header(tarea: tarea, controller: controller),
-                    const SizedBox(height: 24),
-                    _Descripcion(tarea: tarea),
-                    const SizedBox(height: 24),
-                    _FechaHorario(controller: controller),
-                    const SizedBox(height: 24),
-                    _Categoria(controller: controller),
-                    const SizedBox(height: 24),
-                    _Etiquetas(controller: controller),
-                  ],
                 ),
               ),
-            ),
-            _BotonesAccion(
-              tarea: tarea,
-              controller: controller,
-              onEliminacionExitosa: onEliminacionExitosa,
-            ),
-          ],
-        ),
-      );
-    });
+              _BotonesAccion(
+                tarea: tarea,
+                controller: controller,
+                onEliminacionExitosa: onEliminacionExitosa,
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 }
 
 class _Header extends StatelessWidget {
-  final tarea;
+  final dynamic tarea;
   final VerTareaController controller;
 
   const _Header({required this.tarea, required this.controller});
@@ -121,7 +130,7 @@ class _Header extends StatelessWidget {
             borderRadius: BorderRadius.circular(16),
           ),
           child: Text(
-            controller.priori.value?.nombre ?? 'Sin prioridad',
+            controller.priori?.nombre ?? 'Sin prioridad',
             style: TextStyle(
               fontSize: 12,
               color: colorPrioridad,
@@ -135,7 +144,7 @@ class _Header extends StatelessWidget {
 }
 
 class _Descripcion extends StatelessWidget {
-  final tarea;
+  final dynamic tarea;
 
   const _Descripcion({required this.tarea});
 
@@ -174,7 +183,7 @@ class _FechaHorario extends StatelessWidget {
               ),
               const SizedBox(height: 8),
               Text(
-                "${controller.fechaCreacion.value}",
+                "${controller.fechaCreacion}",
                 style: const TextStyle(fontSize: 14),
               ),
               Text(
@@ -194,7 +203,7 @@ class _FechaHorario extends StatelessWidget {
               ),
               const SizedBox(height: 8),
               Text(
-                "${controller.horaCreacion.value} - ${controller.horaVencimiento.value}",
+                "${controller.horaCreacion} - ${controller.horaVencimiento}",
                 style: const TextStyle(fontSize: 14),
               ),
             ],
@@ -227,7 +236,7 @@ class _Categoria extends StatelessWidget {
             borderRadius: BorderRadius.circular(16),
           ),
           child: Text(
-            controller.categoria.value?.nombre ?? 'Trabajo',
+            controller.categoria?.nombre ?? 'Trabajo',
             style: const TextStyle(
               fontSize: 12,
               color: Colors.blue,
@@ -295,7 +304,7 @@ class _Etiquetas extends StatelessWidget {
 }
 
 class _BotonesAccion extends StatelessWidget {
-  final tarea;
+  final dynamic tarea;
   final VerTareaController controller;
   final Function? onEliminacionExitosa;
 
@@ -322,7 +331,16 @@ class _BotonesAccion extends StatelessWidget {
                   style: TextStyle(color: Colors.black54),
                 ),
                 onPressed: () {
-                  Get.toNamed('/editar-tarea/${tarea.id}');
+                  Get.toNamed(
+                    '/editar-tarea',
+                    arguments: {
+                      'tarea': tarea,
+                      'etiquetas': controller.etiquetas,
+                      'categoria': controller.categoria,
+                      'lista': controller.lista,
+                      'prioridad': controller.priori,
+                    },
+                  );
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.grey[200],
@@ -345,7 +363,7 @@ class _BotonesAccion extends StatelessWidget {
                 ),
                 onPressed: () async {
                   try {
-                    controller.tarea.value = tarea;
+                    // Ya no es necesario asignar controller.tarea.value
                     final eliminacionExitosa = await controller.eliminarTarea(
                       tarea.id!,
                     );

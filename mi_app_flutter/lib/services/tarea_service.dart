@@ -6,7 +6,8 @@ import '../../configs/contants.dart';
 import '../../models/service_http_response.dart';
 
 class TareaService {
-  // Obtener tareas por usuario
+  // Parte del servicio de tareas que necesita ser corregido
+
   Future<ServiceHttpResponse> obtenerTareasPorUsuario(int usuarioId) async {
     final url = Uri.parse('${BASE_URL}tareas/$usuarioId');
     final responseWrapper = ServiceHttpResponse();
@@ -21,14 +22,53 @@ class TareaService {
           final tareas = jsonData.map((json) => Tarea.fromMap(json)).toList();
           responseWrapper.body = tareas;
         } catch (e) {
+          responseWrapper.status = 500;
           responseWrapper.body = 'Error al procesar el JSON: $e';
         }
+      } else if (response.statusCode == 404) {
+        responseWrapper.status = 404;
+        responseWrapper.body = []; // Lista vacía cuando no hay tareas
       } else {
         responseWrapper.body = 'Error: ${response.body}';
       }
     } catch (e) {
       responseWrapper.status = 500;
       responseWrapper.body = 'Ocurrió un error al obtener tareas: $e';
+    }
+
+    return responseWrapper;
+  }
+
+  // Buscar tareas por título para un usuario
+  Future<ServiceHttpResponse> buscarTareasPorTitulo(
+    int usuarioId,
+    String titulo,
+  ) async {
+    final url = Uri.parse('${BASE_URL}tareas/buscar/$usuarioId/$titulo');
+    final responseWrapper = ServiceHttpResponse();
+
+    try {
+      final response = await http.get(url);
+      responseWrapper.status = response.statusCode;
+
+      if (response.statusCode == 200) {
+        try {
+          final List<dynamic> jsonData = json.decode(response.body);
+          final tareas = jsonData.map((json) => Tarea.fromMap(json)).toList();
+          responseWrapper.body = tareas;
+        } catch (e) {
+          responseWrapper.status = 500;
+          responseWrapper.body = 'Error al procesar el JSON: $e';
+        }
+      } else if (response.statusCode == 404) {
+        responseWrapper.status = 404;
+        responseWrapper.body = []; // Lista vacía cuando no hay tareas
+      } else {
+        responseWrapper.body = 'Error: ${response.body}';
+      }
+    } catch (e) {
+      responseWrapper.status = 500;
+      responseWrapper.body = 'Ocurrió un error al buscar tareas por título: $e';
     }
 
     return responseWrapper;
@@ -376,17 +416,22 @@ class TareaService {
     return responseWrapper;
   }
 
-  // Eliminar etiqueta de tarea
-  Future<ServiceHttpResponse> eliminarTareaEtiqueta(int id) async {
-    final url = Uri.parse('${BASE_URL}tareaetiqueta/eliminar/$id');
+  Future<ServiceHttpResponse> eliminarTareaEtiqueta(
+    int tareaId,
+    int etiquetaId,
+  ) async {
+    final url = Uri.parse('${BASE_URL}tareaetiqueta/$tareaId/$etiquetaId');
     final responseWrapper = ServiceHttpResponse();
 
     try {
       final response = await http.delete(url);
+
       responseWrapper.status = response.statusCode;
 
       if (response.statusCode == 200) {
-        responseWrapper.body = 'Etiqueta eliminada con éxito';
+        responseWrapper.body = 'Etiqueta eliminada de la tarea';
+      } else if (response.statusCode == 404) {
+        responseWrapper.body = 'Relación entre tarea y etiqueta no encontrada';
       } else {
         responseWrapper.body = 'Error: ${response.body}';
       }

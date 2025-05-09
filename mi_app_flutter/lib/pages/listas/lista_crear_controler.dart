@@ -1,17 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../home/home_controler.dart';
 import '../../models/lista.dart';
 import '../../services/lista_service.dart';
 import '../../services/controladorsesion.dart';
+import '../../pages/home/home_controler.dart';
 
 class CrearListaController extends GetxController {
   final ListaService _listaService = ListaService();
   final ControladorSesionUsuario _sesion = Get.find<ControladorSesionUsuario>();
-  final HomeController _homeController = Get.find<HomeController>();
   // TextEditingControllers
   final nombreController = TextEditingController();
   final descripcionController = TextEditingController();
+  final HomeController _homeController = Get.find<HomeController>();
 
   // Variables observables
   RxBool cargando = false.obs;
@@ -88,8 +88,7 @@ class CrearListaController extends GetxController {
       }
 
       // Recargar datos
-      _homeController.recargarDatos();
-
+      _homeController.cargarListasDelUsuario();
       Get.back(result: true);
 
       Get.snackbar(

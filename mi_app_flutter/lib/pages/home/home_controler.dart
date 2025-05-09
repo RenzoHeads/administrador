@@ -137,16 +137,6 @@ class HomeController extends GetxController {
             }
           }
 
-          // Ordenar tareas por hora (de menor a mayor)
-          tareasTemporales.sort((a, b) {
-            if (a.fechaCreacion == false || b.fechaCreacion == false) {
-              return 0;
-            }
-            final horaA = a.fechaCreacion.hour;
-            final horaB = b.fechaCreacion.hour;
-            return horaA.compareTo(horaB);
-          });
-
           // Actualizar la lista observable con las tareas ordenadas
           tareasDeHoy.clear();
           tareasDeHoy.addAll(tareasTemporales);

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import 'lista_item_controller.dart';
-import '../../../pages/widgets/eventos_controlador.dart';
 
 class ListaItemWidget extends StatelessWidget {
   final int listaId;
@@ -26,120 +25,117 @@ class ListaItemWidget extends StatelessWidget {
       tag: 'lista_$listaId',
     );
 
-    // Suscripción a eventos directamente en el widget, igual que en TareaItem
-    ever(EventosControlador.recargarDatosEvento, (_) {
-      // Recargar esta lista cuando se solicite una recarga global
-      controller.cargarDatos();
-    });
+    // Ya no usamos ever para suscribirnos a eventos
+    // El controlador ahora se actualizará mediante llamadas directas
 
-    // Suscripción a eventos específicos para las listas
-    ever(EventosControlador.recargarControladorEvento, (mapa) {
-      if (mapa.containsKey('listas') && mapa['listas'] == true) {
-        // Recargar esta lista cuando se solicite una recarga específica de listas
-        controller.cargarDatos();
-      }
-    });
+    return GetBuilder<ListaItemController>(
+      init: controller,
+      tag: 'lista_$listaId',
+      id: 'lista_$listaId', // ID único para actualización específica
+      builder: (controller) {
+        if (controller.isLoading.value) {
+          return Container(
+            height: 83,
+            margin: const EdgeInsets.only(bottom: 16),
+            decoration: BoxDecoration(
+              color: Colors.grey[200],
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: const Center(child: CircularProgressIndicator()),
+          );
+        }
 
-    return Obx(() {
-      if (controller.isLoading.value) {
+        if (controller.lista.value == null) {
+          return const SizedBox.shrink();
+        }
+
+        final lista = controller.lista.value!;
+        final color = _getColorFromHex(lista.color);
+
         return Container(
-          height: 83,
+          height: 83, // Altura fija
           margin: const EdgeInsets.only(bottom: 16),
-          decoration: BoxDecoration(
-            color: Colors.grey[200],
+          child: Material(
+            color: backgroundColor ?? color.withOpacity(0.1),
             borderRadius: BorderRadius.circular(16),
-          ),
-          child: const Center(child: CircularProgressIndicator()),
-        );
-      }
-
-      if (controller.lista.value == null) {
-        return const SizedBox.shrink();
-      }
-
-      final lista = controller.lista.value!;
-      final color = _getColorFromHex(lista.color);
-
-      return Container(
-        height: 83, // Altura fija
-        margin: const EdgeInsets.only(bottom: 16),
-        child: Material(
-          color: backgroundColor ?? color.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(16),
-          child: InkWell(
-            onTap: onTap,
-            borderRadius: BorderRadius.circular(16),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 16),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          lista.nombre,
-                          style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black87,
+            child: InkWell(
+              onTap: onTap,
+              borderRadius: BorderRadius.circular(16),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 16,
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            lista.nombre,
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black87,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        const SizedBox(height: 4),
-                        Row(
-                          children: [
-                            Flexible(
-                              flex: 4,
-                              child: Text(
-                                '${controller.totalTareas.value} tareas',
-                                style: const TextStyle(
-                                  fontSize: 14,
-                                  color: Colors.black54,
+                          const SizedBox(height: 4),
+                          Row(
+                            children: [
+                              Flexible(
+                                flex: 4,
+                                child: Text(
+                                  '${controller.totalTareas.value} tareas',
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    color: Colors.black54,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
                                 ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
                               ),
-                            ),
-                            const SizedBox(width: 6),
-                            Container(
-                              width: 1,
-                              height: 14,
-                              color: Colors.black26,
-                            ),
-                            const SizedBox(width: 6),
-                            Flexible(
-                              flex: 6,
-                              child: Text(
-                                '${controller.tareasPendientes.value} pendientes',
-                                style: const TextStyle(
-                                  fontSize: 14,
-                                  color: Colors.black54,
+                              const SizedBox(width: 6),
+                              Container(
+                                width: 1,
+                                height: 14,
+                                color: Colors.black26,
+                              ),
+                              const SizedBox(width: 6),
+                              Flexible(
+                                flex: 6,
+                                child: Text(
+                                  '${controller.tareasPendientes.value} pendientes',
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    color: Colors.black54,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
                                 ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
                               ),
-                            ),
-                          ],
-                        ),
-                      ],
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                  if (showArrow)
-                    const Icon(
-                      Icons.chevron_right,
-                      size: 28,
-                      color: Colors.black54,
-                    ),
-                ],
+                    if (showArrow)
+                      const Icon(
+                        Icons.chevron_right,
+                        size: 28,
+                        color: Colors.black54,
+                      ),
+                  ],
+                ),
               ),
             ),
           ),
-        ),
-      );
-    });
+        );
+      },
+    );
   }
 
   // Convierte string hexadecimal a Color
