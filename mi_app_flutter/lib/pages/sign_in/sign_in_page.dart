@@ -5,171 +5,220 @@ import 'sign_in_controller.dart';
 class SignInPage extends StatelessWidget {
   final SignInController control = Get.put(SignInController());
 
-  Widget _buildBody(BuildContext context) {
-    final orientation = MediaQuery.of(context).orientation;
-    return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: SingleChildScrollView(
-          child: orientation == Orientation.portrait
-              ? Column(
-                  children: [
-                    _headerVertical(context),
-                    _form(context),
-                  ],
-                )
-              : Row(
-                  children: [
-                    Expanded(child: _headerHorizontal(context)),
-                    Expanded(child: _form(context)),
-                  ],
-                ),
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Container(
+        width: double.infinity,
+        height: double.infinity,
+        color: Colors.white,
+        child: Center(
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24.0),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const _Header(),
+                  const SizedBox(height: 32),
+                  _UserField(controller: control.txtUsuario),
+                  const SizedBox(height: 16),
+                  _PasswordField(controller: control.txtContrasena),
+                  const SizedBox(height: 4),
+                  _ForgotPassword(onTap: () => control.goReset(context)),
+                  const SizedBox(height: 24),
+                  _LoginButton(control: control),
+                  const SizedBox(height: 16),
+                  _RegisterLink(onTap: () => control.goSignUp(context)),
+                ],
+              ),
+            ),
+          ),
         ),
       ),
     );
   }
+}
 
-  Widget _headerVertical(BuildContext context) {
+class _Header extends StatelessWidget {
+  const _Header();
+  @override
+  Widget build(BuildContext context) {
     return Column(
-      children: [
-        const SizedBox(height: 40),
-        Text(
-          'Bienvenido',
-          style: TextStyle(
-            fontSize: 28,
-            fontWeight: FontWeight.bold,
-            color: Theme.of(context).colorScheme.onBackground,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: const [
+        SizedBox(height: 24),
+        Center(
+          child: Text(
+            'Iniciar sesión',
+            style: TextStyle(
+              fontSize: 28,
+              fontWeight: FontWeight.bold,
+              color: Colors.black,
+            ),
           ),
         ),
-        const SizedBox(height: 20),
+        SizedBox(height: 32),
       ],
     );
   }
+}
 
-  Widget _headerHorizontal(BuildContext context) {
+class _UserField extends StatelessWidget {
+  final TextEditingController controller;
+  const _UserField({required this.controller});
+  @override
+  Widget build(BuildContext context) {
     return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'Bienvenido',
-          style: TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-            color: Theme.of(context).colorScheme.onBackground,
-          ),
+        Row(
+          children: const [
+            Text('Usuario', style: TextStyle(fontSize: 14, color: Colors.grey)),
+            Text(' *', style: TextStyle(color: Colors.red, fontSize: 14)),
+          ],
         ),
-      ],
-    );
-  }
-
-  Widget _form(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        TextField(
-          controller: control.txtUsuario,
+        const SizedBox(height: 6),
+        TextFormField(
+          controller: controller,
           decoration: InputDecoration(
-            labelText: 'Usuario',
+            hintText: 'Ingresa tu nombre',
             prefixIcon: const Icon(Icons.person_outline),
+            filled: true,
+            fillColor: const Color(0xFFF6F7F9),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide.none,
             ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: Colors.grey.shade300),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: Theme.of(context).colorScheme.primary, width: 2),
+            contentPadding: const EdgeInsets.symmetric(
+              vertical: 0,
+              horizontal: 12,
             ),
           ),
         ),
-        const SizedBox(height: 20),
-        TextField(
-          controller: control.txtContrasena,
-          obscureText: true,
+      ],
+    );
+  }
+}
+
+class _PasswordField extends StatefulWidget {
+  final TextEditingController controller;
+  const _PasswordField({required this.controller});
+  @override
+  State<_PasswordField> createState() => _PasswordFieldState();
+}
+
+class _PasswordFieldState extends State<_PasswordField> {
+  bool _obscure = true;
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: const [
+            Text(
+              'Contraseña',
+              style: TextStyle(fontSize: 14, color: Colors.grey),
+            ),
+            Text(' *', style: TextStyle(color: Colors.red, fontSize: 14)),
+          ],
+        ),
+        const SizedBox(height: 6),
+        TextFormField(
+          controller: widget.controller,
+          obscureText: _obscure,
           decoration: InputDecoration(
-            labelText: 'Contraseña',
+            hintText: 'Ingresa tu contraseña',
             prefixIcon: const Icon(Icons.lock_outline),
+            suffixIcon: IconButton(
+              icon: Icon(_obscure ? Icons.visibility_off : Icons.visibility),
+              onPressed: () => setState(() => _obscure = !_obscure),
+            ),
+            filled: true,
+            fillColor: const Color(0xFFF6F7F9),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide.none,
             ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: Colors.grey.shade300),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: Theme.of(context).colorScheme.primary, width: 2),
+            contentPadding: const EdgeInsets.symmetric(
+              vertical: 0,
+              horizontal: 12,
             ),
           ),
         ),
-        Obx(() {
-          return (control.mensaje.value == '')
-              ? const SizedBox(height: 16)
-              : Container(
-                  margin: const EdgeInsets.only(top: 16),
-                  padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
-                  decoration: BoxDecoration(
-                    color: control.hayError.value 
-                        ? Colors.red.withOpacity(0.1) 
-                        : Colors.green.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(
-                      color: control.hayError.value 
-                          ? Colors.red.shade300 
-                          : Colors.green.shade300,
-                    ),
-                  ),
-                  child: Text(
-                    control.mensaje.value,
-                    style: TextStyle(
-                      color: control.hayError.value
-                          ? Colors.red.shade700
-                          : Colors.green.shade700,
-                      fontWeight: FontWeight.w500,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                );
-        }),
-        const SizedBox(height: 24),
-        Obx(() {
-          final isLoading = control.mensaje.value != '' && !control.hayError.value;
-          return ElevatedButton(
-            onPressed: isLoading 
-                ? null 
-                : () {
-                    // Basic validation
+      ],
+    );
+  }
+}
+
+class _ForgotPassword extends StatelessWidget {
+  final VoidCallback onTap;
+  const _ForgotPassword({required this.onTap});
+  @override
+  Widget build(BuildContext context) {
+    return Align(
+      alignment: Alignment.centerRight,
+      child: GestureDetector(
+        onTap: onTap,
+        child: const Text(
+          '¿Olvidaste tu contraseña?',
+          style: TextStyle(
+            color: Color(0xFF5DB075),
+            fontWeight: FontWeight.w600,
+            fontSize: 14,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _LoginButton extends StatelessWidget {
+  final SignInController control;
+  const _LoginButton({required this.control});
+  @override
+  Widget build(BuildContext context) {
+    return Obx(() {
+      final isLoading = control.mensaje.value != '' && !control.hayError.value;
+      return SizedBox(
+        width: double.infinity,
+        child: ElevatedButton(
+          onPressed:
+              isLoading
+                  ? null
+                  : () {
                     if (control.txtUsuario.text.trim().isEmpty) {
-                      control.mensaje.value = 'Por favor ingrese su usuario';
+                      control.mensaje.value = 'Por favor ingresa tu usuario';
                       control.hayError.value = true;
-                      Future.delayed(Duration(seconds: 3), () {
+                      Future.delayed(const Duration(seconds: 3), () {
                         control.mensaje.value = '';
                       });
                       return;
                     }
                     if (control.txtContrasena.text.isEmpty) {
-                      control.mensaje.value = 'Por favor ingrese su contraseña';
+                      control.mensaje.value = 'Por favor ingresa tu contraseña';
                       control.hayError.value = true;
-                      Future.delayed(Duration(seconds: 3), () {
+                      Future.delayed(const Duration(seconds: 3), () {
                         control.mensaje.value = '';
                       });
                       return;
                     }
                     control.goHome(context);
                   },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Theme.of(context).colorScheme.primary,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              elevation: 2,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: const Color(0xFF5DB075),
+            foregroundColor: Colors.white,
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
             ),
-            child: isLoading 
-                ? SizedBox(
+            elevation: 0,
+          ),
+          child:
+              isLoading
+                  ? const SizedBox(
                     height: 20,
                     width: 20,
                     child: CircularProgressIndicator(
@@ -177,54 +226,38 @@ class SignInPage extends StatelessWidget {
                       valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                     ),
                   )
-                : const Text('Ingresar', style: TextStyle(fontSize: 16)),
-          );
-        }),
-        const SizedBox(height: 16),
-        OutlinedButton(
-          onPressed: () {
-            control.goSignUp(context);
-          },
-          style: OutlinedButton.styleFrom(
-            foregroundColor: Theme.of(context).colorScheme.primary,
-            side: BorderSide(color: Theme.of(context).colorScheme.primary),
-            padding: const EdgeInsets.symmetric(vertical: 16),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-          ),
-          child: const Text('Crear Cuenta', style: TextStyle(fontSize: 16)),
+                  : const Text('Ingresar', style: TextStyle(fontSize: 16)),
         ),
-        const SizedBox(height: 16),
-        TextButton(
-          onPressed: () {
-            control.goReset(context);
-          },
-          style: TextButton.styleFrom(
-            foregroundColor: Colors.grey.shade700,
-            padding: const EdgeInsets.symmetric(vertical: 12),
-          ),
-          child: const Text('Recuperar Contraseña', style: TextStyle(fontSize: 14)),
-        ),
-      ],
-    );
+      );
+    });
   }
+}
 
+class _RegisterLink extends StatelessWidget {
+  final VoidCallback onTap;
+  const _RegisterLink({required this.onTap});
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Theme.of(context).colorScheme.surface,
-              Theme.of(context).colorScheme.background,
-            ],
+    return Center(
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Text(
+            '¿No tienes una cuenta? ',
+            style: TextStyle(color: Colors.black87, fontSize: 14),
           ),
-        ),
-        child: _buildBody(context),
+          GestureDetector(
+            onTap: onTap,
+            child: const Text(
+              'Regístrate',
+              style: TextStyle(
+                color: Color(0xFF5DB075),
+                fontWeight: FontWeight.w600,
+                fontSize: 14,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

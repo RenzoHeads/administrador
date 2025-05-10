@@ -9,131 +9,223 @@ class SignUpPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       body: SafeArea(
-        child: Obx(() {
-          return SingleChildScrollView(
-            padding: EdgeInsets.all(24),
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
             child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const SizedBox(height: 40),
-                Text(
-                  'Crear Cuenta',
-                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 40),
-                _buildTextField(
-                  controller: control.txtUsuario,
-                  label: 'Nombre de Usuario',
-                  icon: Icons.person_outline,
-                  enabled: control.enabled.value,
-                ),
+                _header(),
+                const SizedBox(height: 32),
+                _userField(control),
                 const SizedBox(height: 16),
-                _buildTextField(
-                  controller: control.txtCorreo,
-                  label: 'Correo Electrónico',
-                  icon: Icons.email_outlined,
-                  enabled: control.enabled.value,
-                ),
+                _emailField(control),
                 const SizedBox(height: 16),
-                _buildTextField(
-                  controller: control.txtContrasenia,
-                  label: 'Contraseña',
-                  icon: Icons.lock_outline,
-                  isPassword: true,
-                  enabled: control.enabled.value,
-                ),
+                _passwordField(control),
                 const SizedBox(height: 16),
-                _buildTextField(
-                  controller: control.txtContrasenia2,
-                  label: 'Confirmar Contraseña',
-                  icon: Icons.lock_outline,
-                  isPassword: true,
-                  enabled: control.enabled.value,
-                ),
+                _confirmPasswordField(control),
                 const SizedBox(height: 24),
-                if (control.mensaje.value.isNotEmpty)
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 16),
-                    child: Text(
-                      control.mensaje.value,
-                      style: TextStyle(color: Colors.red),
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-                _buildButton(
-                  text: 'Crear cuenta',
-                  icon: Icons.person_add,
-                  isPrimary: true,
-                  onPressed: control.enabled.value ? () => control.signUp(context) : null,
-                ),
-                const SizedBox(height: 16),
-                _buildButton(
-                  text: 'Ir a Login',
-                  icon: Icons.login,
-                  onPressed: control.enabled.value ? () => control.goToSignIn(context) : null,
-                ),
-                const SizedBox(height: 16),
-                _buildButton(
-                  text: 'Resetear Contraseña',
-                  icon: Icons.restore,
-                  onPressed: control.enabled.value ? () => control.goToResetPassword(context) : null,
-                ),
+                _registerButton(context, control),
+                const SizedBox(height: 24),
+                _loginLink(context, control),
               ],
             ),
-          );
-        }),
+          ),
+        ),
       ),
     );
   }
+}
 
-  Widget _buildTextField({
-    required TextEditingController controller,
-    required String label,
-    required IconData icon,
-    bool isPassword = false,
-    bool enabled = true,
-  }) {
-    return TextField(
-      controller: controller,
-      obscureText: isPassword,
-      decoration: InputDecoration(
-        labelText: label,
-        prefixIcon: Icon(icon),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
-        enabled: enabled,
+Widget _header() {
+  return const Center(
+    child: Text(
+      'Crear Cuenta',
+      style: TextStyle(
+        fontSize: 28,
+        fontWeight: FontWeight.bold,
+        color: Colors.black,
       ),
-    );
-  }
+    ),
+  );
+}
 
-  Widget _buildButton({
-    required String text,
-    required VoidCallback? onPressed,
-    required IconData icon,
-    bool isPrimary = false,
-  }) {
-    return ElevatedButton(
-      onPressed: onPressed,
-      style: ElevatedButton.styleFrom(
-        backgroundColor: isPrimary ? Colors.red : Colors.redAccent.withOpacity(0.8),
-        foregroundColor: Colors.white,
-        padding: EdgeInsets.symmetric(vertical: 16),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(14),
-        ),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(icon),
-          SizedBox(width: 8),
-          Text(text, style: TextStyle(fontSize: 16)),
+Widget _userField(SignUpController control) {
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Row(
+        children: const [
+          Text('Usuario', style: TextStyle(fontSize: 14, color: Colors.grey)),
+          Text(' *', style: TextStyle(color: Colors.red, fontSize: 14)),
         ],
       ),
+      const SizedBox(height: 6),
+      TextFormField(
+        controller: control.txtUsuario,
+        decoration: InputDecoration(
+          hintText: 'Ingresa tu nombre',
+          prefixIcon: const Icon(Icons.person_outline),
+          filled: true,
+          fillColor: const Color(0xFFF6F7F9),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide.none,
+          ),
+          contentPadding: const EdgeInsets.symmetric(
+            vertical: 0,
+            horizontal: 12,
+          ),
+        ),
+      ),
+    ],
+  );
+}
+
+Widget _emailField(SignUpController control) {
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Row(
+        children: const [
+          Text('Correo', style: TextStyle(fontSize: 14, color: Colors.grey)),
+          Text(' *', style: TextStyle(color: Colors.red, fontSize: 14)),
+        ],
+      ),
+      const SizedBox(height: 6),
+      TextFormField(
+        controller: control.txtCorreo,
+        decoration: InputDecoration(
+          hintText: 'Ingresa tu correo',
+          prefixIcon: const Icon(Icons.email_outlined),
+          filled: true,
+          fillColor: const Color(0xFFF6F7F9),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide.none,
+          ),
+          contentPadding: const EdgeInsets.symmetric(
+            vertical: 0,
+            horizontal: 12,
+          ),
+        ),
+      ),
+    ],
+  );
+}
+
+Widget _passwordField(SignUpController control) {
+  return _PasswordField(
+    controller: control.txtContrasenia,
+    label: 'Contraseña',
+    hint: 'Ingresa tu contraseña',
+  );
+}
+
+Widget _confirmPasswordField(SignUpController control) {
+  return _PasswordField(
+    controller: control.txtContrasenia2,
+    label: 'Confirmar Contraseña',
+    hint: 'Confirma tu contraseña',
+  );
+}
+
+class _PasswordField extends StatefulWidget {
+  final TextEditingController controller;
+  final String label;
+  final String hint;
+  const _PasswordField({
+    required this.controller,
+    required this.label,
+    required this.hint,
+  });
+  @override
+  State<_PasswordField> createState() => _PasswordFieldState();
+}
+
+class _PasswordFieldState extends State<_PasswordField> {
+  bool _obscure = true;
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Text(
+              widget.label,
+              style: const TextStyle(fontSize: 14, color: Colors.grey),
+            ),
+            const Text(' *', style: TextStyle(color: Colors.red, fontSize: 14)),
+          ],
+        ),
+        const SizedBox(height: 6),
+        TextFormField(
+          controller: widget.controller,
+          obscureText: _obscure,
+          decoration: InputDecoration(
+            hintText: widget.hint,
+            prefixIcon: const Icon(Icons.lock_outline),
+            suffixIcon: IconButton(
+              icon: Icon(_obscure ? Icons.visibility_off : Icons.visibility),
+              onPressed: () => setState(() => _obscure = !_obscure),
+            ),
+            filled: true,
+            fillColor: const Color(0xFFF6F7F9),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide.none,
+            ),
+            contentPadding: const EdgeInsets.symmetric(
+              vertical: 0,
+              horizontal: 12,
+            ),
+          ),
+        ),
+      ],
     );
   }
+}
+
+Widget _registerButton(BuildContext context, SignUpController control) {
+  return SizedBox(
+    width: double.infinity,
+    child: ElevatedButton(
+      onPressed: () => control.signUp(context),
+      style: ElevatedButton.styleFrom(
+        backgroundColor: const Color(0xFF5DB075),
+        foregroundColor: Colors.white,
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        elevation: 0,
+      ),
+      child: const Text('Registrarse', style: TextStyle(fontSize: 16)),
+    ),
+  );
+}
+
+Widget _loginLink(BuildContext context, SignUpController control) {
+  return Center(
+    child: Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        const Text(
+          '¿Ya tienes una cuenta? ',
+          style: TextStyle(color: Colors.black87, fontSize: 14),
+        ),
+        GestureDetector(
+          onTap: () => control.goToSignIn(context),
+          child: const Text(
+            'Inicia Sesión',
+            style: TextStyle(
+              color: Color(0xFF5DB075),
+              fontWeight: FontWeight.w600,
+              fontSize: 14,
+            ),
+          ),
+        ),
+      ],
+    ),
+  );
 }
