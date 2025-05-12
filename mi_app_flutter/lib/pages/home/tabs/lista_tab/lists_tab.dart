@@ -1,16 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../home_controler.dart';
-
-import '../../widgets/ListLista/List_lista_item.dart';
+import 'lista_tab_controller.dart';
+import '../../../widgets/ListLista/List_lista_item.dart';
 
 class ListsTab extends StatelessWidget {
-  final HomeController controller = Get.find<HomeController>();
+  final ListaTabController controller = Get.find<ListaTabController>();
 
   @override
   Widget build(BuildContext context) {
     return Obx(() {
-      // Verificamos que tengamos el controlador y datos
       if (controller.cargando.value) {
         return Center(child: CircularProgressIndicator());
       }

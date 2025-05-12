@@ -1,10 +1,11 @@
 import 'package:get/get.dart';
 import '../../../models/lista.dart';
-import '../../../services/lista_service.dart';
+import '../../principal/principal_controller.dart'; // Importamos el PrincipalController
 
 class ListaItemController extends GetxController {
   final int listaId;
-  final ListaService _listasService = ListaService();
+  final PrincipalController _principalController =
+      Get.find<PrincipalController>();
 
   // Variables observables
   final Rx<Lista?> lista = Rx<Lista?>(null);
@@ -24,27 +25,23 @@ class ListaItemController extends GetxController {
     isLoading.value = true;
 
     try {
-      // Carga los datos de la lista
-      final listaResponse = await _listasService.obtenerListaPorId(listaId);
-      if (listaResponse.status == 200 && listaResponse.body is Lista) {
-        lista.value = listaResponse.body;
+      // Obtener la lista desde el PrincipalController
+      final listas = await _principalController.ObtenerListaUsuario();
+      final listaEncontrada = listas.firstWhereOrNull(
+        (lista) => lista.id == listaId,
+      );
+      if (listaEncontrada != null) {
+        lista.value = listaEncontrada;
       }
 
-      // Carga la cantidad de tareas
-      final tareasResponse = await _listasService.obtenerCantidadTareasPorLista(
+      // Obtener la cantidad total de tareas desde el PrincipalController
+      totalTareas.value = await _principalController.ObtenerTareasPorLista(
         listaId,
       );
-      if (tareasResponse.status == 200 && tareasResponse.body is int) {
-        totalTareas.value = tareasResponse.body;
-      }
 
-      // Carga la cantidad de tareas pendientes
-      final tareasPendientesResponse = await _listasService
-          .obtenerCantidadTareasPendientesPorLista(listaId);
-      if (tareasPendientesResponse.status == 200 &&
-          tareasPendientesResponse.body is int) {
-        tareasPendientes.value = tareasPendientesResponse.body;
-      }
+      // Obtener la cantidad de tareas pendientes desde el PrincipalController
+      tareasPendientes.value =
+          await _principalController.ObtenerTareasPendientesPorLista(listaId);
     } catch (e) {
       print('Error al cargar datos del ítem de lista $listaId: $e');
     } finally {
@@ -56,11 +53,13 @@ class ListaItemController extends GetxController {
   }
 
   // Método estático para actualizar una lista específica desde cualquier lugar
-  static void actualizarLista(int? listaId) {
-    final String tag = 'lista_$listaId';
-    if (Get.isRegistered<ListaItemController>(tag: tag)) {
-      final controller = Get.find<ListaItemController>(tag: tag);
-      controller.cargarDatos();
+  static Future<void> actualizarLista(int? listaId) async {
+    if (listaId != null) {
+      final String tag = 'lista_$listaId';
+      if (Get.isRegistered<ListaItemController>(tag: tag)) {
+        final controller = Get.find<ListaItemController>(tag: tag);
+        await controller.cargarDatos();
+      }
     }
   }
 }

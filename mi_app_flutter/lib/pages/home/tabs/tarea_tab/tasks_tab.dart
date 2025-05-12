@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
-import '../home_controler.dart';
-import '../../../pages/widgets/ListTarea/List_tarea_item.dart';
+import 'task_tab_controller.dart';
+import '../../../widgets/ListTarea/List_tarea_item.dart';
 
 class TasksTab extends StatelessWidget {
-  final HomeController controller = Get.find<HomeController>();
+  final TaskTabController controller = Get.find<TaskTabController>();
 
   @override
   Widget build(BuildContext context) {
@@ -56,12 +56,9 @@ class TasksTab extends StatelessWidget {
                 ),
               );
             } else {
-              // Extraer los IDs de las tareas
-
               return TareasGridWidget(
                 tareas: controller.tareasDeHoy,
                 onTap: (id) {
-                  // Aquí puedes manejar la acción al tocar una tarea
                   print('Tarea seleccionada: $id');
                 },
               );

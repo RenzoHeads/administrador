@@ -49,3 +49,14 @@ delete '/tareaetiqueta/:tarea_id/:etiqueta_id' do
         [404, 'Relación entre tarea y etiqueta no encontrada']
     end
 end
+
+
+#Obtener todas las etiquetas de todas las tareas de un usuario
+get '/etiquetas_usuario/:usuario_id' do
+  etiquetas = DB[:tarea_etiquetas]
+              .join(:tareas, id: :tarea_id)
+              .where(usuario_id: params[:usuario_id])
+              .all
+
+  etiquetas.empty? ? [404, 'No hay etiquetas para las tareas del usuario'] : [200, etiquetas.to_json]
+end

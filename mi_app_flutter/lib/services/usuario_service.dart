@@ -17,7 +17,7 @@ class UsuarioService {
         headers: {'Content-Type': 'application/json'},
         body: json.encode({
           'nombre': usuario.nombre,
-          'contrasena': usuario.contrasena
+          'contrasena': usuario.contrasena,
         }),
       );
 
@@ -59,10 +59,7 @@ class UsuarioService {
       final response = await http.put(
         url,
         headers: {'Content-Type': 'application/json'},
-        body: json.encode({
-          'email': email,
-          'contrasena': newPassword
-        }),
+        body: json.encode({'email': email, 'contrasena': newPassword}),
       );
 
       serviceResponse.status = response.statusCode;
@@ -77,7 +74,11 @@ class UsuarioService {
   }
 
   // Método signUp
-  Future<ServiceHttpResponse?> signUp(String nombre, String contrasena, String email) async {
+  Future<ServiceHttpResponse?> signUp(
+    String nombre,
+    String contrasena,
+    String email,
+  ) async {
     ServiceHttpResponse serviceResponse = ServiceHttpResponse();
     final url = Uri.parse('${BASE_URL}usuario/crear-usuario');
 
@@ -85,11 +86,7 @@ class UsuarioService {
       final response = await http.post(
         url,
         headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-        body: {
-          'nombre': nombre,
-          'contrasena': contrasena,
-          'email': email
-        },
+        body: {'nombre': nombre, 'contrasena': contrasena, 'email': email},
       );
 
       serviceResponse.status = response.statusCode;
@@ -135,7 +132,6 @@ class UsuarioService {
           'contrasena': usuario.contrasena,
           'email': usuario.email,
           'imagen_perfil': usuario.foto,
-
         }),
       );
 
@@ -169,7 +165,10 @@ class UsuarioService {
   }
 
   // Actualizar contraseña por email
-  Future<ServiceHttpResponse?> updatePasswordByEmail(String email, String newPassword) async {
+  Future<ServiceHttpResponse?> updatePasswordByEmail(
+    String email,
+    String newPassword,
+  ) async {
     ServiceHttpResponse serviceResponse = ServiceHttpResponse();
     final url = Uri.parse('${BASE_URL}usuario/actualizar-contrasena');
 
@@ -177,10 +176,7 @@ class UsuarioService {
       final response = await http.put(
         url,
         headers: {'Content-Type': 'application/json'},
-        body: json.encode({
-          'email': email,
-          'contrasena': newPassword
-        }),
+        body: json.encode({'email': email, 'contrasena': newPassword}),
       );
 
       serviceResponse.status = response.statusCode;
@@ -211,7 +207,7 @@ class UsuarioService {
 
     return serviceResponse;
   }
-  
+
   // Solicitar recuperación de contraseña
   Future<ServiceHttpResponse?> requestPasswordRecovery(String email) async {
     ServiceHttpResponse serviceResponse = ServiceHttpResponse();
@@ -236,7 +232,10 @@ class UsuarioService {
   }
 
   // Restablecer contraseña con token
-  Future<ServiceHttpResponse?> resetPasswordWithToken(String token, String newPassword) async {
+  Future<ServiceHttpResponse?> resetPasswordWithToken(
+    String token,
+    String newPassword,
+  ) async {
     ServiceHttpResponse serviceResponse = ServiceHttpResponse();
     final url = Uri.parse('${BASE_URL}usuario/restablecer-contrasena');
 
@@ -244,10 +243,7 @@ class UsuarioService {
       final response = await http.put(
         url,
         headers: {'Content-Type': 'application/json'},
-        body: json.encode({
-          'reset_token': token,
-          'contrasena': newPassword
-        }),
+        body: json.encode({'reset_token': token, 'contrasena': newPassword}),
       );
 
       serviceResponse.status = response.statusCode;
@@ -260,16 +256,15 @@ class UsuarioService {
 
     return serviceResponse;
   }
-    // Subir foto de perfil
+
+  // Subir foto de perfil
   Future<ServiceHttpResponse?> uploadProfilePhoto(int id, File photo) async {
     ServiceHttpResponse serviceResponse = ServiceHttpResponse();
     final url = Uri.parse('${BASE_URL}usuario/$id/foto-perfil');
 
     try {
       var request = http.MultipartRequest('POST', url);
-      request.files.add(
-        await http.MultipartFile.fromPath('file', photo.path),
-      );
+      request.files.add(await http.MultipartFile.fromPath('file', photo.path));
 
       var streamedResponse = await request.send();
       var response = await http.Response.fromStream(streamedResponse);
@@ -304,15 +299,18 @@ class UsuarioService {
   }
 
   // Obtener URL de la foto de perfil (con expiración opcional)
-  Future<ServiceHttpResponse?> getProfilePhotoUrl(int id, {int? expiraEn}) async {
+  Future<ServiceHttpResponse?> getProfilePhotoUrl(
+    int id, {
+    int? expiraEn,
+  }) async {
     ServiceHttpResponse serviceResponse = ServiceHttpResponse();
     String baseUrl = '${BASE_URL}usuario/$id/foto-perfil';
-    
+
     // Añadir parámetro de expiración si está presente
     if (expiraEn != null) {
       baseUrl += '?expira_en=$expiraEn';
     }
-    
+
     final url = Uri.parse(baseUrl);
 
     try {
@@ -327,7 +325,6 @@ class UsuarioService {
 
     return serviceResponse;
   }
-
 
   // Actualizar nombre de usuario
   Future<ServiceHttpResponse?> updateUserName(int id, String newName) async {

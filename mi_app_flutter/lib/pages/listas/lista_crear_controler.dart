@@ -4,6 +4,7 @@ import '../../models/lista.dart';
 import '../../services/lista_service.dart';
 import '../../services/controladorsesion.dart';
 import '../../pages/home/home_controler.dart';
+import '../../pages/principal/principal_controller.dart';
 
 class CrearListaController extends GetxController {
   final ListaService _listaService = ListaService();
@@ -12,6 +13,8 @@ class CrearListaController extends GetxController {
   final nombreController = TextEditingController();
   final descripcionController = TextEditingController();
   final HomeController _homeController = Get.find<HomeController>();
+  final PrincipalController _principalController =
+      Get.find<PrincipalController>();
 
   // Variables observables
   RxBool cargando = false.obs;
@@ -86,9 +89,10 @@ class CrearListaController extends GetxController {
       if (resultado.status != 200 || !(resultado.body is Lista)) {
         throw Exception('No se pudo crear la lista');
       }
-
+      await _principalController.AgregarLista(resultado.body as Lista);
       // Recargar datos
-      _homeController.cargarListasDelUsuario();
+      _homeController.recargarTodo();
+
       Get.back(result: true);
 
       Get.snackbar(

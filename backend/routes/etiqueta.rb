@@ -70,3 +70,15 @@ put '/etiquetas/actualizar/:id' do
       [200, etiquetas.to_json]
     end
   end
+
+  ##Obtener etiquetas completas de todas las tareas de un usuario
+  get '/usuarios/:usuario_id/etiquetas' do
+    tareaetiquetas = TareaEtiqueta.where(usuario_id: params[:usuario_id]).all
+    if tareaetiquetas.empty?
+      [404, 'Sin etiquetas']
+    else
+      etiquetas = tareaetiquetas.map { |te| Etiqueta.first(id: te.etiqueta_id) }.compact
+      [200, etiquetas.to_json]
+    end
+  end
+  

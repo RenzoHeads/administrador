@@ -3,81 +3,75 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
-import '../home_controler.dart';
-import '../../../services/controladorsesion.dart';
+import 'profile_tab_controller.dart';
+import '../../../../services/controladorsesion.dart';
 
 class ProfileTab extends StatelessWidget {
-  final HomeController controller = Get.find<HomeController>();
+  final ProfileTabController controller = Get.find<ProfileTabController>();
   final ControladorSesionUsuario sesionControlador =
       Get.find<ControladorSesionUsuario>();
 
   @override
   Widget build(BuildContext context) {
-    return Expanded(
-      child: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Título principal
-              const Text(
-                'Cuenta',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(
-                height: 6,
-              ), // Espacio reducido entre título y opciones
-              // Opciones de cuenta
-              _buildOptionItem(
-                'Cambiar nombre',
-                'Edita tu nombre de usuario',
-                Icons.chevron_right,
-                () => mostrarModalCambiarNombre(context, controller),
-              ),
-              _buildDivider(),
+    return SingleChildScrollView(
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Título principal
+            const Text(
+              'Cuenta',
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 6),
+            // Opciones de cuenta
+            _buildOptionItem(
+              'Cambiar nombre',
+              'Edita tu nombre de usuario',
+              Icons.chevron_right,
+              () => mostrarModalCambiarNombre(context, controller),
+            ),
+            _buildDivider(),
 
-              _buildOptionItem(
-                'Cambiar imagen de perfil',
-                'Sube o modifica tu foto de perfil',
-                Icons.chevron_right,
-                () => mostrarModalCambiarImagen(context, controller),
-              ),
-              _buildDivider(),
+            _buildOptionItem(
+              'Cambiar imagen de perfil',
+              'Sube o modifica tu foto de perfil',
+              Icons.chevron_right,
+              () => mostrarModalCambiarImagen(context, controller),
+            ),
+            _buildDivider(),
 
-              _buildOptionItem(
-                'Cambiar correo electrónico',
-                'Actualiza tu email de contacto',
-                Icons.chevron_right,
-                () => mostrarModalCambiarCorreo(context, controller),
-              ),
+            _buildOptionItem(
+              'Cambiar correo electrónico',
+              'Actualiza tu email de contacto',
+              Icons.chevron_right,
+              () => mostrarModalCambiarCorreo(context, controller),
+            ),
 
-              const SizedBox(height: 20), // Espacio entre secciones
-              // Título de sección Notificaciones
-              const Text(
-                'Notificaciones',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(
-                height: 6,
-              ), // Espacio reducido entre título y opciones
-              // Opciones de notificaciones
-              _buildSwitchItem(
-                'Notificaciones del sistema',
-                'Recibir notificaciones a tu dispositivo',
-                true,
-                (value) {},
-              ),
-              _buildDivider(),
+            const SizedBox(height: 20),
+            // Título de sección Notificaciones
+            const Text(
+              'Notificaciones',
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 6),
+            // Opciones de notificaciones
+            _buildSwitchItem(
+              'Notificaciones del sistema',
+              'Recibir notificaciones a tu dispositivo',
+              true,
+              (value) {},
+            ),
+            _buildDivider(),
 
-              _buildSwitchItem(
-                'Mostrar solo notificaciones urgentes',
-                'Filtra las alertas para tareas de alta prioridad',
-                true,
-                (value) {},
-              ),
-            ],
-          ),
+            _buildSwitchItem(
+              'Mostrar solo notificaciones urgentes',
+              'Filtra las alertas para tareas de alta prioridad',
+              true,
+              (value) {},
+            ),
+          ],
         ),
       ),
     );
@@ -172,7 +166,7 @@ class ProfileTab extends StatelessWidget {
 // Modal para cambiar nombre
 void mostrarModalCambiarNombre(
   BuildContext context,
-  HomeController controller,
+  ProfileTabController controller,
 ) {
   final TextEditingController nombreController = TextEditingController();
   final formKey = GlobalKey<FormState>();
@@ -294,7 +288,7 @@ void mostrarModalCambiarNombre(
 // Modal para cambiar imagen de perfil
 void mostrarModalCambiarImagen(
   BuildContext context,
-  HomeController controller,
+  ProfileTabController controller,
 ) {
   final ImagePicker _picker = ImagePicker();
 
@@ -475,7 +469,7 @@ void mostrarModalCambiarImagen(
 // Modal para cambiar correo electrónico
 void mostrarModalCambiarCorreo(
   BuildContext context,
-  HomeController controller,
+  ProfileTabController controller,
 ) {
   final TextEditingController correoController = TextEditingController();
   final formKey = GlobalKey<FormState>();

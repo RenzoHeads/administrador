@@ -39,6 +39,127 @@ class TareaService {
     return responseWrapper;
   }
 
+  // Crear tarea con etiquetas
+  Future<ServiceHttpResponse> crearTareaConEtiquetas({
+    required int usuarioId,
+    required int listaId,
+    required String titulo,
+    required String descripcion,
+    required String fechaCreacion,
+    required String fechaVencimiento,
+    required int categoriaId,
+    required int estadoId,
+    required int prioridadId,
+    required List<int> etiquetas,
+  }) async {
+    final url = Uri.parse('${BASE_URL}tareas/crear_con_etiquetas');
+    final responseWrapper = ServiceHttpResponse();
+
+    try {
+      Map<String, dynamic> payload = {
+        'usuario_id': usuarioId,
+        'lista_id': listaId,
+        'titulo': titulo,
+        'descripcion': descripcion,
+        'fecha_creacion': fechaCreacion,
+        'fecha_vencimiento': fechaVencimiento,
+        'categoria_id': categoriaId,
+        'estado_id': estadoId,
+        'prioridad_id': prioridadId,
+        'etiquetas': etiquetas,
+      };
+
+      print('Payload: ${jsonEncode(payload)}');
+
+      final headers = {
+        'Content-Type': 'application/json; charset=UTF-8',
+        'Accept': 'application/json',
+      };
+
+      final response = await http.post(
+        url,
+        headers: headers,
+        body: jsonEncode(payload),
+      );
+
+      responseWrapper.status = response.statusCode;
+      if (response.statusCode == 200) {
+        if (response.body.isNotEmpty) {
+          final jsonData = json.decode(response.body);
+          responseWrapper.body = Tarea.fromMap(jsonData);
+        } else {
+          responseWrapper.body =
+              'Tarea creada con éxito, pero sin datos retornados';
+        }
+      } else {
+        responseWrapper.body = 'Error: ${response.body}';
+      }
+    } catch (e, stackTrace) {
+      print('Error en crearTareaConEtiquetas: $e');
+      print('Stack trace: $stackTrace');
+      responseWrapper.status = 500;
+      responseWrapper.body =
+          'Ocurrió un error al crear la tarea con etiquetas: $e';
+    }
+
+    return responseWrapper;
+  }
+
+  // Actualizar tarea con etiquetas
+  Future<ServiceHttpResponse> actualizarTareaConEtiquetas({
+    required int id,
+    required int usuarioId,
+    required int listaId,
+    required String titulo,
+    required String descripcion,
+    required String fechaCreacion,
+    required String fechaVencimiento,
+    required int categoriaId,
+    required int estadoId,
+    required int prioridadId,
+    required List<int> etiquetas,
+  }) async {
+    final url = Uri.parse('${BASE_URL}tareas/$id/actualizar_con_etiquetas');
+    final responseWrapper = ServiceHttpResponse();
+
+    try {
+      Map<String, dynamic> payload = {
+        'usuario_id': usuarioId,
+        'lista_id': listaId,
+        'titulo': titulo,
+        'descripcion': descripcion,
+        'fecha_creacion': fechaCreacion,
+        'fecha_vencimiento': fechaVencimiento,
+        'categoria_id': categoriaId,
+        'estado_id': estadoId,
+        'prioridad_id': prioridadId,
+        'etiquetas': etiquetas,
+      };
+
+      final response = await http.put(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode(payload),
+      );
+
+      responseWrapper.status = response.statusCode;
+      if (response.statusCode == 200) {
+        final jsonData = json.decode(response.body);
+        responseWrapper.body = Tarea.fromMap(jsonData);
+      } else if (response.statusCode == 404) {
+        responseWrapper.body = 'Tarea no encontrada';
+      } else {
+        responseWrapper.body = 'Error: ${response.body}';
+      }
+    } catch (e) {
+      responseWrapper.status = 500;
+      responseWrapper.body =
+          'Ocurrió un error al actualizar la tarea con etiquetas: $e';
+    }
+
+    return responseWrapper;
+  }
+
   // Buscar tareas por título para un usuario
   Future<ServiceHttpResponse> buscarTareasPorTitulo(
     int usuarioId,

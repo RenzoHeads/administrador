@@ -1,13 +1,13 @@
-import '../../services/tarea_service.dart';
 import '../../models/tarea.dart';
 import '../../services/controladorsesion.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'dart:async';
+import '../principal/principal_controller.dart';
 
 class BuscadorController extends GetxController {
-  final TareaService _tareaService = TareaService();
   final ControladorSesionUsuario _sesion = Get.find<ControladorSesionUsuario>();
+  final PrincipalController _principal = Get.find<PrincipalController>();
 
   // Variables reactivas
   final tareasEncontradas = <Tarea>[].obs;
@@ -24,8 +24,11 @@ class BuscadorController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    cargarTodasLasTareas();
-
+    ever(_principal.datosCargados, (bool cargados) {
+      if (cargados) {
+        cargarTodasLasTareas();
+      }
+    });
     // Listener para el texto de búsqueda con debounce
     ever(textoBusqueda, (_) {
       _debounceTimer?.cancel();
@@ -44,74 +47,10 @@ class BuscadorController extends GetxController {
 
   // Cargar todas las tareas del usuario
   Future<void> cargarTodasLasTareas() async {
-    cargando.value = true;
-    try {
-      final usuario = _sesion.usuarioActual.value;
-      if (usuario?.id == null) {
-        Get.snackbar(
-          'Error',
-          'No hay usuario activo',
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.red[400],
-          colorText: Colors.white,
-        );
-        cargando.value = false;
-        return;
-      }
-
-      final response = await _tareaService.obtenerTareasPorUsuario(
-        usuario!.id!,
-      );
-
-      print('Response: ${response.status}');
-
-      if (response.status == 200 && response.body is List) {
-        // Asignar las tareas obtenidas
-        todasLasTareas.assignAll(response.body as List<Tarea>);
-        tareasEncontradas.assignAll(todasLasTareas);
-      } else if (response.status == 404) {
-        // No hay tareas - configurar listas vacías
-        todasLasTareas.clear();
-        tareasEncontradas.clear();
-        Get.snackbar(
-          'Información',
-          'No tienes tareas registradas aún',
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.blue[300],
-          colorText: Colors.white,
-          duration: const Duration(seconds: 2),
-        );
-      } else if (response.body is String &&
-          (response.body as String).contains('Error al procesar el JSON')) {
-        // Error específico de procesamiento JSON
-        Get.snackbar(
-          'Error',
-          'Problema al procesar los datos recibidos',
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.red[400],
-          colorText: Colors.white,
-        );
-      } else {
-        // Otro tipo de error
-        Get.snackbar(
-          'Error',
-          'No se pudieron cargar las tareas',
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.orange,
-          colorText: Colors.white,
-        );
-      }
-    } catch (e) {
-      Get.snackbar(
-        'Error',
-        'Error al cargar tareas: $e',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red[400],
-        colorText: Colors.white,
-      );
-    } finally {
-      cargando.value = false;
-    }
+    final tareas = _principal.tareas;
+    todasLasTareas.assignAll(tareas);
+    // Actualizar también tareasEncontradas cuando se cargan los datos
+    tareasEncontradas.assignAll(todasLasTareas);
   }
 
   // Buscar tareas por título
@@ -136,58 +75,11 @@ class BuscadorController extends GetxController {
         cargando.value = false;
         return;
       }
-
-      final response = await _tareaService.buscarTareasPorTitulo(
-        usuario!.id!,
-        texto,
-      );
-
-      if (response.status == 200 && response.body is List) {
-        // Asignar las tareas encontradas
-        final tareas = response.body as List<Tarea>;
-        tareasEncontradas.assignAll(tareas);
-
-        if (tareas.isEmpty) {
-          Get.snackbar(
-            'Información',
-            'No se encontraron tareas con ese título',
-            snackPosition: SnackPosition.BOTTOM,
-            backgroundColor: Colors.blue[300],
-            colorText: Colors.white,
-            duration: const Duration(seconds: 2),
-          );
-        }
-      } else if (response.status == 404) {
-        // Si no se encontraron tareas, mostrar lista vacía
-        tareasEncontradas.clear();
-        Get.snackbar(
-          'Información',
-          'No se encontraron tareas con ese título',
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.blue[300],
-          colorText: Colors.white,
-          duration: const Duration(seconds: 2),
-        );
-      } else if (response.body is String &&
-          (response.body as String).contains('Error al procesar el JSON')) {
-        // Error específico de procesamiento JSON
-        Get.snackbar(
-          'Error',
-          'Problema al procesar los datos recibidos',
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.red[400],
-          colorText: Colors.white,
-        );
-      } else {
-        // Otro tipo de error pero mantener datos existentes
-        Get.snackbar(
-          'Error',
-          'No se pudieron obtener resultados de búsqueda',
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.orange,
-          colorText: Colors.white,
-        );
-      }
+      final buscando =
+          _principal.tareas
+              .where((tarea) => tarea.titulo.contains(texto))
+              .toList();
+      tareasEncontradas.assignAll(buscando);
     } catch (e) {
       Get.snackbar(
         'Error',
@@ -213,4 +105,9 @@ class BuscadorController extends GetxController {
 
   // Getter para lista de tareas encontrada (versión no reactiva)
   List<Tarea> get ListaTareasBusqueda => tareasEncontradas.toList();
+
+  //Recargar tareas
+  Future<void> recargarBuscador() async {
+    await cargarTodasLasTareas();
+  }
 }

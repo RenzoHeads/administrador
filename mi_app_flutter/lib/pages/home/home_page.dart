@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'home_controler.dart';
 import '../../services/controladorsesion.dart';
-import 'tabs/tasks_tab.dart';
-import 'tabs/lists_tab.dart';
-import 'tabs/profile_tab.dart';
+import 'tabs/tarea_tab/tasks_tab.dart';
+import 'tabs/lista_tab/lists_tab.dart';
+import 'tabs/perfil_tab/profile_tab.dart';
 import '../../pages/widgets/eventos_controlador.dart';
 
 class HomePage extends StatelessWidget {
@@ -35,38 +35,63 @@ class HomePage extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     GestureDetector(
-                      onTap: () => controller.navegarAPerfil(),
                       child: Obx(
-                        () => CircleAvatar(
-                          backgroundImage:
-                              controller.profilePhotoUrl.value.isNotEmpty
-                                  ? NetworkImage(
-                                    controller.profilePhotoUrl.value,
-                                  )
-                                  : null,
-                          backgroundColor: Colors.grey[300],
-                          radius: 20,
-                          child:
-                              controller.profilePhotoUrl.value.isEmpty
-                                  ? Text(
-                                    sesionControlador
+                        () => Stack(
+                          children: [
+                            CircleAvatar(
+                              backgroundImage:
+                                  controller.profilePhotoUrl.value.isNotEmpty
+                                      ? NetworkImage(
+                                        controller.profilePhotoUrl.value,
+                                      )
+                                      : null,
+                              backgroundColor: Colors.grey[300],
+                              radius: 20,
+                              child:
+                                  controller.profilePhotoUrl.value.isEmpty
+                                      ? Text(
+                                        sesionControlador
+                                                    .usuarioActual
+                                                    .value
+                                                    ?.nombre
+                                                    .isNotEmpty ==
+                                                true
+                                            ? sesionControlador
                                                 .usuarioActual
-                                                .value
-                                                ?.nombre
-                                                .isNotEmpty ==
-                                            true
-                                        ? sesionControlador
-                                            .usuarioActual
-                                            .value!
-                                            .nombre
-                                            .substring(0, 1)
-                                            .toUpperCase()
-                                        : "U",
-                                    style: TextStyle(color: Colors.white),
-                                  )
-                                  : null,
+                                                .value!
+                                                .nombre
+                                                .substring(0, 1)
+                                                .toUpperCase()
+                                            : "U",
+                                        style: TextStyle(color: Colors.white),
+                                      )
+                                      : null,
+                            ),
+                            if (controller.loadingPhoto.value)
+                              Positioned.fill(
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    color: Colors.black.withOpacity(0.3),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: Center(
+                                    child: CircularProgressIndicator(
+                                      valueColor: AlwaysStoppedAnimation<Color>(
+                                        Colors.white,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                          ],
                         ),
                       ),
+                      onTap: () {
+                        print(
+                          'URL actual de la foto: ${controller.profilePhotoUrl.value}',
+                        ); // Debug
+                        controller.recargarFotoPerfil();
+                      },
                     ),
                     IconButton(
                       icon: Icon(Icons.logout),

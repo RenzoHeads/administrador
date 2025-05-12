@@ -1,6 +1,3 @@
-import 'dart:convert';
-
-// Clase Tarea con manejo de valores nulos
 class Tarea {
   int? id;
   final String titulo;
@@ -26,9 +23,49 @@ class Tarea {
     this.listaId,
   });
 
-  @override
-  String toString() {
-    return 'Tarea{id: $id, titulo: $titulo, fechaCreacion: $fechaCreacion, fechaVencimiento: $fechaVencimiento, prioridadId: $prioridadId, estadoId: $estadoId, listaId: $listaId}';
+  factory Tarea.fromMap(Map<String, dynamic> map) {
+    return Tarea(
+      id: parseNullableInt(map['id']),
+      titulo: map['titulo']?.toString() ?? 'Sin título',
+      descripcion: map['descripcion']?.toString() ?? '',
+      fechaCreacion: parseDateTime(map['fecha_creacion']),
+      fechaVencimiento: parseDateTime(map['fecha_vencimiento']),
+      prioridadId: parseInt(map['prioridad_id'], defaultValue: 1),
+      estadoId: parseInt(map['estado_id'], defaultValue: 1),
+      categoriaId: parseInt(map['categoria_id'], defaultValue: 1),
+      usuarioId: parseInt(map['usuario_id'], defaultValue: 0),
+      listaId: parseNullableInt(map['lista_id']),
+    );
+  }
+
+  static int parseInt(dynamic value, {int defaultValue = 0}) {
+    if (value == null) return defaultValue;
+    if (value is int) return value;
+    try {
+      return int.parse(value.toString());
+    } catch (_) {
+      return defaultValue;
+    }
+  }
+
+  static int? parseNullableInt(dynamic value) {
+    if (value == null) return null;
+    if (value is int) return value;
+    try {
+      return int.parse(value.toString());
+    } catch (_) {
+      return null;
+    }
+  }
+
+  static DateTime parseDateTime(dynamic value) {
+    if (value == null) return DateTime.now();
+    if (value is DateTime) return value;
+    try {
+      return DateTime.parse(value.toString());
+    } catch (_) {
+      return DateTime.now();
+    }
   }
 
   Map<String, dynamic> toJson() {
@@ -46,65 +83,6 @@ class Tarea {
     };
   }
 
-  factory Tarea.fromMap(Map<String, dynamic> map) {
-    // Manejo seguro de los campos que podrían ser nulos
-    return Tarea(
-      id: map['id'] is int ? map['id'] : null,
-      titulo: map['titulo'] ?? '',
-      descripcion: map['descripcion'] ?? '',
-      fechaCreacion: _parseDateTime(
-        map['fecha_creacion'] ?? map['fechaCreacion'],
-      ),
-      fechaVencimiento: _parseDateTime(
-        map['fecha_vencimiento'] ?? map['fechaVencimiento'],
-      ),
-      prioridadId: _parseInt(map['prioridad_id'] ?? map['prioridadId']),
-      estadoId: _parseInt(map['estado_id'] ?? map['estadoId']),
-      categoriaId: _parseInt(map['categoria_id'] ?? map['categoriaId']),
-      usuarioId: _parseInt(map['usuario_id'] ?? map['usuarioId']),
-      listaId:
-          map['lista_id'] is int
-              ? map['lista_id']
-              : (map['listaId'] is int ? map['listaId'] : null),
-    );
-  }
-
-  // Ayudante para parseo seguro de DateTime
-  static DateTime _parseDateTime(dynamic value) {
-    if (value == null) return DateTime.now();
-    if (value is DateTime) return value;
-    try {
-      return DateTime.parse(value.toString());
-    } catch (e) {
-      return DateTime.now();
-    }
-  }
-
-  // Ayudante para parseo seguro de int
-  static int _parseInt(dynamic value) {
-    if (value == null) return 0;
-    if (value is int) return value;
-    try {
-      return int.parse(value.toString());
-    } catch (e) {
-      return 0;
-    }
-  }
-
-  factory Tarea.fromJson(dynamic source) {
-    if (source is String) {
-      // Si es una cadena JSON, primero la convertimos a Map
-      return Tarea.fromMap(json.decode(source));
-    } else if (source is Map<String, dynamic>) {
-      // Si ya es un Map, lo usamos directamente
-      return Tarea.fromMap(source);
-    } else {
-      // Si no es ni String ni Map, lanzamos una excepción
-      throw FormatException('Formato de datos no válido para Tarea: $source');
-    }
-  }
-
-  // Método para crear una copia con algunas propiedades modificadas
   Tarea copyWith({
     int? id,
     String? titulo,

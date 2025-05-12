@@ -8,21 +8,22 @@ import '../../../models/etiqueta.dart';
 import '../../../models/tarea.dart';
 import '../../../services/tarea_service.dart';
 import '../../../services/etiqueta_service.dart';
-import '../../../services/categoria_service.dart';
-import '../../../services/lista_service.dart';
 import '../../../services/controladorsesion.dart';
-import '../../../services/prioridad_service.dart';
+
 import '../../widgets/tarea/ver_tarea_controller.dart';
 import '../../home/home_controler.dart';
+import '../../principal/principal_controller.dart';
+import '../../widgets/lista/lista_item_controller.dart';
+import '../../buscador/buscador_controller_page.dart';
 
 class TaskFormController extends GetxController {
   final TareaService _tareaService = TareaService();
   final EtiquetaService _etiquetaService = EtiquetaService();
-  final CategoriaService _categoriaService = CategoriaService();
-  final ListaService _listaService = ListaService();
-  final PrioridadService _prioridadService = PrioridadService();
   final ControladorSesionUsuario _sesion = Get.find<ControladorSesionUsuario>();
   final HomeController _homeController = Get.find<HomeController>();
+  final PrincipalController _principalController =
+      Get.find<PrincipalController>();
+  final BuscadorController _buscadorController = Get.find<BuscadorController>();
 
   // TextEditingControllers
   final tituloController = TextEditingController();
@@ -178,28 +179,23 @@ class TaskFormController extends GetxController {
       // Cargar listas del usuario
       final usuario = _sesion.usuarioActual.value;
       if (usuario != null && usuario.id != null) {
-        final resultadoListas = await _listaService.obtenerListasPorUsuario(
-          usuario.id!,
-        );
-        if (resultadoListas.status == 200 &&
-            resultadoListas.body is List<Lista>) {
-          listas.assignAll(resultadoListas.body);
-        }
+        final resultadoListas =
+            await _principalController.ObtenerListaUsuario();
+
+        listas.assignAll(resultadoListas);
       }
 
       // Cargar categorías
-      final resultadoCategorias = await _categoriaService.obtenerCategorias();
-      if (resultadoCategorias.status == 200 &&
-          resultadoCategorias.body is List<Categoria>) {
-        categorias.assignAll(resultadoCategorias.body);
-      }
+      final resultadoCategorias =
+          await _principalController.ObtenerCategoriasUsuario();
+
+      categorias.assignAll(resultadoCategorias);
 
       // Cargar prioridades
-      final resultadoPrioridades = await _prioridadService.obtenerPrioridades();
-      if (resultadoPrioridades.status == 200 &&
-          resultadoPrioridades.body is List<Prioridad>) {
-        prioridades.assignAll(resultadoPrioridades.body);
-      }
+      final resultadoPrioridades =
+          await _principalController.ObtenerPrioridadesUsuario();
+
+      prioridades.assignAll(resultadoPrioridades);
     } catch (e) {
       print('Error al cargar datos básicos: $e');
       Get.snackbar(
@@ -458,8 +454,15 @@ class TaskFormController extends GetxController {
         'yyyy-MM-dd HH:mm:ss',
       ).format(fechaVencimientoCompleta);
 
-      // Crear la tarea
-      final resultadoTarea = await _tareaService.crearTarea(
+      // Extraer IDs de etiquetas
+      final List<int> etiquetasIds =
+          etiquetasSeleccionadas
+              .where((etiqueta) => etiqueta.id != null)
+              .map((etiqueta) => etiqueta.id!)
+              .toList();
+
+      // Crear la tarea con etiquetas en una sola operación
+      final resultadoTarea = await _tareaService.crearTareaConEtiquetas(
         usuarioId: usuario.id!,
         listaId: listaSeleccionada.value!.id!,
         titulo: tituloController.text,
@@ -469,30 +472,36 @@ class TaskFormController extends GetxController {
         categoriaId: categoriaSeleccionada.value!.id!,
         estadoId: 1, // Estado inicial (1 = Pendiente)
         prioridadId: prioridadSeleccionada.value!.id!,
+        etiquetas: etiquetasIds,
       );
 
-      if (resultadoTarea.status != 200 || !(resultadoTarea.body is Tarea)) {
+      if (resultadoTarea.status != 200) {
         throw Exception('No se pudo crear la tarea');
       }
 
-      final Tarea tareaCreada = resultadoTarea.body;
+      Tarea bodyTarea = resultadoTarea.body as Tarea;
+      Tarea tareita = Tarea(
+        id: bodyTarea.id,
+        titulo: tituloController.text,
+        descripcion: descripcionController.text,
+        fechaCreacion: fechaCreacionCompleta,
+        fechaVencimiento: fechaVencimientoCompleta,
+        prioridadId: prioridadSeleccionada.value!.id!,
+        estadoId: 1,
+        categoriaId: categoriaSeleccionada.value!.id!,
+        usuarioId: usuario.id!,
+        listaId: listaSeleccionada.value!.id!,
+      );
 
-      // Agregar etiquetas a la tarea
-      if (etiquetasSeleccionadas.isNotEmpty) {
-        for (var etiqueta in etiquetasSeleccionadas) {
-          if (etiqueta.id != null) {
-            await _tareaService.crearTareaEtiqueta(
-              tareaCreada.id!,
-              etiqueta.id!,
-            );
-          }
-        }
-      }
-
+      await _principalController.AgregarTarea(tareita);
       // Recargar datos en el homeController
-      _homeController.cargarListasDelUsuario();
-      _homeController.cargarTareasDelUsuario();
+      await _principalController.AgregarEtiquetasPorTarea(
+        tareita.id!,
+        etiquetasSeleccionadas,
+      );
 
+      await _homeController.recargarTodo();
+      await _buscadorController.recargarBuscador();
       // Volver a la pantalla anterior con resultado exitoso
       Get.back(result: true);
 
@@ -594,19 +603,18 @@ class TaskFormController extends GetxController {
         'yyyy-MM-dd HH:mm:ss',
       ).format(fechaVencimientoCompleta);
 
-      // Primero obtener la información actual de la tarea para preservar el estadoId
-      final resultadoTareaActual = await _tareaService.obtenerTareaPorId(
-        tareaId.value,
-      );
-      if (resultadoTareaActual.status != 200 ||
-          !(resultadoTareaActual.body is Tarea)) {
-        throw Exception('No se pudo obtener la información actual de la tarea');
-      }
+      Tarea tareita =
+          await _principalController.ObtenerTareaPorId(tareaId.value)!;
 
-      final Tarea tareaActual = resultadoTareaActual.body;
+      // Extraer IDs de etiquetas
+      final List<int> etiquetasIds =
+          etiquetasSeleccionadas
+              .where((etiqueta) => etiqueta.id != null)
+              .map((etiqueta) => etiqueta.id!)
+              .toList();
 
-      // Actualizar la tarea
-      final resultadoTarea = await _tareaService.actualizarTarea(
+      // Actualizar la tarea con etiquetas en una sola operación
+      final resultadoTarea = await _tareaService.actualizarTareaConEtiquetas(
         id: tareaId.value,
         usuarioId: usuario.id!,
         listaId: listaSeleccionada.value!.id!,
@@ -615,54 +623,40 @@ class TaskFormController extends GetxController {
         fechaCreacion: fechaCreacionFormateada,
         fechaVencimiento: fechaVencimientoFormateada,
         categoriaId: categoriaSeleccionada.value!.id!,
-        estadoId: tareaActual.estadoId, // Mantener el estado actual
+        estadoId: tareita.estadoId, // Mantener el estado actual
         prioridadId: prioridadSeleccionada.value!.id!,
+        etiquetas: etiquetasIds,
       );
 
-      if (resultadoTarea.status != 200 || !(resultadoTarea.body is Tarea)) {
+      if (resultadoTarea.status != 200) {
         throw Exception('No se pudo actualizar la tarea');
       }
+      Tarea tareitae = resultadoTarea.body as Tarea;
 
-      final Tarea tareaActualizada = resultadoTarea.body;
-
-      // Obtener etiquetas actuales de la tarea
-      final resultadoEtiquetas = await _etiquetaService.obtenerEtiquetasDeTarea(
-        tareaId.value,
+      Tarea tareaActualizada = Tarea(
+        id: tareitae.id,
+        titulo: tituloController.text,
+        descripcion: descripcionController.text,
+        fechaCreacion: fechaCreacionCompleta,
+        fechaVencimiento: fechaVencimientoCompleta,
+        prioridadId: prioridadSeleccionada.value!.id!,
+        estadoId: tareita.estadoId, // Mantener el estado actual
+        categoriaId: categoriaSeleccionada.value!.id!,
+        usuarioId: usuario.id!,
+        listaId: listaSeleccionada.value!.id!,
       );
-      List<Etiqueta> etiquetasActuales = [];
-      if (resultadoEtiquetas.status == 200 &&
-          resultadoEtiquetas.body is List<Etiqueta>) {
-        etiquetasActuales = resultadoEtiquetas.body;
-      }
-
-      // Eliminar todas las etiquetas actuales de la tarea
-      for (var etiqueta in etiquetasActuales) {
-        if (etiqueta.id != null) {
-          await _tareaService.eliminarTareaEtiqueta(
-            tareaActualizada.id!,
-            etiqueta.id!,
-          );
-        }
-      }
-
-      // Agregar las nuevas etiquetas seleccionadas
-      if (etiquetasSeleccionadas.isNotEmpty) {
-        for (var etiqueta in etiquetasSeleccionadas) {
-          if (etiqueta.id != null) {
-            await _tareaService.crearTareaEtiqueta(
-              tareaActualizada.id!,
-              etiqueta.id!,
-            );
-          }
-        }
-      }
 
       // Actualizar datos en el VerTareaController si está en uso
-      VerTareaController.actualizarTarea(tareaActualizada.id!);
+      await _principalController.EditarTarea(tareaActualizada);
 
-      // Recargar datos en el homeController
-      _homeController.cargarListasDelUsuario();
-      _homeController.cargarTareasDelUsuario();
+      await _principalController.ActualizarEtiquetasPorTarea(
+        tareaActualizada.id!,
+        etiquetasSeleccionadas,
+      );
+      await ListaItemController.actualizarLista(tareaActualizada.listaId!);
+      await VerTareaController.actualizarTarea(tareaId.value);
+      await _homeController.recargarTodo();
+      await _buscadorController.recargarBuscador();
 
       // Volver a la pantalla anterior con resultado exitoso
       Get.back(result: true);

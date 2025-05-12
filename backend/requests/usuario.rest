@@ -24,7 +24,7 @@ Content-Type: application/x-www-form-urlencoded
 usuario=sapo&contrasenia=3972re
 
 #############################################
-GET {{baseUrl}}tareas/obtener/141
+GET {{baseUrl}}usuarios/7/datos_completos
 
 
 #############################################

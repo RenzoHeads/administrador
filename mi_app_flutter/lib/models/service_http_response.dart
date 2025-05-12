@@ -8,8 +8,8 @@ class ServiceHttpResponse {
   factory ServiceHttpResponse.fromMap(Map<String, dynamic> map) {
     return ServiceHttpResponse(
       status: map['status'],
-      body: map[
-          'body'], // Puedes agregar lógica para convertir el body según su tipo
+      body:
+          map['body'], // Puedes agregar lógica para convertir el body según su tipo
     );
   }
 

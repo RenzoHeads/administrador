@@ -1,0 +1,237 @@
+import 'package:get/get.dart';
+import '../../services/inicio_service.dart';
+import '../../models/tarea.dart';
+import '../../models/etiqueta.dart';
+import '../../models/estado.dart';
+import '../../models/categoria.dart';
+import '../../models/prioridad.dart';
+import '../../models/service_http_response.dart';
+import '../../services/controladorsesion.dart';
+import '../../models/lista.dart';
+
+class PrincipalController extends GetxController {
+  final InicioService _inicioService = InicioService();
+  final ControladorSesionUsuario _sesionController =
+      Get.find<ControladorSesionUsuario>();
+
+  // Variables observables para almacenar datos
+  var tareas = <Tarea>[].obs;
+  var listas = <Lista>[].obs;
+  var etiquetasPorTarea = <Map<String, dynamic>>[].obs;
+  var prioridades = <Prioridad>[].obs;
+  var estados = <Estado>[].obs;
+  var categorias = <Categoria>[].obs;
+
+  // Estado de carga
+  var isLoading = true.obs;
+  var hasError = false.obs;
+  var errorMessage = ''.obs;
+  var datosCargados = false.obs;
+
+  @override
+  void onInit() {
+    super.onInit();
+    cargarDatosUsuario();
+  }
+
+  Future<void> cargarDatosUsuario() async {
+    try {
+      isLoading(true);
+      hasError(false);
+      datosCargados(false);
+
+      final usuarioId = _sesionController.usuarioActual.value?.id;
+
+      if (usuarioId != null) {
+        final ServiceHttpResponse response = await _inicioService
+            .fetchCompleteDatosUsuario(usuarioId);
+
+        if (response.status == 200 && response.body is Map<String, dynamic>) {
+          final data = response.body as Map<String, dynamic>;
+
+          // Ya vienen como objetos
+          tareas.value = data['tareas'] as List<Tarea>;
+          etiquetasPorTarea.value =
+              data['etiquetasPorTarea'] as List<Map<String, dynamic>>;
+
+          // Listas vienen como datos JSON sin parsear, aquí hacemos la conversión correcta
+          final listasData = data['listas'] as List<dynamic>;
+          listas.value =
+              listasData
+                  .map(
+                    (listaJson) =>
+                        Lista.fromMap(listaJson as Map<String, dynamic>),
+                  )
+                  .toList();
+
+          final datosReferencia =
+              data['datosReferencia'] as Map<String, dynamic>;
+          prioridades.value = datosReferencia['prioridades'] as List<Prioridad>;
+          estados.value = datosReferencia['estados'] as List<Estado>;
+          categorias.value = datosReferencia['categorias'] as List<Categoria>;
+
+          print('Datos cargados correctamente');
+          print('Tareas: ${tareas.length}');
+          print('Listas: ${listas.length}');
+          print('Etiquetas por tarea: ${etiquetasPorTarea.length}');
+          print('Prioridades: ${prioridades.length}');
+
+          // Marcar que los datos están cargados
+          datosCargados(true);
+        } else {
+          hasError(true);
+          if (response.body is Map<String, dynamic> &&
+              (response.body as Map<String, dynamic>).containsKey('message')) {
+            errorMessage(
+              (response.body as Map<String, dynamic>)['message'].toString(),
+            );
+          } else {
+            errorMessage('Error en la respuesta del servidor');
+          }
+        }
+      } else {
+        hasError(true);
+        errorMessage('No se ha identificado un usuario válido');
+      }
+    } catch (e) {
+      hasError(true);
+      errorMessage('Error al cargar datos: ${e.toString()}');
+    } finally {
+      isLoading(false);
+    }
+  }
+
+  // Método para refrescar los datos
+  Future<void> refreshData() async {
+    await cargarDatosUsuario();
+  }
+
+  // Métodos para obtener datos específicos
+  Future<List<Tarea>> getTareasUsuario() async {
+    return tareas;
+  }
+
+  Future<List<Etiqueta>> getEtiquetasPorTarea(int tareaId) async {
+    final etiquetasMap = etiquetasPorTarea.firstWhereOrNull(
+      (element) => element['tarea_id'] == tareaId,
+    );
+
+    if (etiquetasMap == null) {
+      return [];
+    }
+
+    return (etiquetasMap['etiquetas'] as List<dynamic>).cast<Etiqueta>();
+  }
+
+  // Métodos para datos de referencia
+  Future<Estado?> getEstadoPorId(int estadoId) async {
+    return estados.firstWhereOrNull((estado) => estado.id == estadoId);
+  }
+
+  Future<Categoria?> getCategoriaPorId(int categoriaId) async {
+    return categorias.firstWhereOrNull(
+      (categoria) => categoria.id == categoriaId,
+    );
+  }
+
+  Future<Prioridad?> getPrioridadPorId(int prioridadId) async {
+    return prioridades.firstWhereOrNull(
+      (prioridad) => prioridad.id == prioridadId,
+    );
+  }
+
+  Future<void> EliminarTarea(int tareaId) async {
+    tareas.removeWhere((tarea) => tarea.id == tareaId);
+  }
+
+  Future<void> AgregarTarea(Tarea tarea) async {
+    tareas.add(tarea);
+  }
+
+  Future<void> EditarTarea(Tarea tarea) async {
+    int index = tareas.indexWhere((t) => t.id == tarea.id);
+    if (index != -1) {
+      tareas[index] = tarea;
+    }
+  }
+
+  Future<void> ActualizarEtiquetasPorTarea(
+    int tareaId,
+    List<Etiqueta> etiquetas,
+  ) async {
+    etiquetasPorTarea.removeWhere((element) => element['tarea_id'] == tareaId);
+    etiquetasPorTarea.add({'tarea_id': tareaId, 'etiquetas': etiquetas});
+  }
+
+  Future<void> AgregarEtiquetasPorTarea(
+    int tareaId,
+    List<Etiqueta> etiquetas,
+  ) async {
+    etiquetasPorTarea.add({'tarea_id': tareaId, 'etiquetas': etiquetas});
+  }
+
+  Future<void> EliminarTareasPorLista(int listaId) async {
+    tareas.removeWhere((tarea) => tarea.listaId == listaId);
+  }
+
+  Future<void> EliminarLista(int listaId) async {
+    listas.removeWhere((lista) => lista.id == listaId);
+  }
+
+  Future<void> AgregarLista(Lista lista) async {
+    listas.add(lista);
+  }
+
+  Future<void> EditarLista(Lista lista) async {
+    int index = listas.indexWhere((l) => l.id == lista.id);
+    if (index != -1) {
+      listas[index] = lista;
+    }
+  }
+
+  Future<int> ObtenerTareasPorLista(int listaId) async {
+    return tareas.where((tarea) => tarea.listaId == listaId).length;
+  }
+
+  Future<int> ObtenerTareasPendientesPorLista(int listaId) async {
+    return tareas
+        .where((tarea) => tarea.listaId == listaId && tarea.estadoId == 1)
+        .length;
+  }
+
+  Future<List<Lista>> ObtenerListaUsuario() async {
+    return listas;
+  }
+
+  Future<List<Categoria>> ObtenerCategoriasUsuario() async {
+    return categorias;
+  }
+
+  Future<List<Estado>> ObtenerEstadosUsuario() async {
+    return estados;
+  }
+
+  Future<List<Prioridad>> ObtenerPrioridadesUsuario() async {
+    return prioridades;
+  }
+
+  Future<Tarea> ObtenerTareaPorId(int tareaId) async {
+    return tareas.firstWhereOrNull((tarea) => tarea.id == tareaId)!;
+  }
+
+  Future<String> ObtenerNombreEstadoPorId(int estadoId) async {
+    return estados
+            .firstWhereOrNull((estado) => estado.id == estadoId)
+            ?.nombre ??
+        '';
+  }
+
+  Future<String> obtenerNombreEstadoPorTareaId(int tareaId) async {
+    final tarea = await ObtenerTareaPorId(tareaId);
+    return ObtenerNombreEstadoPorId(tarea.estadoId);
+  }
+
+  Future<List<Tarea>> ObtenerTareasUsuario() async {
+    return tareas;
+  }
+}

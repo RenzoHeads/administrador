@@ -535,3 +535,125 @@ put '/usuario/actualizar-correo/:id' do
   status status
   resp
 end
+
+#Obtener todas las etiquetas de todas las tareas de un usuario
+get '/tareaetiqueta/usuario/:usuario_id' do
+  begin
+    tareaetiquetas = TareaEtiqueta.where(usuario_id: params[:usuario_id]).all
+    if tareaetiquetas.any?
+      status 200
+      return tareaetiquetas.to_json
+    else
+      status 404
+      return { error: 'Sin etiquetas' }.to_json
+    end
+  rescue => e
+    puts "Error al obtener etiquetas de usuario: #{e.message}"
+    status 500
+    return { error: 'Error interno al procesar la solicitud' }.to_json
+  end
+end
+
+
+get '/usuarios/:usuario_id/datos_completos' do
+  usuario_id = params[:usuario_id]
+  
+  # Inicializamos un hash para almacenar toda la información
+  datos = {
+    tareas: [],
+    listas: [],
+    etiquetas_por_tarea: [],
+    datos_referencia: {
+      prioridades: [],
+      estados: [],
+      categorias: []
+    }
+  }
+  
+  # Obtenemos las tareas con sus etiquetas usando joins
+  # Asumiendo que estás usando Sequel para interactuar con la base de datos
+  tareas_con_etiquetas = DB[:tareas]
+    .left_join(:tarea_etiquetas, tarea_id: :id)
+    .left_join(:etiquetas, id: :etiqueta_id)
+    .where(Sequel[:tareas][:usuario_id] => usuario_id)
+    .select(
+      Sequel[:tareas][:id].as(:tarea_id),
+      Sequel[:tareas][:titulo],
+      Sequel[:tareas][:descripcion],
+      Sequel[:tareas][:usuario_id],
+      Sequel[:tareas][:lista_id],
+      Sequel[:tareas][:fecha_creacion],
+      Sequel[:tareas][:fecha_vencimiento],
+      Sequel[:tareas][:categoria_id],
+      Sequel[:tareas][:estado_id],
+      Sequel[:tareas][:prioridad_id],
+      Sequel[:etiquetas][:id].as(:etiqueta_id),
+      Sequel[:etiquetas][:nombre].as(:etiqueta_nombre),
+      Sequel[:etiquetas][:color].as(:etiqueta_color)
+
+    )
+    .all
+    
+  # Procesamos los resultados para organizarlos en un formato jerárquico
+  tarea_map = {}
+  etiquetas_por_tarea = {}
+  
+  tareas_con_etiquetas.each do |resultado|
+    tarea_id = resultado[:tarea_id]
+    
+    # Almacenamos la tarea si no la habíamos procesado antes
+    unless tarea_map[tarea_id]
+      tarea_map[tarea_id] = {
+        id: tarea_id,
+        titulo: resultado[:titulo],
+        descripcion: resultado[:descripcion],
+        usuario_id: resultado[:usuario_id],
+        lista_id: resultado[:lista_id],
+        titulo: resultado[:titulo],
+        descripcion: resultado[:descripcion],
+        fecha_creacion: resultado[:fecha_creacion],
+        fecha_vencimiento: resultado[:fecha_vencimiento],
+        categoria_id: resultado[:categoria_id],
+        estado_id: resultado[:estado_id],
+        prioridad_id: resultado[:prioridad_id]
+      }
+      etiquetas_por_tarea[tarea_id] = []
+    end
+    
+    # Añadimos la etiqueta si existe
+    if resultado[:etiqueta_id]
+      etiquetas_por_tarea[tarea_id] << {
+        id: resultado[:etiqueta_id],
+        nombre: resultado[:etiqueta_nombre],
+        color: resultado[:etiqueta_color]
+      }
+    end
+  end
+  
+  # Convertimos el hash de tareas a un array
+  datos[:tareas] = tarea_map.values
+  
+  # Organizamos las etiquetas por tarea
+  etiquetas_por_tarea.each do |tarea_id, etiquetas|
+    datos[:etiquetas_por_tarea] << {
+      tarea_id: tarea_id,
+      etiquetas: etiquetas.uniq { |e| e[:id] } # Eliminamos duplicados
+    }
+  end
+  
+  # Obtenemos las listas del usuario (con join para hacerlo más eficiente)
+  datos[:listas] = DB[:listas].where(usuario_id: usuario_id).all
+  
+  # Obtenemos datos de referencia en una sola consulta cada uno
+  datos[:datos_referencia][:prioridades] = DB[:prioridades].all
+  datos[:datos_referencia][:estados] = DB[:estados].all
+  datos[:datos_referencia][:categorias] = DB[:categorias].all
+  
+  # Verificamos si se encontraron datos del usuario
+  if datos[:tareas].empty? && datos[:listas].empty?
+    return [404, { mensaje: 'No se encontraron datos para este usuario' }.to_json]
+  end
+  
+  # Devolvemos todos los datos en formato JSON
+  [200, datos.to_json]
+end
