@@ -603,8 +603,9 @@ class TaskFormController extends GetxController {
         'yyyy-MM-dd HH:mm:ss',
       ).format(fechaVencimientoCompleta);
 
-      Tarea tareita =
-          await _principalController.ObtenerTareaPorId(tareaId.value)!;
+      Tarea tareita = await _principalController.ObtenerTareaPorId(
+        tareaId.value,
+      );
 
       // Extraer IDs de etiquetas
       final List<int> etiquetasIds =

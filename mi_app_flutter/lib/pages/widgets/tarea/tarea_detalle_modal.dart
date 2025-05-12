@@ -14,6 +14,9 @@ class TareaDetalleModal extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Desenfocar el teclado inmediatamente al construir el modal
+    FocusScope.of(context).unfocus();
+
     // Usamos GetBuilder en lugar de Obx para escuchar actualizaciones específicas
     return GestureDetector(
       onTap: () {

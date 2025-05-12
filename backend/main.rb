@@ -13,6 +13,11 @@ set :port, ENV['PORT'] || 4567
 # db
 require_relative 'configs/database'
 require_relative 'configs/models'
+
+# Precargar tablas clave para evitar latencia en primera ejecución
+# Warm-up explícito de todas las consultas críticas, de forma secuencial
+
+
 # end points
 Dir[File.join(__dir__, 'routes', '*.rb')].each { |file| require_relative file }
 # CORS

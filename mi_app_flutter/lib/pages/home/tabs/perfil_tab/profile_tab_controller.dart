@@ -1,3 +1,4 @@
+// Corrección en ProfileTabController.dart
 import 'dart:io';
 import 'dart:convert';
 import 'package:flutter/material.dart';
@@ -5,55 +6,52 @@ import 'package:get/get.dart';
 import '../../../../services/controladorsesion.dart';
 import '../../../../services/usuario_service.dart';
 import '../../../../models/usuario.dart';
+import '../../home_controler.dart';
 
 class ProfileTabController extends GetxController {
   final ControladorSesionUsuario _sesion = Get.find<ControladorSesionUsuario>();
   final UsuarioService _usuarioService = UsuarioService();
+  HomeController? _homeController;
 
   RxString profilePhotoUrl = RxString('');
   RxBool loadingPhoto = true.obs;
+  // Agregamos esta bandera para controlar si ya se cargó la foto
+  RxBool _fotoYaCargada = false.obs;
 
   @override
   void onInit() {
     super.onInit();
-    cargarFotoPerfil();
+    // No cargamos la foto aquí, esperamos a que setHomeController sea llamado
+  }
+
+  void setHomeController(HomeController controller) {
+    _homeController = controller;
+    // Solo cargamos la foto si aún no se ha cargado
+    if (!_fotoYaCargada.value) {
+      cargarFotoPerfil();
+    }
   }
 
   Future<void> cargarFotoPerfil() async {
+    // Si ya estamos cargando o ya cargamos, no hacemos nada
+    if (_fotoYaCargada.value) {
+      return;
+    }
+
     final usuario = _sesion.usuarioActual.value;
-    if (usuario != null && usuario.id != null) {
+    if (usuario != null) {
       try {
         loadingPhoto.value = true;
-        final respuesta = await _usuarioService.getProfilePhotoUrl(usuario.id!);
+        profilePhotoUrl.value = ''; // Limpiar la URL actual
 
-        if (respuesta != null && respuesta.status == 200) {
-          if (respuesta.body is String) {
-            try {
-              final Map<String, dynamic> data = json.decode(
-                respuesta.body as String,
-              );
-              if (data.containsKey('url')) {
-                final String url = data['url'];
-
-                profilePhotoUrl.value = url;
-              } else {
-                print('No se encontró URL en la respuesta'); // Debug
-                profilePhotoUrl.value = '';
-              }
-            } catch (e) {
-              print("Error al parsear JSON de foto: $e");
-              profilePhotoUrl.value = '';
-            }
-          } else {
-            print(
-              'Respuesta no es String: ${respuesta.body.runtimeType}',
-            ); // Debug
-            profilePhotoUrl.value = '';
-          }
-        } else {
+        // Obtener la URL directamente del controlador de sesión
+        if (usuario.foto != null && usuario.foto!.isNotEmpty) {
+          profilePhotoUrl.value = usuario.foto!;
           print(
-            'Respuesta nula o status no 200: ${respuesta?.status}',
-          ); // Debug
+            'Foto de perfil cargada desde sesión: ${profilePhotoUrl.value}',
+          );
+        } else {
+          print('No hay foto de perfil en la sesión');
           profilePhotoUrl.value = '';
         }
       } catch (e) {
@@ -61,12 +59,25 @@ class ProfileTabController extends GetxController {
         profilePhotoUrl.value = '';
       } finally {
         loadingPhoto.value = false;
+        _fotoYaCargada.value = true;
+
+        // Notificar al HomeController sobre el cambio
+        if (_homeController != null) {
+          _homeController!.profilePhotoUrl.value = profilePhotoUrl.value;
+          _homeController!.loadingPhoto.value = loadingPhoto.value;
+        }
       }
     } else {
-      print('Usuario no encontrado o ID nulo'); // Debug
+      print('Usuario no encontrado');
       profilePhotoUrl.value = '';
       loadingPhoto.value = false;
     }
+  }
+
+  // Este método ahora sólo fuerza una recarga cuando es necesario
+  Future<void> forzarRecargaFoto() async {
+    _fotoYaCargada.value = false; // Reseteamos la bandera
+    await cargarFotoPerfil(); // Cargamos de nuevo
   }
 
   Future<bool> actualizarNombreUsuario(String nuevoNombre) async {
@@ -162,15 +173,38 @@ class ProfileTabController extends GetxController {
           foto,
         );
         if (respuesta != null && respuesta.status == 200) {
-          await cargarFotoPerfil();
-          Get.snackbar(
-            'Éxito',
-            'Foto de perfil actualizada',
-            snackPosition: SnackPosition.BOTTOM,
-            backgroundColor: Colors.green,
-            colorText: Colors.white,
-          );
-          return true;
+          try {
+            // Parsear la respuesta para obtener la URL de la imagen
+            final Map<String, dynamic> data = json.decode(
+              respuesta.body as String,
+            );
+            if (data.containsKey('imagen_perfil') &&
+                data['imagen_perfil'] != null) {
+              // Actualizar el usuario en el controlador de sesión con la nueva URL
+              Usuario usuarioActualizado = Usuario(
+                id: usuario.id,
+                nombre: usuario.nombre,
+                contrasena: usuario.contrasena,
+                email: usuario.email,
+                token: usuario.token,
+                foto: data['imagen_perfil'],
+              );
+              await _sesion.actualizarUsuario(usuarioActualizado);
+
+              forzarRecargaFoto();
+
+              Get.snackbar(
+                'Éxito',
+                'Foto de perfil actualizada',
+                snackPosition: SnackPosition.BOTTOM,
+                backgroundColor: Colors.green,
+                colorText: Colors.white,
+              );
+              return true;
+            }
+          } catch (e) {
+            print('Error al procesar respuesta de subida de foto: $e');
+          }
         }
       } catch (e) {
         print('Error al subir foto: $e');
@@ -192,8 +226,20 @@ class ProfileTabController extends GetxController {
       try {
         final respuesta = await _usuarioService.deleteProfilePhoto(usuario.id!);
         if (respuesta != null && respuesta.status == 200) {
+          // Actualizar el usuario en el controlador de sesión eliminando la URL
+          Usuario usuarioActualizado = Usuario(
+            id: usuario.id,
+            nombre: usuario.nombre,
+            contrasena: usuario.contrasena,
+            email: usuario.email,
+            token: usuario.token,
+            foto: '',
+          );
+          await _sesion.actualizarUsuario(usuarioActualizado);
+
           profilePhotoUrl.value = '';
-          await cargarFotoPerfil();
+          _fotoYaCargada.value = false;
+
           Get.snackbar(
             'Éxito',
             'Foto de perfil eliminada',

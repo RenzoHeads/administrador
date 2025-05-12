@@ -173,11 +173,17 @@ class TareaItem extends StatelessWidget {
     BuildContext context,
     VerTareaController controller,
   ) {
+    // Desenfocar el teclado antes de mostrar el modal
+    FocusScope.of(context).unfocus();
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) => TareaDetalleModal(controller: controller),
-    );
+    ).then((_) {
+      // Desenfocar el teclado cuando se cierra el modal
+      FocusScope.of(context).unfocus();
+    });
   }
 }

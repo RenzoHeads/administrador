@@ -5,7 +5,6 @@ import '../../services/controladorsesion.dart';
 import 'tabs/tarea_tab/tasks_tab.dart';
 import 'tabs/lista_tab/lists_tab.dart';
 import 'tabs/perfil_tab/profile_tab.dart';
-import '../../pages/widgets/eventos_controlador.dart';
 
 class HomePage extends StatelessWidget {
   final HomeController controller = Get.put(HomeController());
@@ -90,7 +89,6 @@ class HomePage extends StatelessWidget {
                         print(
                           'URL actual de la foto: ${controller.profilePhotoUrl.value}',
                         ); // Debug
-                        controller.recargarFotoPerfil();
                       },
                     ),
                     IconButton(
@@ -98,12 +96,8 @@ class HomePage extends StatelessWidget {
                       onPressed: () => controller.cerrarSesionCompleta(),
                       tooltip: 'Cerrar sesión',
                     ),
+
                     //Agrega boton de recarga
-                    IconButton(
-                      icon: Icon(Icons.refresh),
-                      onPressed: () => EventosControlador.solicitarRecarga(),
-                      tooltip: 'Recargar datos',
-                    ),
                   ],
                 ),
               ),

@@ -19,12 +19,14 @@ class ControladorSesionUsuario extends GetxController {
     String nombre,
     String contrasena,
     String email,
+    String? foto,
   ) async {
     usuarioActual.value = Usuario(
       id: id,
       nombre: nombre,
       contrasena: contrasena,
       email: email,
+      foto: foto,
     );
     sesionIniciada.value = true;
 
@@ -34,6 +36,7 @@ class ControladorSesionUsuario extends GetxController {
     await prefs.setString('nombre', nombre);
     await prefs.setString('contrasena', contrasena);
     await prefs.setString('email', email);
+    await prefs.setString('foto', foto ?? '');
     await prefs.setBool('sesionActiva', true);
 
     // Alternativa: guardar objeto completo como JSON

@@ -11,6 +11,7 @@ GEM
       nokogiri (~> 1, >= 1.10.8)
     base64 (0.2.0)
     bigdecimal (3.1.8)
+    concurrent-ruby (1.3.5)
     connection_pool (2.5.0)
     dotenv (3.1.8)
     faraday (1.10.4)
@@ -54,6 +55,7 @@ GEM
       connection_pool (~> 2.2)
     nokogiri (1.18.7-x64-mingw-ucrt)
       racc (~> 1.4)
+    pg (1.5.9-x64-mingw-ucrt)
     racc (1.8.1)
     rack (3.0.11)
     rack-protection (4.0.0)
@@ -87,8 +89,10 @@ PLATFORMS
 
 DEPENDENCIES
   azure-storage-blob
+  concurrent-ruby
   dotenv
   mime-types
+  pg
   rackup
   rerun
   sequel (~> 5.79.0)

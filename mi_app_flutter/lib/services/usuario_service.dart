@@ -280,6 +280,24 @@ class UsuarioService {
     return serviceResponse;
   }
 
+  // Obtener URL de la foto de perfil
+  Future<ServiceHttpResponse?> getProfilePhotoUrl(int id) async {
+    ServiceHttpResponse serviceResponse = ServiceHttpResponse();
+    final url = Uri.parse('${BASE_URL}usuario/$id/foto-perfil');
+
+    try {
+      final response = await http.get(url);
+      serviceResponse.status = response.statusCode;
+      serviceResponse.body = response.body;
+    } catch (e) {
+      print('Error: $e');
+      serviceResponse.status = 500;
+      serviceResponse.body = 'Error al obtener la URL de la foto de perfil';
+    }
+
+    return serviceResponse;
+  }
+
   // Eliminar foto de perfil
   Future<ServiceHttpResponse?> deleteProfilePhoto(int id) async {
     ServiceHttpResponse serviceResponse = ServiceHttpResponse();
@@ -293,34 +311,6 @@ class UsuarioService {
       print('Error: $e');
       serviceResponse.status = 500;
       serviceResponse.body = 'Error al eliminar la foto de perfil';
-    }
-
-    return serviceResponse;
-  }
-
-  // Obtener URL de la foto de perfil (con expiración opcional)
-  Future<ServiceHttpResponse?> getProfilePhotoUrl(
-    int id, {
-    int? expiraEn,
-  }) async {
-    ServiceHttpResponse serviceResponse = ServiceHttpResponse();
-    String baseUrl = '${BASE_URL}usuario/$id/foto-perfil';
-
-    // Añadir parámetro de expiración si está presente
-    if (expiraEn != null) {
-      baseUrl += '?expira_en=$expiraEn';
-    }
-
-    final url = Uri.parse(baseUrl);
-
-    try {
-      final response = await http.get(url);
-      serviceResponse.status = response.statusCode;
-      serviceResponse.body = response.body;
-    } catch (e) {
-      print('Error: $e');
-      serviceResponse.status = 500;
-      serviceResponse.body = 'Error al obtener la URL de la foto de perfil';
     }
 
     return serviceResponse;

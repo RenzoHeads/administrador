@@ -1,3 +1,4 @@
+// Corrección en HomeController.dart
 import 'package:get/get.dart';
 
 import 'package:flutter/material.dart';
@@ -49,12 +50,7 @@ class HomeController extends GetxController {
 
     taskController.setHomeController(this);
     listaController.setHomeController(this);
-
-    ever(profileController.profilePhotoUrl, (String url) {
-      print('URL actualizada en HomeController: $url');
-      profilePhotoUrl.value = url;
-      loadingPhoto.value = false;
-    });
+    profileController.setHomeController(this);
   }
 
   void _cargarDatosIniciales() async {
@@ -97,16 +93,13 @@ class HomeController extends GetxController {
     try {
       await taskController.cargarTareas();
       await listaController.cargarListas();
-      await profileController.cargarFotoPerfil();
     } finally {
       cargando(false);
     }
   }
 
   Future<void> recargarFotoPerfil() async {
-    profilePhotoUrl.value = '';
-    loadingPhoto.value = true;
-    await profileController.cargarFotoPerfil();
+    await profileController.forzarRecargaFoto();
   }
 
   Color colorDesdeString(String colorString, {int alpha = 80}) {

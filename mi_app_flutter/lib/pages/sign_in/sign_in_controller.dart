@@ -82,6 +82,7 @@ class SignInController extends GetxController {
                 usuarioResponse.nombre,
                 usuarioResponse.contrasena,
                 usuarioResponse.email,
+                usuarioResponse.foto,
               );
 
               // Navegar a la página de inicio

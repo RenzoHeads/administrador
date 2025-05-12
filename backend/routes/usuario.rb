@@ -1,6 +1,7 @@
 require 'json'
 require 'securerandom'
 require_relative '../models/blob' # Asegúrate de tener la clase AzureBlobService definida
+require 'concurrent'
 
 # === CONTROLADORES PARA USUARIOS ===
 
@@ -340,23 +341,23 @@ post '/usuario/:id/foto-perfil' do
       status 404
       return { error: 'Usuario no encontrado' }.to_json
     end
-    
+
     # Validar que se ha subido un archivo
     unless params[:file]
       status 400
       return { error: 'Se requiere un archivo de imagen' }.to_json
     end
-    
+
     # Validar tipo de archivo (debe ser imagen)
     file_type = determine_file_type(params[:file][:filename])
     unless file_type == 'IMAGEN'
       status 400
       return { error: 'El archivo debe ser una imagen (JPG, PNG, etc.)' }.to_json
     end
-    
+
     # Procesar el archivo subido
     upload_result = process_file_upload(params)
-    
+
     if upload_result[:success]
       # Subir al blob de Azure
       blob_result = AzureBlobService.upload_file(
@@ -372,23 +373,36 @@ post '/usuario/:id/foto-perfil' do
       
       if blob_result[:success]
         # Si el usuario ya tenía una foto, eliminarla del blob
-        if usuario.imagen_perfil
-          # Intentar eliminar la imagen anterior (ignoramos errores)
-          AzureBlobService.delete_file(usuario.imagen_perfil) rescue nil
+        if usuario.imagen_perfil && usuario.imagen_perfil.start_with?('http')
+          # Extraer la ruta del blob de la URL anterior (si es posible)
+          begin
+            uri = URI.parse(usuario.imagen_perfil)
+            old_path = uri.path.sub(/^\//, '')
+            # Intentar eliminar la imagen anterior (ignoramos errores)
+            AzureBlobService.delete_file(old_path) rescue nil
+          rescue
+            # Si hay error al parsear la URL, continuamos sin eliminar
+          end
         end
         
-        # Actualizar el campo de imagen_perfil con la nueva ruta
-        usuario.update(imagen_perfil: blob_result[:path])
+        # Generar URL con SAS para acceso permanente (duración larga)
+        # Por ejemplo, una duración de 10 años (valor en minutos)
+        duracion_larga = 60 * 24 * 365 * 10 # 10 años en minutos
+        sas_result = AzureBlobService.generate_sas_url(blob_result[:path], duracion_larga)
         
-        # Generar URL con SAS para acceso temporal
-        sas_result = AzureBlobService.generate_sas_url(blob_result[:path])
-        
-        status 200
-        return {
-          message: 'Foto de perfil actualizada correctamente',
-          imagen_perfil: blob_result[:path],
-          url: sas_result[:success] ? sas_result[:sas_url] : blob_result[:url]
-        }.to_json
+        if sas_result[:success]
+          # Guardar la URL completa en la base de datos
+          usuario.update(imagen_perfil: sas_result[:sas_url])
+          
+          status 200
+          return {
+            message: 'Foto de perfil actualizada correctamente',
+            imagen_perfil: sas_result[:sas_url]
+          }.to_json
+        else
+          status 500
+          return { error: "Error al generar URL de acceso: #{sas_result[:error]}" }.to_json
+        end
       else
         status 500
         return { error: "Error al subir imagen a Azure: #{blob_result[:error]}" }.to_json
@@ -402,6 +416,32 @@ post '/usuario/:id/foto-perfil' do
     puts e.backtrace.join("\n")
     status 500
     return { error: 'Error interno al procesar la solicitud' }.to_json
+  end
+end
+
+# Obtener URL de la foto de perfil
+get '/usuario/:id/foto-perfil' do
+  begin
+    usuario = Usuario.first(id: params[:id])
+
+    unless usuario
+      status 404
+      return { error: 'Usuario no encontrado' }.to_json
+    end
+
+    if usuario.imagen_perfil && !usuario.imagen_perfil.empty?
+      status 200
+      return {
+        imagen_perfil: usuario.imagen_perfil
+      }.to_json
+    else
+      status 404
+      return { error: 'El usuario no tiene foto de perfil' }.to_json
+    end
+  rescue => e
+    puts "Error al obtener URL de foto de perfil: #{e.message}"
+    status 500
+    return { error: 'Error al obtener URL de la foto de perfil' }.to_json
   end
 end
 
@@ -432,43 +472,6 @@ delete '/usuario/:id/foto-perfil' do
     puts "Error al eliminar foto de perfil: #{e.message}"
     status 500
     return { error: 'Error al eliminar foto de perfil' }.to_json
-  end
-end
-
-# Obtener URL de la foto de perfil
-get '/usuario/:id/foto-perfil' do
-  begin
-    usuario = Usuario.first(id: params[:id])
-    
-    unless usuario
-      status 404
-      return { error: 'Usuario no encontrado' }.to_json
-    end
-    
-    if usuario.imagen_perfil
-      # Generar URL con SAS para acceso temporal
-      expira_en = params[:expira_en]&.to_i || 60 # Minutos
-      sas_result = AzureBlobService.generate_sas_url(usuario.imagen_perfil, expira_en)
-      
-      if sas_result[:success]
-        status 200
-        return {
-          imagen_perfil: usuario.imagen_perfil,
-          url: sas_result[:sas_url],
-          expira_en: sas_result[:expiry_time]
-        }.to_json
-      else
-        status 500
-        return { error: "Error al generar URL: #{sas_result[:error]}" }.to_json
-      end
-    else
-      status 404
-      return { error: 'El usuario no tiene foto de perfil' }.to_json
-    end
-  rescue => e
-    puts "Error al obtener URL de foto de perfil: #{e.message}"
-    status 500
-    return { error: 'Error al generar URL de acceso' }.to_json
   end
 end
 
@@ -555,105 +558,98 @@ get '/tareaetiqueta/usuario/:usuario_id' do
 end
 
 
+
+
+# Global connection pool warming at application startup
+DB.fetch("SELECT 1").all  # Warm up the connection pool when app starts
+
+# Pre-load common object classes
+DB[:tareas].first  # Force load of Sequel dataset and row classes
+DB[:listas].first
+DB[:etiquetas].first
+DB[:tarea_etiquetas].first
+
+# Cache de datos de referencia (que no cambian frecuentemente)
+DATOS_REFERENCIA_CACHE = {
+  prioridades: DB[:prioridades].all,
+  estados: DB[:estados].all,
+  categorias: DB[:categorias].all
+}
+
 get '/usuarios/:usuario_id/datos_completos' do
   usuario_id = params[:usuario_id]
+
+  pool = Concurrent::FixedThreadPool.new(3)
+  resultados = Concurrent::Hash.new
+
+  resultados[:datos_referencia] = DATOS_REFERENCIA_CACHE
+
+  pool.post do
+    resultados[:tareas] = DB[:tareas].where(usuario_id: usuario_id).select_all.all
+  end
+
+  pool.post do
+    resultados[:listas] = DB[:listas].where(usuario_id: usuario_id).all
+  end
+
+  pool.post do
+    resultados[:etiquetas] = DB[:tarea_etiquetas]
+      .join(:etiquetas, id: :etiqueta_id)
+      .join(:tareas, Sequel[:tareas][:id] => Sequel[:tarea_etiquetas][:tarea_id])
+      .where(Sequel[:tareas][:usuario_id] => usuario_id)
+      .select(
+        Sequel[:tarea_etiquetas][:tarea_id],
+        Sequel[:etiquetas][:id].as(:etiqueta_id),
+        Sequel[:etiquetas][:nombre],
+        Sequel[:etiquetas][:color]
+      ).all
+  end
+
+  pool.shutdown
+  pool.wait_for_termination # Espera a que todas las tareas terminen
   
-  # Inicializamos un hash para almacenar toda la información
+  # Organizamos la respuesta
   datos = {
-    tareas: [],
-    listas: [],
+    tareas: resultados[:tareas] || [],
+    listas: resultados[:listas] || [],
     etiquetas_por_tarea: [],
-    datos_referencia: {
-      prioridades: [],
-      estados: [],
-      categorias: []
-    }
+    datos_referencia: resultados[:datos_referencia]
   }
   
-  # Obtenemos las tareas con sus etiquetas usando joins
-  # Asumiendo que estás usando Sequel para interactuar con la base de datos
-  tareas_con_etiquetas = DB[:tareas]
-    .left_join(:tarea_etiquetas, tarea_id: :id)
-    .left_join(:etiquetas, id: :etiqueta_id)
-    .where(Sequel[:tareas][:usuario_id] => usuario_id)
-    .select(
-      Sequel[:tareas][:id].as(:tarea_id),
-      Sequel[:tareas][:titulo],
-      Sequel[:tareas][:descripcion],
-      Sequel[:tareas][:usuario_id],
-      Sequel[:tareas][:lista_id],
-      Sequel[:tareas][:fecha_creacion],
-      Sequel[:tareas][:fecha_vencimiento],
-      Sequel[:tareas][:categoria_id],
-      Sequel[:tareas][:estado_id],
-      Sequel[:tareas][:prioridad_id],
-      Sequel[:etiquetas][:id].as(:etiqueta_id),
-      Sequel[:etiquetas][:nombre].as(:etiqueta_nombre),
-      Sequel[:etiquetas][:color].as(:etiqueta_color)
-
-    )
-    .all
-    
-  # Procesamos los resultados para organizarlos en un formato jerárquico
-  tarea_map = {}
+  # Procesamos las etiquetas por tarea
   etiquetas_por_tarea = {}
   
-  tareas_con_etiquetas.each do |resultado|
-    tarea_id = resultado[:tarea_id]
-    
-    # Almacenamos la tarea si no la habíamos procesado antes
-    unless tarea_map[tarea_id]
-      tarea_map[tarea_id] = {
-        id: tarea_id,
-        titulo: resultado[:titulo],
-        descripcion: resultado[:descripcion],
-        usuario_id: resultado[:usuario_id],
-        lista_id: resultado[:lista_id],
-        titulo: resultado[:titulo],
-        descripcion: resultado[:descripcion],
-        fecha_creacion: resultado[:fecha_creacion],
-        fecha_vencimiento: resultado[:fecha_vencimiento],
-        categoria_id: resultado[:categoria_id],
-        estado_id: resultado[:estado_id],
-        prioridad_id: resultado[:prioridad_id]
-      }
-      etiquetas_por_tarea[tarea_id] = []
-    end
-    
-    # Añadimos la etiqueta si existe
-    if resultado[:etiqueta_id]
+  if resultados[:etiquetas]
+    resultados[:etiquetas].each do |etiqueta|
+      tarea_id = etiqueta[:tarea_id]
+      etiquetas_por_tarea[tarea_id] ||= []
+      
       etiquetas_por_tarea[tarea_id] << {
-        id: resultado[:etiqueta_id],
-        nombre: resultado[:etiqueta_nombre],
-        color: resultado[:etiqueta_color]
+        id: etiqueta[:etiqueta_id],
+        nombre: etiqueta[:nombre],
+        color: etiqueta[:color]
       }
     end
   end
   
-  # Convertimos el hash de tareas a un array
-  datos[:tareas] = tarea_map.values
-  
-  # Organizamos las etiquetas por tarea
+  # Convertimos a formato de array como esperado
   etiquetas_por_tarea.each do |tarea_id, etiquetas|
     datos[:etiquetas_por_tarea] << {
       tarea_id: tarea_id,
-      etiquetas: etiquetas.uniq { |e| e[:id] } # Eliminamos duplicados
+      etiquetas: etiquetas
     }
   end
-  
-  # Obtenemos las listas del usuario (con join para hacerlo más eficiente)
-  datos[:listas] = DB[:listas].where(usuario_id: usuario_id).all
-  
-  # Obtenemos datos de referencia en una sola consulta cada uno
-  datos[:datos_referencia][:prioridades] = DB[:prioridades].all
-  datos[:datos_referencia][:estados] = DB[:estados].all
-  datos[:datos_referencia][:categorias] = DB[:categorias].all
   
   # Verificamos si se encontraron datos del usuario
   if datos[:tareas].empty? && datos[:listas].empty?
     return [404, { mensaje: 'No se encontraron datos para este usuario' }.to_json]
   end
   
-  # Devolvemos todos los datos en formato JSON
-  [200, datos.to_json]
+  # Añadir caché con un TTL corto para reducir carga
+  cache_control :public, max_age: 60  # 1 minuto de caché
+  
+  # Usamos oj para serialización más rápida
+  json_response = defined?(Oj) ? Oj.dump(datos, mode: :compat) : datos.to_json
+  
+  [200, json_response]
 end
