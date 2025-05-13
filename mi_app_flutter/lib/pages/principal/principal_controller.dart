@@ -8,6 +8,7 @@ import '../../models/prioridad.dart';
 import '../../models/service_http_response.dart';
 import '../../services/controladorsesion.dart';
 import '../../models/lista.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 
 class PrincipalController extends GetxController {
   final InicioService _inicioService = InicioService();
@@ -32,6 +33,12 @@ class PrincipalController extends GetxController {
   void onInit() {
     super.onInit();
     cargarDatosUsuario();
+    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+      print(
+        'Notificación recibida en primer plano: ${message.notification?.title}',
+      );
+      // Aquí puedes mostrar un alert, snackbar, etc.
+    });
   }
 
   Future<void> cargarDatosUsuario() async {

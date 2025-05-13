@@ -9,6 +9,8 @@ class RecordatorioService {
   Future<ServiceHttpResponse> crearRecordatorio({
     required int tareaId,
     required DateTime fechaHora,
+    String? tokenFCM,
+    String? mensaje,
   }) async {
     final url = Uri.parse('${BASE_URL}recordatorios/crear');
     final responseWrapper = ServiceHttpResponse();
@@ -20,11 +22,13 @@ class RecordatorioService {
         body: jsonEncode({
           'tarea_id': tareaId,
           'fecha_hora': fechaHora.toIso8601String(),
+          'token_fcm': tokenFCM,
+          'mensaje': mensaje,
         }),
       );
 
       responseWrapper.status = response.statusCode;
-      
+
       if (response.statusCode == 200) {
         try {
           final jsonData = json.decode(response.body);
@@ -55,7 +59,8 @@ class RecordatorioService {
       if (response.statusCode == 200) {
         try {
           final List<dynamic> jsonData = json.decode(response.body);
-          final recordatorios = jsonData.map((json) => Recordatorio.fromMap(json)).toList();
+          final recordatorios =
+              jsonData.map((json) => Recordatorio.fromMap(json)).toList();
           responseWrapper.body = recordatorios;
         } catch (e) {
           responseWrapper.body = 'Error al procesar el JSON: $e';
@@ -65,7 +70,8 @@ class RecordatorioService {
       }
     } catch (e) {
       responseWrapper.status = 500;
-      responseWrapper.body = 'Ocurrió un error al obtener los recordatorios: $e';
+      responseWrapper.body =
+          'Ocurrió un error al obtener los recordatorios: $e';
     }
 
     return responseWrapper;
@@ -76,6 +82,8 @@ class RecordatorioService {
     required int id,
     required int tareaId,
     required DateTime fechaHora,
+    String? tokenFCM,
+    String? mensaje,
   }) async {
     final url = Uri.parse('${BASE_URL}recordatorios/actualizar');
     final responseWrapper = ServiceHttpResponse();
@@ -88,11 +96,13 @@ class RecordatorioService {
           'id': id,
           'tarea_id': tareaId,
           'fecha_hora': fechaHora.toIso8601String(),
+          'token_fcm': tokenFCM,
+          'mensaje': mensaje,
         }),
       );
 
       responseWrapper.status = response.statusCode;
-      
+
       if (response.statusCode == 200) {
         try {
           final jsonData = json.decode(response.body);
@@ -105,7 +115,8 @@ class RecordatorioService {
       }
     } catch (e) {
       responseWrapper.status = 500;
-      responseWrapper.body = 'Ocurrió un error al actualizar el recordatorio: $e';
+      responseWrapper.body =
+          'Ocurrió un error al actualizar el recordatorio: $e';
     }
 
     return responseWrapper;

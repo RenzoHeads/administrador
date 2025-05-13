@@ -48,12 +48,13 @@ GET {{baseUrl}}usuario/7/foto-perfil
   ?usuario_id=7
 #############################################
 
-POST {{baseUrl}}usuario/solicitar-recuperacion
+POST {{baseUrl}}usuario/7/token-fcm
 Content-Type: application/json
 
 {
-  "email": "diazjovita248@gmail.com"
+  "token_fcm": "1234567890"
 }
+
 
 
 

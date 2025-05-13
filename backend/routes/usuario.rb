@@ -40,6 +40,7 @@ post '/usuario/crear-usuario' do
   contrasena = params[:contrasena]
   email = params[:email]
 
+
   begin
     if Usuario.where(nombre: nombre).count == 0
       usuario = Usuario.new(nombre: nombre, contrasena: contrasena, email: email)
@@ -558,6 +559,38 @@ get '/tareaetiqueta/usuario/:usuario_id' do
 end
 
 
+# Asignar un token FCM a un usuario
+post '/usuario/:id/token-fcm' do
+  content_type :json
+  begin
+    # Obtener el usuario por ID
+    usuario = Usuario.first(id: params[:id])
+    unless usuario
+      halt 404, { error: 'Usuario no encontrado' }.to_json
+    end
+
+    # Obtener el token FCM del cuerpo de la solicitud
+    request_data = JSON.parse(request.body.read) rescue {}
+    token_fcm = request_data['token_fcm'] || params[:token_fcm]
+    
+    if token_fcm.nil? || token_fcm.empty?
+      halt 400, { error: 'Token FCM no proporcionado' }.to_json
+    end
+
+    # Actualizar el token FCM del usuario
+    if usuario.respond_to?(:update)
+      usuario.update(token_fcm: token_fcm)
+    else
+      usuario.token_fcm = token_fcm
+      usuario.save
+    end
+
+    { message: 'Token FCM actualizado correctamente' }.to_json
+  rescue => e
+    logger.error "Error al asignar token FCM: #{e.message}"
+    halt 500, { error: 'Error interno al procesar la solicitud' }.to_json
+  end
+end
 
 
 # Global connection pool warming at application startup
@@ -653,3 +686,5 @@ get '/usuarios/:usuario_id/datos_completos' do
   
   [200, json_response]
 end
+
+

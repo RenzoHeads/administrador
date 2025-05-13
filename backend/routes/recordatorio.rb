@@ -7,6 +7,8 @@ post '/recordatorios/crear' do
     recordatorio = Recordatorio.new(
       tarea_id: data['tarea_id'],
       fecha_hora: data['fecha_hora'],
+      token_fcm: data['token_fcm'],
+      mensaje: data['mensaje'],
       
     )
     recordatorio.save
@@ -20,6 +22,8 @@ put '/recordatorios/actualizar' do
       recordatorio.update(
         tarea_id: data['tarea_id'],
         fecha_hora: data['fecha_hora'],
+        token_fcm: data['token_fcm'],
+        mensaje: data['mensaje'],
         
       )
       [200, recordatorio.to_json]

@@ -7,6 +7,7 @@ import '../../models/index.dart';
 import '../../services/controladorsesion.dart';
 import '../../services/usuario_service.dart';
 import '../principal/principal_page.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 
 class SignInController extends GetxController {
   TextEditingController txtUsuario = TextEditingController();
@@ -74,8 +75,17 @@ class SignInController extends GetxController {
 
               Usuario usuarioResponse = Usuario.fromMap(userMap);
 
+              final tokenActual = await FirebaseMessaging.instance.getToken();
+              String tokenGuardado = usuarioResponse.tokenFCM ?? '';
+
+              if (tokenActual != null && tokenActual != tokenGuardado) {
+                await service.updateUserTokenFCM(usuarioId, tokenActual);
+                tokenGuardado = tokenActual;
+              }
+
               // Guardar la información del usuario en el controlador de sesión
               controladorSesion.usuarioActual.value = usuarioResponse;
+
               controladorSesion.sesionIniciada.value = true;
               controladorSesion.iniciarSesion(
                 usuarioResponse.id,
@@ -83,6 +93,7 @@ class SignInController extends GetxController {
                 usuarioResponse.contrasena,
                 usuarioResponse.email,
                 usuarioResponse.foto,
+                tokenGuardado,
               );
 
               // Navegar a la página de inicio

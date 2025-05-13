@@ -361,4 +361,30 @@ class UsuarioService {
 
     return serviceResponse;
   }
+
+  //asignar token fcm
+  Future<ServiceHttpResponse?> updateUserTokenFCM(
+    int id,
+    String tokenFCM,
+  ) async {
+    ServiceHttpResponse serviceResponse = ServiceHttpResponse();
+    final url = Uri.parse('${BASE_URL}usuario/$id/token-fcm');
+
+    try {
+      final response = await http.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({'token_fcm': tokenFCM}),
+      );
+
+      serviceResponse.status = response.statusCode;
+      serviceResponse.body = response.body;
+    } catch (e) {
+      print('Error: $e');
+      serviceResponse.status = 500;
+      serviceResponse.body = 'Error al actualizar el token FCM del usuario';
+    }
+
+    return serviceResponse;
+  }
 }

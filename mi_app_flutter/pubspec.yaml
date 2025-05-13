@@ -47,6 +47,10 @@ dependencies:
 dev_dependencies:
   flutter_test:
     sdk: flutter
+  firebase_core: ^2.24.0
+  firebase_messaging: ^14.7.10
+
+
     
   
 

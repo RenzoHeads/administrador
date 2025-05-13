@@ -7,6 +7,7 @@ class Usuario {
   final String email;
   final String? token;
   final String? foto;
+  final String? tokenFCM;
 
   Usuario({
     this.id,
@@ -15,6 +16,7 @@ class Usuario {
     required this.email,
     this.token,
     this.foto,
+    this.tokenFCM,
   });
 
   @override
@@ -28,8 +30,9 @@ class Usuario {
       'nombre': nombre,
       'contrasena': contrasena,
       'email': email,
-      'imagen_perfil': foto,  // Mapeado correcto a campo del backend
+      'imagen_perfil': foto, // Mapeado correcto a campo del backend
       'reset_token': token,
+      'token_fcm': tokenFCM,
     };
   }
 
@@ -40,7 +43,8 @@ class Usuario {
       contrasena: map['contrasena'],
       email: map['email'],
       token: map['reset_token'],
-      foto: map['imagen_perfil'],  // Campo 'imagen' del backend a 'foto' en Dart
+      foto: map['imagen_perfil'], // Campo 'imagen' del backend a 'foto' en Dart
+      tokenFCM: map['token_fcm'],
     );
   }
 
