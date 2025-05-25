@@ -1,5 +1,6 @@
 require 'json'
 require 'securerandom'
+require 'langchain'
 
 # # === CONTROLADORES PARA listas ===
 
@@ -103,4 +104,78 @@ get '/listas/obtener/:id' do
   end
 end
 
+# Generar lista con tareas usando IA
+post '/listas/generar_ia' do
+  content_type :json
+
+  request_payload = JSON.parse(request.body.read)
+  user_prompt = request_payload['prompt'] || ''
+
+  json_schema = {
+    type: 'object',
+    properties: {
+      lista: {
+        type: 'object',
+        properties: {
+          nombre: { type: 'string' },
+          descripcion: { type: 'string' },
+          color: { type: 'string', description: 'Color HEX aleatorio' },
+          tareas: {
+            type: 'array',
+            items: {
+              type: 'object',
+              properties: {
+                nombre: { type: 'string' },
+                descripcion: { type: 'string' },
+                fecha_creacion: { type: 'string', format: 'date' },
+                fecha_vencimiento: { type: 'string', format: 'date' }
+              },
+              required: ['nombre', 'descripcion'],
+              additionalProperties: false,
+              description: "Una lista de tareas basada en el prompt del usuario."
+            },
+            minItems: 1,
+            maxItems: 5,
+          }
+        },
+        required: ['nombre', 'descripcion', 'color', 'tareas'],
+        additionalProperties: false,
+      }}
+  }
+
+  parser = Langchain::OutputParsers::StructuredOutputParser.from_json_schema(json_schema)
+  prompt = Langchain::Prompt::PromptTemplate.new(
+    template: "Genera una lista de tareas basada en el siguiente prompt del usuario: '{user_prompt}'. La fecha actual es '{fecha_actual}. 'El formato de la respuesta debe ser:\n\n{json_schema}\n\n",
+    input_variables: ["user_prompt", "fecha_actual","json_schema"],
+  )
+  prompt_text = prompt.format(user_prompt: user_prompt, fecha_actual: Date.today, json_schema: parser.get_format_instructions)
+
+  llm = Langchain::LLM::GoogleGemini.new(
+    api_key: ENV["GEMINI_API_KEY"],
+    default_options: {
+      chat_model: "gemini-2.0-flash",
+      temperature: 0.5,
+    }
+  )
+
+  response = llm.chat(messages: [{ role: "user", parts: [{ text: prompt_text }]}])
+
+  parsed_response = nil
+  
+  # En caso el parser inicial de un error, se usa el OutputParserException para volver a pasearlo (como un backup)
+  begin
+    parsed_response = parser.parse(response.chat_completion)
+  rescue Langchain::OutputParsers::OutputParserException => e
+    puts "Error: #{e}"
+
+    fix_parser = Langchain::OutputParsers::OutputFixingParser.from_llm(
+      llm: llm,
+      parser: parser
+    )
+
+    parsed_response = fix_parser.parse(response.chat_completion)
+  end
+  
+  parsed_response.to_json
+end
 

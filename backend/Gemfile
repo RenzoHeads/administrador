@@ -10,3 +10,4 @@ gem 'azure-storage-blob'
 gem 'mime-types'
 gem 'pg'
 gem 'concurrent-ruby'
+gem "langchainrb", "~> 0.19.5"
