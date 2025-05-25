@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../widgets/ListTarea/List_tarea_item.dart';
+import '../widgets/tarea/tarea_item.dart';
+import '../widgets/lista/lista_item.dart';
 import 'buscador_controller_page.dart';
 
 class BuscadorPage extends StatelessWidget {
@@ -10,8 +11,20 @@ class BuscadorPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Buscador de Tareas'),
-        automaticallyImplyLeading: false, // Quita la flecha de retroceso
+        automaticallyImplyLeading: false,
+        title: const Text(
+          'Buscador',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+        actions: const [
+          Padding(
+            padding: EdgeInsets.only(right: 16),
+            child: CircleAvatar(
+              radius: 18,
+              child: Icon(Icons.person, size: 20),
+            ),
+          )
+        ],
       ),
       body: Column(
         children: [
@@ -26,71 +39,86 @@ class BuscadorPage extends StatelessWidget {
               child: TextField(
                 controller: controller.buscadorController,
                 decoration: InputDecoration(
-                  hintText: 'Buscar tareas...',
-                  prefixIcon: Icon(Icons.search),
+                  hintText: 'Buscar tareas o listas',
+                  prefixIcon: const Icon(Icons.search),
                   border: InputBorder.none,
-                  contentPadding: EdgeInsets.symmetric(vertical: 15),
-                  suffixIcon: Obx(
-                    () =>
-                        controller.textoBusqueda.value.isNotEmpty
-                            ? IconButton(
-                              icon: Icon(Icons.clear),
-                              onPressed: () {
-                                controller.buscadorController.clear();
-                                controller.actualizarTextoBusqueda('');
-                              },
-                            )
-                            : SizedBox(),
-                  ),
+                  contentPadding: const EdgeInsets.symmetric(vertical: 15),
+                  suffixIcon: Obx(() => controller.textoBusqueda.value.isNotEmpty
+                      ? IconButton(
+                    icon: const Icon(Icons.clear),
+                    onPressed: () {
+                      controller.actualizarTextoBusqueda('');
+                    },
+                  )
+                      : const SizedBox.shrink()),
                 ),
-                onChanged: (value) {
-                  controller.actualizarTextoBusqueda(value);
-                },
+                onChanged: controller.actualizarTextoBusqueda,
               ),
             ),
           ),
 
           // Indicador de carga
-          Obx(
-            () =>
-                controller.cargando.value
-                    ? Center(child: CircularProgressIndicator())
-                    : SizedBox(),
-          ),
+          Obx(() => controller.cargando.value
+              ? const Center(child: CircularProgressIndicator())
+              : const SizedBox()),
 
-          // Lista de tareas
+          // Resultados
           Expanded(
             child: Obx(() {
-              if (controller.tareasEncontradas.isEmpty &&
-                  !controller.cargando.value) {
+              final tareas = controller.ListaTareasBusqueda.where((t) => t.id != null).toList();
+              final listas = controller.ListaListasBusqueda.where((l) => l.id != null).toList();
+
+              if (tareas.isEmpty && listas.isEmpty && !controller.cargando.value) {
                 return Center(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.search_off, size: 64, color: Colors.grey),
-                      SizedBox(height: 16),
-                      Text(
-                        controller.textoBusqueda.value.isEmpty
-                            ? 'No tienes tareas registradas'
-                            : 'No se encontraron tareas',
-                        style: TextStyle(fontSize: 18, color: Colors.grey),
-                      ),
+                    children: const [
+                      Text('No se han encontrado resultados',
+                          style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black87)),
+                      SizedBox(height: 8),
+                      Text('Intenta con una búsqueda diferente',
+                          style: TextStyle(color: Colors.black45)),
+                      SizedBox(height: 24),
+                      Icon(Icons.more_horiz, size: 28, color: Colors.black26),
                     ],
                   ),
                 );
               }
 
-              return Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                child: TareasGridWidget(
-                  tareas: controller.ListaTareasBusqueda,
-                  onTap: (id) {
-                    // Maneja la acción al tocar una tarea
-                    print('Tarea seleccionada: $id');
-                    // Aquí podrías navegar a la página de detalle de la tarea
-                    // Get.toNamed('/detalle-tarea/$id');
-                  },
-                ),
+              return ListView(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                children: [
+                  if (tareas.isNotEmpty) ...[
+                    const Padding(
+                      padding: EdgeInsets.only(top: 16.0, bottom: 8),
+                      child: Text('Tareas',
+                          style: TextStyle(
+                              fontSize: 18, fontWeight: FontWeight.bold)),
+                    ),
+                    ...tareas.map((tarea) => TareaItem(
+                      key: ValueKey(tarea.id),
+                      tareaId: tarea.id!,
+                    )),
+                  ],
+                  if (listas.isNotEmpty) ...[
+                    const Padding(
+                      padding: EdgeInsets.only(top: 24.0, bottom: 8),
+                      child: Text('Listas',
+                          style: TextStyle(
+                              fontSize: 18, fontWeight: FontWeight.bold)),
+                    ),
+                    ...listas.map((lista) => ListaItemWidget(
+                      key: ValueKey(lista.id),
+                      listaId: lista.id!,
+                      onTap: () {
+                        print('Lista seleccionada: ${lista.id}');
+                      },
+                    )),
+                  ],
+                ],
               );
             }),
           ),
