@@ -104,12 +104,40 @@ get '/listas/obtener/:id' do
   end
 end
 
+# Obtener listas por usuario con nombre, cantidad de tareas pendientes y cantidad total de tareas
+get '/listas/usuario/:usuario_id' do
+  content_type :json
+
+  begin
+    listas = Lista.where(usuario_id: params[:usuario_id]).to_a
+    
+    resultado = listas.map do |lista|
+      total_tareas = Tarea.where(lista_id: lista.id).count
+      tareas_pendientes = Tarea.where(lista_id: lista.id, estado_id: 1).count
+      {
+        id: lista.id,
+        nombre: lista.nombre,
+        cantidad_tareas: total_tareas,
+        cantidad_tareas_pendientes: tareas_pendientes
+      }
+    end
+    
+    [200, { listas: resultado }.to_json]
+  rescue 
+    [500, { error: 'Error al obtener las listas' }.to_json]
+  end
+end
+
 # Generar lista con tareas usando IA
 post '/listas/generar_ia' do
   content_type :json
 
   request_payload = JSON.parse(request.body.read)
   user_prompt = request_payload['prompt'] || ''
+
+  if user_prompt.empty?
+    return [400, { error: 'El prompt no puede estar vacío' }.to_json]
+  end
 
   json_schema = {
     type: 'object',
@@ -143,31 +171,30 @@ post '/listas/generar_ia' do
       }}
   }
 
-  parser = Langchain::OutputParsers::StructuredOutputParser.from_json_schema(json_schema)
-  prompt = Langchain::Prompt::PromptTemplate.new(
-    template: "Genera una lista de tareas basada en el siguiente prompt del usuario: '{user_prompt}'. La fecha actual es '{fecha_actual}. 'El formato de la respuesta debe ser:\n\n{json_schema}\n\n",
-    input_variables: ["user_prompt", "fecha_actual","json_schema"],
-  )
-  prompt_text = prompt.format(user_prompt: user_prompt, fecha_actual: Date.today, json_schema: parser.get_format_instructions)
+  begin
+    parser = Langchain::OutputParsers::StructuredOutputParser.from_json_schema(json_schema)
+    prompt = Langchain::Prompt::PromptTemplate.new(
+      template: "Genera una lista de tareas basada en el siguiente prompt del usuario: '{user_prompt}'. La fecha actual es '{fecha_actual}. 'El formato de la respuesta debe ser:\n\n{json_schema}\n\n",
+      input_variables: ["user_prompt", "fecha_actual","json_schema"],
+    )
+    prompt_text = prompt.format(user_prompt: user_prompt, fecha_actual: Date.today, json_schema: parser.get_format_instructions)
 
-  llm = Langchain::LLM::GoogleGemini.new(
-    api_key: ENV["GEMINI_API_KEY"],
-    default_options: {
-      chat_model: "gemini-2.0-flash",
-      temperature: 0.5,
-    }
-  )
+    llm = Langchain::LLM::GoogleGemini.new(
+      api_key: ENV["GEMINI_API_KEY"],
+      default_options: {
+        chat_model: "gemini-2.0-flash",
+        temperature: 0.5,
+      }
+    )
 
-  response = llm.chat(messages: [{ role: "user", parts: [{ text: prompt_text }]}])
+    response = llm.chat(messages: [{ role: "user", parts: [{ text: prompt_text }]}])
 
-  parsed_response = nil
+    parsed_response = nil
   
   # En caso el parser inicial de un error, se usa el OutputParserException para volver a pasearlo (como un backup)
   begin
     parsed_response = parser.parse(response.chat_completion)
   rescue Langchain::OutputParsers::OutputParserException => e
-    puts "Error: #{e}"
-
     fix_parser = Langchain::OutputParsers::OutputFixingParser.from_llm(
       llm: llm,
       parser: parser
@@ -176,6 +203,10 @@ post '/listas/generar_ia' do
     parsed_response = fix_parser.parse(response.chat_completion)
   end
   
-  parsed_response.to_json
+    [200, parsed_response.to_json]
+  rescue 
+
+    [500, { error: 'Error al generar la lista con IA' }.to_json]
+  end
 end
 
