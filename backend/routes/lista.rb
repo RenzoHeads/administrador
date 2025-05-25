@@ -104,6 +104,26 @@ get '/listas/obtener/:id' do
   end
 end
 
+# Obtener listas por usuario con nombre, cantidad de tareas pendientes y cantidad total de tareas
+get '/listas/usuario/:usuario_id' do
+  content_type :json
+
+  listas = Lista.where(usuario_id: params[:usuario_id]).to_a
+
+  resultado = listas.map do |lista|
+    total_tareas = Tarea.where(lista_id: lista.id).count
+    tareas_pendientes = Tarea.where(lista_id: lista.id, estado_id: 1).count
+    {
+      id: lista.id,
+      nombre: lista.nombre,
+      cantidad_tareas: total_tareas,
+      cantidad_tareas_pendientes: tareas_pendientes
+    }
+  end
+  
+  { listas: resultado }.to_json
+end
+
 # Generar lista con tareas usando IA
 post '/listas/generar_ia' do
   content_type :json
