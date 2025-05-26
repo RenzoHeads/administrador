@@ -673,11 +673,12 @@ get '/usuarios/:usuario_id/datos_completos' do
     }
   end
   
-  # TODO: Cuando el usuario recién se registra, te da este error
+  # Nota: Cuando el usuario recién se registra, te da este error, por eso se comenta el código
+  
   # Verificamos si se encontraron datos del usuario
-  if datos[:tareas].empty? && datos[:listas].empty?
-    return [404, { mensaje: 'No se encontraron datos para este usuario' }.to_json]
-  end
+  # if datos[:tareas].empty? && datos[:listas].empty?
+  #   return [404, { mensaje: 'No se encontraron datos para este usuario' }.to_json]
+  # end
   
   # Añadir caché con un TTL corto para reducir carga
   cache_control :public, max_age: 60  # 1 minuto de caché
