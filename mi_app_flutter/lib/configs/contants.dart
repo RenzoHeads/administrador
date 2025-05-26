@@ -1,1 +1,1 @@
-const BASE_URL = 'http://10.0.2.2:4567/'; // Usa la IP de tu computadora
+const BASE_URL = 'http://192.168.100.169:3000/'; // Usa la IP de tu computadora
