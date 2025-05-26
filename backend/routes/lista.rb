@@ -40,16 +40,17 @@ put '/listas/actualizar/:id' do
     end
   end
 
-    # Eliminar lista
+# Eliminar lista y sus tareas relacionadas
 delete '/listas/eliminar/:id' do
-    lista = Lista.first(id: params[:id])
-    if lista
-      lista.destroy
-      [200, 'Lista eliminada']
-    else
-      [404, 'Lista no encontrada']
-    end
-  end   
+  lista = Lista.first(id: params[:id])
+  if lista
+    Tarea.where(lista_id: lista.id).destroy # Elimina todas las tareas relacionadas
+    lista.destroy
+    [200, 'Lista y tareas relacionadas eliminadas']
+  else
+    [404, 'Lista no encontrada']
+  end
+end
 
   #Obtener cantidad de tareas por lista
 get '/listas/cantidad_tareas/:id' do
@@ -128,15 +129,56 @@ get '/listas/usuario/:usuario_id' do
   end
 end
 
+# Obtener lista con tareas por id de lista
+get '/listas/tareas/:id' do
+  content_type 'application/json; charset=utf-8'
+
+  begin
+    lista = Lista.first(id: params[:id])
+
+    if lista.nil?
+      return [404, { error: 'Lista no encontrada' }.to_json]
+    end
+
+    tareas = Tarea.where(lista_id: lista.id).all
+    resultado = {
+      id: lista.id,
+      usuario_id: lista.usuario_id,
+      nombre: lista.nombre.to_s.force_encoding('UTF-8'),
+      descripcion: lista.descripcion.to_s.force_encoding('UTF-8'),
+      color: lista.color.to_s.force_encoding('UTF-8'),
+      tareas: tareas.map do |tarea|
+        {
+          id: tarea.id,
+          titulo: tarea.titulo.to_s.force_encoding('UTF-8'),
+          descripcion: tarea.descripcion.to_s.force_encoding('UTF-8'),
+          fecha_creacion: tarea.fecha_creacion.strftime('%Y-%m-%d'),
+          fecha_vencimiento: tarea.fecha_vencimiento.strftime('%Y-%m-%d'),
+          estado_id: tarea.estado_id,
+          categoria_id: tarea.categoria_id,
+          prioridad_id: tarea.prioridad_id,
+        }
+      end
+    }
+
+    [200, resultado.to_json]
+  rescue StandardError => e
+    puts "Error al obtener la lista con tareas: #{e.message}"
+    [500, { error: 'Error al obtener la lista con tareas' }.to_json]
+  end
+end
+
+
 # Generar lista con tareas usando IA
 post '/listas/generar_ia' do
   content_type :json
 
   request_payload = JSON.parse(request.body.read)
   user_prompt = request_payload['prompt'] || ''
+  usuario_id = request_payload['usuario_id']
 
-  if user_prompt.empty?
-    return [400, { error: 'El prompt no puede estar vacío' }.to_json]
+  if user_prompt.empty? || usuario_id.nil?
+    return [400, { error: 'Error al generar la lista' }.to_json]
   end
 
   json_schema = {
@@ -147,7 +189,7 @@ post '/listas/generar_ia' do
         properties: {
           nombre: { type: 'string' },
           descripcion: { type: 'string' },
-          color: { type: 'string', description: 'Color HEX aleatorio' },
+          color: { type: 'string', description: 'Selecciona uno de estos: #4CAF50, #2196F3, #F44336, #FF9800, #9C27B0, #795548, #607D8B, #E91E63, #009688, #FFEB3B' },
           tareas: {
             type: 'array',
             items: {
@@ -155,10 +197,11 @@ post '/listas/generar_ia' do
               properties: {
                 nombre: { type: 'string' },
                 descripcion: { type: 'string' },
-                fecha_creacion: { type: 'string', format: 'date' },
-                fecha_vencimiento: { type: 'string', format: 'date' }
+                fecha_creacion: { type: 'string', format: 'datetime', description: 'Debes agregar la fecha y la hora de inicio de la tarea. Formato yyyy-MM-dd hh:mm:00' },
+                fecha_vencimiento: { type: 'string', format: 'datetime', description: 'Debes agregar la fecha y la hora de fin de la tarea. Formato yyyy-MM-dd hh:mm:00' },
+                prioridad_id: { type: 'integer', description: 'Solo asigna el número, los valores son: 1: Baja - 2: Media - 3: Alta' },
               },
-              required: ['nombre', 'descripcion'],
+              required: ['nombre', 'descripcion', 'fecha_creacion', 'fecha_vencimiento', 'prioridad_id'],
               additionalProperties: false,
               description: "Una lista de tareas basada en el prompt del usuario."
             },
@@ -190,23 +233,53 @@ post '/listas/generar_ia' do
     response = llm.chat(messages: [{ role: "user", parts: [{ text: prompt_text }]}])
 
     parsed_response = nil
-  
-  # En caso el parser inicial de un error, se usa el OutputParserException para volver a pasearlo (como un backup)
-  begin
-    parsed_response = parser.parse(response.chat_completion)
-  rescue Langchain::OutputParsers::OutputParserException => e
-    fix_parser = Langchain::OutputParsers::OutputFixingParser.from_llm(
-      llm: llm,
-      parser: parser
+
+    # En caso el parser inicial de un error, se usa el OutputParserException para volver a pasearlo (como un backup)
+    begin
+      parsed_response = parser.parse(response.chat_completion)
+    rescue Langchain::OutputParsers::OutputParserException => e
+      fix_parser = Langchain::OutputParsers::OutputFixingParser.from_llm(
+        llm: llm,
+        parser: parser
+      )
+      parsed_response = fix_parser.parse(response.chat_completion)
+    end
+
+    # Guardar en la base de datos
+    lista_data = parsed_response["lista"]
+    lista = Lista.create(
+      usuario_id: usuario_id,
+      nombre: lista_data["nombre"],
+      descripcion: lista_data["descripcion"],
+      color: lista_data["color"]
     )
 
-    parsed_response = fix_parser.parse(response.chat_completion)
-  end
-  
-    [200, parsed_response.to_json]
-  rescue 
+    tareas = []
+    if lista_data["tareas"].is_a?(Array)
+      lista_data["tareas"].each do |tarea_data|
+        tarea = Tarea.create(
+          lista_id: lista.id,
+          usuario_id: usuario_id,
+          titulo: tarea_data["nombre"],
+          descripcion: tarea_data["descripcion"],
+          fecha_creacion: tarea_data["fecha_creacion"] || Date.today.to_s,
+          fecha_vencimiento: tarea_data["fecha_vencimiento"] || Date.today.to_s,
+          estado_id: 1, # Estado pendiente por defecto
+          prioridad_id: tarea_data["prioridad_id"] || 1,
+          categoria_id: 2 # Luego se modificará esto, por ahora se asigna una categoría por defecto
+        )
+        tareas << tarea
+      end
+    end
 
+    resultado = {
+      lista: lista,
+      tareas: tareas
+    }
+
+    [200, resultado.to_json]
+  rescue StandardError => e
+    puts "Sharay: #{e.message}"
     [500, { error: 'Error al generar la lista con IA' }.to_json]
   end
 end
-
