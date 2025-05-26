@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import '../../widgets/lista/lista_item.dart';
 import '../../../models/lista.dart';
+import '../../listas/lista_detalle_page.dart';
 
 class ListasGridWidget extends StatelessWidget {
   final List<Lista> listas;
@@ -25,7 +26,14 @@ class ListasGridWidget extends StatelessWidget {
         return ListaItemWidget(
           key: ValueKey(lista.id),
           listaId: lista.id!,
-          onTap: () => onTap(index),
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => ListaDetallePage(listaId: lista.id!),
+              ),
+            );
+          },
         );
       },
     );

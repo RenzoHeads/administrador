@@ -1,7 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
+import '../../models/lista.dart';
+import '../../models/tarea.dart';
 import '../../pages/listas/lista_crear.dart';
+import '../../pages/listas/lista_ia_modal.dart';
+import '../../services/lista_service.dart';
+import '../../services/controladorsesion.dart';
+import '../../pages/home/home_controler.dart';
+import '../principal/principal_controller.dart';
 
 class CustomFAB extends StatelessWidget {
   final Function()? onTapTask;
@@ -189,11 +196,80 @@ class CustomFAB extends StatelessWidget {
                       backgroundColor: const Color(0xFFF8F0FF),
                       onTap: () {
                         Navigator.pop(context);
-                        if (onTapIA != null) {
-                          onTapIA!();
-                        } else {
-                          Get.toNamed('/crear-lista-ia');
-                        }
+                        showModalBottomSheet(
+                          context: context,
+                          isScrollControlled: true,
+                          backgroundColor: Colors.transparent,
+                          builder:
+                              (context) => ListaIAModal(
+                                onGenerar: (prompt) async {
+                                  final sesion =
+                                      Get.find<ControladorSesionUsuario>();
+                                  final usuario = sesion.usuarioActual.value;
+                                  if (usuario == null || usuario.id == null) {
+                                    Get.snackbar(
+                                      'Error',
+                                      'No hay usuario autenticado',
+                                    );
+                                    return;
+                                  }
+                                  final listaService = ListaService();
+                                  final response = await listaService
+                                      .generarListaIA(
+                                        prompt: prompt,
+                                        usuarioId: usuario.id!,
+                                      );
+                                  if (response.status == 200) {
+                                    // final homeController =
+                                    //     Get.find<HomeController>();
+                                    // final principalController =
+                                    //     Get.find<PrincipalController>();
+
+                                    // final nuevaLista = Lista.fromJson(
+                                    //   response.body['lista'],
+                                    // );
+
+                                    // final nuevasTareas =
+                                    //     response.body['tareas'];
+
+                                    // for (var tarea in nuevasTareas) {
+                                    //   await principalController.AgregarTarea(
+                                    //     tarea,
+                                    //   );
+                                    // }
+
+                                    // await principalController.AgregarLista(
+                                    //   nuevaLista,
+                                    // );
+
+                                    // await homeController.recargarTodo();
+
+                                    // Cerrar todos los modales y refrescar pantalla de listas
+                                    Navigator.of(
+                                      context,
+                                      rootNavigator: true,
+                                    ).popUntil((route) => route.isFirst);
+
+                                    Get.snackbar(
+                                      'Éxito',
+                                      'Lista generada correctamente',
+                                      snackPosition: SnackPosition.BOTTOM,
+                                      backgroundColor: Colors.green,
+                                      colorText: Colors.white,
+                                    );
+                                  } else {
+                                    Get.snackbar(
+                                      'Error',
+                                      'Error al generar la lista',
+                                      snackPosition: SnackPosition.BOTTOM,
+                                      backgroundColor: Colors.red,
+                                      colorText: Colors.white,
+                                    );
+                                  }
+                                },
+                                onClose: () => Navigator.pop(context),
+                              ),
+                        );
                       },
                     ),
                   ],
