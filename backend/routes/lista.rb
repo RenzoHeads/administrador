@@ -153,7 +153,7 @@ get '/listas/tareas/:id' do
       return [404, { error: 'Lista no encontrada' }.to_json]
     end
 
-    tareas = Tarea.where(lista_id: lista.id).all
+    tareas = Tarea.where(lista_id: lista.id).order(:fecha_vencimiento).all
     resultado = {
       id: lista.id,
       usuario_id: lista.usuario_id,
