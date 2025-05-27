@@ -42,14 +42,27 @@ put '/listas/actualizar/:id' do
 
 # Eliminar lista y sus tareas relacionadas
 delete '/listas/eliminar/:id' do
-  lista = Lista.first(id: params[:id])
-  if lista
-    Tarea.where(lista_id: lista.id).destroy # Elimina todas las tareas relacionadas
-    lista.destroy
-    [200, 'Lista y tareas relacionadas eliminadas']
-  else
-    [404, 'Lista no encontrada']
+  content_type 'application/json; charset=utf-8'
+
+  begin
+    lista = Lista.first(id: params[:id])
+  rescue StandardError => e
+    [500, { message: 'Error al encontrar la lista' }.to_json]
   end
+
+  return [404, { message: 'Lista no encontrada' }.to_json] unless lista
+
+  begin
+    Tarea.where(lista_id: lista.id).destroy
+
+    lista.destroy
+
+    raise StandardError, 'Error genérico'
+  rescue StandardError => e
+    [500, { message: 'Error al eliminar los datos' }.to_json]
+  end
+  
+  [200, { message: 'Lista y tareas relacionadas eliminadas' }.to_json]
 end
 
   #Obtener cantidad de tareas por lista

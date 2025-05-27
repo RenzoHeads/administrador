@@ -128,14 +128,11 @@ class ListaService {
       final response = await http.delete(url);
       responseWrapper.status = response.statusCode;
 
-      if (response.statusCode == 200) {
-        responseWrapper.body = 'Lista eliminada con éxito';
-      } else {
-        responseWrapper.body = 'Error: ${response.body}';
-      }
-    } catch (e) {
+      final messageResponse = jsonDecode(response.body);
+      responseWrapper.body = messageResponse['message'];
+    } catch (_) {
       responseWrapper.status = 500;
-      responseWrapper.body = 'Ocurrió un error al eliminar la lista: $e';
+      responseWrapper.body = 'Ocurrió un error al eliminar la lista';
     }
 
     return responseWrapper;

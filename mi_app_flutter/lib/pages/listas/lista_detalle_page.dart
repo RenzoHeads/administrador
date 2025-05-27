@@ -142,34 +142,63 @@ class _ListaDetallePageState extends State<ListaDetallePage> {
                 context: context,
                 builder:
                     (context) => AlertDialog(
-                      title: const Text('Eliminar lista'),
+                      backgroundColor: const Color(0xFFFFFFFF),
+                      title: const Text(
+                        'Eliminar lista',
+                        style: TextStyle(fontWeight: FontWeight.w500),
+                      ),
                       content: const Text(
                         '¿Deseas eliminar esta lista y todas las tareas asociadas? Esta acción será permanente.',
+                        style: TextStyle(
+                          color: Color(0xFF6F7686),
+                          fontSize: 16,
+                        ),
                       ),
                       actions: [
-                        TextButton(
-                          onPressed: () => Navigator.of(context).pop(false),
-                          child: const Text('Cancelar'),
-                        ),
-                        TextButton(
-                          onPressed: () => Navigator.of(context).pop(true),
-                          style: TextButton.styleFrom(
-                            foregroundColor: const Color(
-                              0xFFDD3B3F,
-                            ), // Texto rojo
-                            backgroundColor: const Color(
-                              0xFFFDF2F2,
-                            ), // Fondo rojo claro
-                          ),
-                          child: const Text('Eliminar'),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: TextButton(
+                                onPressed:
+                                    () => Navigator.of(context).pop(false),
+                                style: TextButton.styleFrom(
+                                  foregroundColor: const Color(0xFF565D6D),
+                                  backgroundColor: const Color(0xFFF3F4F6),
+                                  shape: const StadiumBorder(),
+                                ),
+                                child: const Text(
+                                  'Cancelar',
+                                  style: TextStyle(fontSize: 16),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: TextButton(
+                                onPressed:
+                                    () => Navigator.of(context).pop(true),
+                                style: TextButton.styleFrom(
+                                  foregroundColor: const Color(0xFFFFFFFF),
+                                  backgroundColor: const Color(0xFFDE3B40),
+                                  shape: const StadiumBorder(),
+                                ),
+                                child: const Text(
+                                  'Eliminar',
+                                  style: TextStyle(fontSize: 16),
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),
               );
+
               if (confirm == true) {
                 final response = await _listaService.eliminarLista(
                   widget.listaId,
                 );
+
                 if (mounted) {
                   if (response.status == 200) {
                     await _principalController.EliminarLista(widget.listaId);
@@ -177,11 +206,11 @@ class _ListaDetallePageState extends State<ListaDetallePage> {
                     await _buscadorController.recargarBuscador();
                     await _calendarioController.recargarCalendario();
 
-                    Get.back(result: true); // Volver a la lista de listas
+                    Get.back(result: true);
 
                     Get.snackbar(
                       'Éxito',
-                      'Lista eliminada correctamente',
+                      response.body,
                       snackPosition: SnackPosition.BOTTOM,
                       backgroundColor: Colors.green,
                       colorText: Colors.white,
@@ -189,7 +218,7 @@ class _ListaDetallePageState extends State<ListaDetallePage> {
                   } else {
                     Get.snackbar(
                       'Error',
-                      'Error al eliminar la lista',
+                      response.body,
                       snackPosition: SnackPosition.BOTTOM,
                       backgroundColor: Colors.red,
                       colorText: Colors.white,
