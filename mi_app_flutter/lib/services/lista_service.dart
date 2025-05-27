@@ -15,11 +15,10 @@ class ListaService {
   }) async {
     final url = Uri.parse('${BASE_URL}listas/crear');
     final responseWrapper = ServiceHttpResponse();
-
     try {
       final response = await http.post(
         url,
-        headers: {'Content-Type': 'application/json'},
+        headers: {'Content-Type': 'application/json; charset=UTF-8'},
         body: jsonEncode({
           'usuario_id': usuarioId,
           'nombre': nombre,
@@ -86,11 +85,10 @@ class ListaService {
   }) async {
     final url = Uri.parse('${BASE_URL}listas/actualizar/$id');
     final responseWrapper = ServiceHttpResponse();
-
     try {
       final response = await http.put(
         url,
-        headers: {'Content-Type': 'application/json'},
+        headers: {'Content-Type': 'application/json; charset=UTF-8'},
         body: jsonEncode({
           'usuario_id': usuarioId,
           'nombre': nombre,
@@ -354,11 +352,10 @@ class ListaService {
   }) async {
     final url = Uri.parse('${BASE_URL}listas/generar_ia');
     final responseWrapper = ServiceHttpResponse();
-
     try {
       final response = await http.post(
         url,
-        headers: {'Content-Type': 'application/json'},
+        headers: {'Content-Type': 'application/json; charset=UTF-8'},
         body: jsonEncode({'prompt': prompt, 'usuario_id': usuarioId}),
       );
       responseWrapper.status = response.statusCode;

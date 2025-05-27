@@ -14,7 +14,7 @@ class UsuarioService {
     try {
       final response = await http.post(
         url,
-        headers: {'Content-Type': 'application/json'},
+        headers: {'Content-Type': 'application/json; charset=UTF-8'},
         body: json.encode({
           'nombre': usuario.nombre,
           'contrasena': usuario.contrasena,
@@ -58,7 +58,7 @@ class UsuarioService {
     try {
       final response = await http.put(
         url,
-        headers: {'Content-Type': 'application/json'},
+        headers: {'Content-Type': 'application/json; charset=UTF-8'},
         body: json.encode({'email': email, 'contrasena': newPassword}),
       );
 
@@ -85,7 +85,9 @@ class UsuarioService {
     try {
       final response = await http.post(
         url,
-        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+        },
         body: {'nombre': nombre, 'contrasena': contrasena, 'email': email},
       );
 
@@ -126,7 +128,7 @@ class UsuarioService {
     try {
       final response = await http.put(
         url,
-        headers: {'Content-Type': 'application/json'},
+        headers: {'Content-Type': 'application/json; charset=UTF-8'},
         body: json.encode({
           'nombre': usuario.nombre,
           'contrasena': usuario.contrasena,
@@ -175,7 +177,7 @@ class UsuarioService {
     try {
       final response = await http.put(
         url,
-        headers: {'Content-Type': 'application/json'},
+        headers: {'Content-Type': 'application/json; charset=UTF-8'},
         body: json.encode({'email': email, 'contrasena': newPassword}),
       );
 
@@ -216,7 +218,7 @@ class UsuarioService {
     try {
       final response = await http.post(
         url,
-        headers: {'Content-Type': 'application/json'},
+        headers: {'Content-Type': 'application/json; charset=UTF-8'},
         body: json.encode({'email': email}),
       );
 
@@ -238,11 +240,10 @@ class UsuarioService {
   ) async {
     ServiceHttpResponse serviceResponse = ServiceHttpResponse();
     final url = Uri.parse('${BASE_URL}usuario/restablecer-contrasena');
-
     try {
       final response = await http.put(
         url,
-        headers: {'Content-Type': 'application/json'},
+        headers: {'Content-Type': 'application/json; charset=UTF-8'},
         body: json.encode({'reset_token': token, 'contrasena': newPassword}),
       );
 
@@ -320,11 +321,10 @@ class UsuarioService {
   Future<ServiceHttpResponse?> updateUserName(int id, String newName) async {
     ServiceHttpResponse serviceResponse = ServiceHttpResponse();
     final url = Uri.parse('${BASE_URL}usuario/actualizar-nombre/$id');
-
     try {
       final response = await http.put(
         url,
-        headers: {'Content-Type': 'application/json'},
+        headers: {'Content-Type': 'application/json; charset=UTF-8'},
         body: json.encode({'nombre': newName}),
       );
 
@@ -347,7 +347,7 @@ class UsuarioService {
     try {
       final response = await http.put(
         url,
-        headers: {'Content-Type': 'application/json'},
+        headers: {'Content-Type': 'application/json; charset=UTF-8'},
         body: json.encode({'email': newEmail}),
       );
 
@@ -373,7 +373,7 @@ class UsuarioService {
     try {
       final response = await http.post(
         url,
-        headers: {'Content-Type': 'application/json'},
+        headers: {'Content-Type': 'application/json; charset=UTF-8'},
         body: json.encode({'token_fcm': tokenFCM}),
       );
 

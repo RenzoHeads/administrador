@@ -18,7 +18,7 @@ class RecordatorioService {
     try {
       final response = await http.post(
         url,
-        headers: {'Content-Type': 'application/json'},
+        headers: {'Content-Type': 'application/json; charset=UTF-8'},
         body: jsonEncode({
           'tarea_id': tareaId,
           'fecha_hora': fechaHora.toIso8601String(),
@@ -91,7 +91,7 @@ class RecordatorioService {
     try {
       final response = await http.put(
         url,
-        headers: {'Content-Type': 'application/json'},
+        headers: {'Content-Type': 'application/json; charset=UTF-8'},
         body: jsonEncode({
           'id': id,
           'tarea_id': tareaId,

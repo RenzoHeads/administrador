@@ -16,7 +16,7 @@ class CategoriaService {
     try {
       final response = await http.post(
         url,
-        headers: {'Content-Type': 'application/json'},
+        headers: {'Content-Type': 'application/json; charset=UTF-8'},
         body: jsonEncode({'nombre': nombre, 'color': color}),
       );
 
@@ -81,7 +81,7 @@ class CategoriaService {
     try {
       final response = await http.put(
         url,
-        headers: {'Content-Type': 'application/json'},
+        headers: {'Content-Type': 'application/json; charset=UTF-8'},
         body: jsonEncode({'nombre': nombre, 'color': color}),
       );
 
