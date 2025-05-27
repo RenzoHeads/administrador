@@ -11,27 +11,68 @@ class TareaDetalleModal extends StatelessWidget {
     this.onEliminacionExitosa,
     Key? key,
   }) : super(key: key);
-
   @override
   Widget build(BuildContext context) {
-    // Desenfocar el teclado inmediatamente al construir el modal
-    FocusScope.of(context).unfocus();
-
-    // Usamos GetBuilder en lugar de Obx para escuchar actualizaciones específicas
-    return GestureDetector(
-      onTap: () {
-        // Desenfocar el teclado cuando se toca fuera del contenido
+    // Usar WillPopScope para manejar el cierre del modal
+    return WillPopScope(
+      onWillPop: () async {
+        // Ocultar teclado antes de cerrar
         FocusScope.of(context).unfocus();
+        return true;
       },
-      child: GetBuilder<VerTareaController>(
-        init: controller,
-        tag: 'tarea_${controller.tareaId}',
-        id: 'tarea_${controller.tareaId}',
-        builder: (controller) {
-          if (controller.cargando) {
+      child: GestureDetector(
+        onTap: () {
+          // Desenfocar el teclado cuando se toca fuera del contenido
+          FocusScope.of(context).unfocus();
+        },
+        child: GetBuilder<VerTareaController>(
+          init: controller,
+          tag: 'tarea_${controller.tareaId}',
+          id: 'tarea_${controller.tareaId}',
+          builder: (controller) {
+            if (controller.cargando) {
+              return Container(
+                constraints: BoxConstraints(
+                  maxHeight: MediaQuery.of(context).size.height * 0.3,
+                ),
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(20),
+                    topRight: Radius.circular(20),
+                  ),
+                ),
+                child: const Center(
+                  child: Padding(
+                    padding: EdgeInsets.all(20.0),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        CircularProgressIndicator(),
+                        SizedBox(height: 16),
+                        Text(
+                          'Cargando...',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            }
+
+            if (controller.tarea == null) {
+              return const SizedBox.shrink();
+            }
+
+            final tarea = controller.tarea!;
+
             return Container(
               constraints: BoxConstraints(
-                maxHeight: MediaQuery.of(context).size.height * 0.3,
+                maxHeight: MediaQuery.of(context).size.height * 0.9,
               ),
               decoration: const BoxDecoration(
                 color: Colors.white,
@@ -40,76 +81,38 @@ class TareaDetalleModal extends StatelessWidget {
                   topRight: Radius.circular(20),
                 ),
               ),
-              child: const Center(
-                child: Padding(
-                  padding: EdgeInsets.all(20.0),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      CircularProgressIndicator(),
-                      SizedBox(height: 16),
-                      Text(
-                        'Cargando...',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w500,
-                        ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Flexible(
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.all(20.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _Header(tarea: tarea, controller: controller),
+                          const SizedBox(height: 24),
+                          _Descripcion(tarea: tarea),
+                          const SizedBox(height: 24),
+                          _FechaHorario(controller: controller),
+                          const SizedBox(height: 24),
+                          _Categoria(controller: controller),
+                          const SizedBox(height: 24),
+                          _Etiquetas(controller: controller),
+                        ],
                       ),
-                    ],
-                  ),
-                ),
-              ),
-            );
-          }
-
-          if (controller.tarea == null) {
-            return const SizedBox.shrink();
-          }
-
-          final tarea = controller.tarea!;
-
-          return Container(
-            constraints: BoxConstraints(
-              maxHeight: MediaQuery.of(context).size.height * 0.9,
-            ),
-            decoration: const BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.only(
-                topLeft: Radius.circular(20),
-                topRight: Radius.circular(20),
-              ),
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Flexible(
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.all(20.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _Header(tarea: tarea, controller: controller),
-                        const SizedBox(height: 24),
-                        _Descripcion(tarea: tarea),
-                        const SizedBox(height: 24),
-                        _FechaHorario(controller: controller),
-                        const SizedBox(height: 24),
-                        _Categoria(controller: controller),
-                        const SizedBox(height: 24),
-                        _Etiquetas(controller: controller),
-                      ],
                     ),
                   ),
-                ),
-                _BotonesAccion(
-                  tarea: tarea,
-                  controller: controller,
-                  onEliminacionExitosa: onEliminacionExitosa,
-                ),
-              ],
-            ),
-          );
-        },
+                  _BotonesAccion(
+                    tarea: tarea,
+                    controller: controller,
+                    onEliminacionExitosa: onEliminacionExitosa,
+                  ),
+                ],
+              ),
+            );
+          },
+        ),
       ),
     );
   }
@@ -118,15 +121,17 @@ class TareaDetalleModal extends StatelessWidget {
     BuildContext context,
     VerTareaController controller,
   ) {
+    // Desenfocar el teclado antes de mostrar el modal
+    FocusScope.of(context).unfocus();
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
+      isDismissible: true,
+      enableDrag: true,
       builder: (context) => TareaDetalleModal(controller: controller),
-    ).then((_) {
-      // Desenfocar cualquier campo de texto cuando se cierre el modal
-      FocusScope.of(context).unfocus();
-    });
+    );
   }
 }
 
@@ -387,14 +392,12 @@ class _BotonesAccion extends StatelessWidget {
                 ),
                 onPressed: () async {
                   try {
-                    // Ya no es necesario asignar controller.tarea.value
                     final eliminacionExitosa = await controller.eliminarTarea(
                       tarea.id!,
                     );
-                    if (eliminacionExitosa && context.mounted) {
-                      Navigator.pop(context);
-                    }
-                    if (onEliminacionExitosa != null) {
+
+                    // Solo ejecutar el callback si existe y la eliminación fue exitosa
+                    if (eliminacionExitosa && onEliminacionExitosa != null) {
                       onEliminacionExitosa!();
                     }
                   } catch (e) {

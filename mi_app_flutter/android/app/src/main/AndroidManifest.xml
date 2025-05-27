@@ -9,7 +9,7 @@
         android:maxSdkVersion="28"/>
 
     <application
-        android:label="mi_app_flutter"
+        android:label="Adminstrador de Tareas"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher"
         android:requestLegacyExternalStorage="true">

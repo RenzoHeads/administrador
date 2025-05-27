@@ -3,11 +3,13 @@ import 'package:get/get.dart';
 import '../../services/lista_service.dart';
 import '../../services/tarea_service.dart';
 import '../principal/principal_controller.dart';
+import '../widgets/tarea/ver_tarea_controller.dart';
+import '../../models/lista.dart';
+import '../../models/tarea.dart';
+import 'lista_editar.dart';
 import '../home/home_controler.dart';
 import '../buscador/buscador_controller_page.dart';
-import '../widgets/lista/lista_item_controller.dart';
-import '../../models/lista.dart';
-import 'lista_editar.dart';
+import '../calendario/calendario_controller_page.dart';
 
 class ListaDetallePage extends StatefulWidget {
   final int listaId;
@@ -21,12 +23,15 @@ class ListaDetallePage extends StatefulWidget {
 class _ListaDetallePageState extends State<ListaDetallePage> {
   final ListaService _listaService = ListaService();
   final TareaService _tareaService = TareaService();
+  final HomeController _homeController = Get.find<HomeController>();
+  final BuscadorController _buscadorController = Get.find<BuscadorController>();
+  final CalendarioController _calendarioController =
+      Get.find<CalendarioController>();
+
   late Future<Map<String, dynamic>?> _futureLista;
 
-  final HomeController _homeController = Get.find<HomeController>();
   final PrincipalController _principalController =
       Get.find<PrincipalController>();
-  final BuscadorController _buscadorController = Get.find<BuscadorController>();
 
   @override
   void initState() {
@@ -37,7 +42,44 @@ class _ListaDetallePageState extends State<ListaDetallePage> {
   Future<Map<String, dynamic>?> _fetchLista() async {
     final response = await _listaService.obtenerListaConTareas(widget.listaId);
     if (response.status == 200 && response.body is Map) {
-      return Map<String, dynamic>.from(response.body);
+      final responseData = Map<String, dynamic>.from(response.body);
+      final lista = responseData['lista'];
+      final tareas = responseData['tareas'];
+
+      // Combinar datos de lista y tareas en un solo mapa
+      if (lista is Lista) {
+        // Convertir tareas de objetos Tarea a Maps para compatibilidad con UI
+        List<Map<String, dynamic>> tareasMap = [];
+        if (tareas is List) {
+          for (var tarea in tareas) {
+            if (tarea is Tarea) {
+              tareasMap.add({
+                'id': tarea.id,
+                'titulo': tarea.titulo,
+                'descripcion': tarea.descripcion,
+                'fecha_creacion': tarea.fechaCreacion.toIso8601String(),
+                'fecha_vencimiento': tarea.fechaVencimiento.toIso8601String(),
+                'prioridad_id': tarea.prioridadId,
+                'estado_id': tarea.estadoId,
+                'categoria_id': tarea.categoriaId,
+                'usuario_id': tarea.usuarioId,
+                'lista_id': tarea.listaId,
+              });
+            } else if (tarea is Map<String, dynamic>) {
+              tareasMap.add(tarea);
+            }
+          }
+        }
+
+        return {
+          'id': lista.id,
+          'usuario_id': lista.usuarioId,
+          'nombre': lista.nombre,
+          'descripcion': lista.descripcion,
+          'color': lista.color,
+          'tareas': tareasMap,
+        };
+      }
     }
     return null;
   }
@@ -74,13 +116,14 @@ class _ListaDetallePageState extends State<ListaDetallePage> {
                         onClose: () => Navigator.pop(context),
                       ),
                     ),
-              );
-              // Refrescar datos tras edición
-              if (mounted) {
-                setState(() {
-                  _futureLista = _fetchLista();
-                });
-              }
+              ).then((result) {
+                // Refrescar datos tras edición si hubo cambios
+                if (result == true && mounted) {
+                  setState(() {
+                    _futureLista = _fetchLista();
+                  });
+                }
+              });
             },
             style: TextButton.styleFrom(
               foregroundColor: const Color(0xFF5E9F7A), // Texto verde
@@ -130,8 +173,9 @@ class _ListaDetallePageState extends State<ListaDetallePage> {
                 if (mounted) {
                   if (response.status == 200) {
                     await _principalController.EliminarLista(widget.listaId);
-
-                    await _homeController.recargarTodo(); // Recargar listas
+                    await _homeController.recargarTodo();
+                    await _buscadorController.recargarBuscador();
+                    await _calendarioController.recargarCalendario();
 
                     Get.back(result: true); // Volver a la lista de listas
 
@@ -322,43 +366,32 @@ class _ListaDetallePageState extends State<ListaDetallePage> {
                                       ),
                                 );
                                 if (confirm == true) {
+                                  print(tarea);
                                   final tareaId = tarea['id'];
-                                  final response = await _tareaService
-                                      .eliminarTarea(tareaId);
-                                  if (mounted) {
-                                    if (response.status == 200) {
-                                      await _principalController.EliminarTarea(
-                                        tareaId,
-                                      );
-                                      await ListaItemController.actualizarLista(
-                                        widget.listaId,
-                                      );
-
-                                      await _homeController.recargarTodo();
-
-                                      await _buscadorController
-                                          .recargarBuscador();
-
-                                      setState(() {
-                                        _futureLista = _fetchLista();
-                                      });
-                                      Get.snackbar(
-                                        'Éxito',
-                                        'Tarea eliminada correctamente',
-                                        snackPosition: SnackPosition.BOTTOM,
-                                        backgroundColor: Colors.green,
-                                        colorText: Colors.white,
-                                      );
+                                  // Crear un controlador temporal para eliminar la tarea
+                                  VerTareaController.eliminarTareaDefinitivo(
+                                    tareaId,
+                                  ).then((eliminacionExitosa) {
+                                    if (eliminacionExitosa) {
+                                      // La eliminación fue exitosa
+                                      if (mounted) {
+                                        setState(() {
+                                          _futureLista = _fetchLista();
+                                        });
+                                      }
                                     } else {
-                                      Get.snackbar(
-                                        'Error',
-                                        'Error al eliminar la tarea',
-                                        snackPosition: SnackPosition.BOTTOM,
-                                        backgroundColor: Colors.red,
-                                        colorText: Colors.white,
-                                      );
+                                      // La eliminación falló
+                                      if (mounted) {
+                                        Get.snackbar(
+                                          'Error',
+                                          'No se pudo eliminar la tarea',
+                                          snackPosition: SnackPosition.BOTTOM,
+                                          backgroundColor: Colors.red,
+                                          colorText: Colors.white,
+                                        );
+                                      }
                                     }
-                                  }
+                                  });
                                 }
                               },
                             ),

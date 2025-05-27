@@ -7,77 +7,33 @@ import '../../../../services/controladorsesion.dart';
 import '../../../../services/usuario_service.dart';
 import '../../../../models/usuario.dart';
 import '../../home_controler.dart';
+import '../../../principal/principal_controller.dart';
 
 class ProfileTabController extends GetxController {
   final ControladorSesionUsuario _sesion = Get.find<ControladorSesionUsuario>();
   final UsuarioService _usuarioService = UsuarioService();
-  HomeController? _homeController;
 
-  RxString profilePhotoUrl = RxString('');
-  RxBool loadingPhoto = true.obs;
-  // Agregamos esta bandera para controlar si ya se cargó la foto
-  RxBool _fotoYaCargada = false.obs;
+  // Obtener el PrincipalController
+  final PrincipalController _principalController =
+      Get.find<PrincipalController>();
+
+  // Usar las variables del PrincipalController para la foto
+  RxString get profilePhotoUrl => _principalController.profilePhotoUrl;
+  RxBool get loadingPhoto => _principalController.loadingPhoto;
 
   @override
   void onInit() {
     super.onInit();
-    // No cargamos la foto aquí, esperamos a que setHomeController sea llamado
+    // Ya no necesitamos cargar la foto aquí, se hace en PrincipalController
   }
 
   void setHomeController(HomeController controller) {
-    _homeController = controller;
-    // Solo cargamos la foto si aún no se ha cargado
-    if (!_fotoYaCargada.value) {
-      cargarFotoPerfil();
-    }
+    // Ya no es necesario mantener referencia al HomeController
   }
 
-  Future<void> cargarFotoPerfil() async {
-    // Si ya estamos cargando o ya cargamos, no hacemos nada
-    if (_fotoYaCargada.value) {
-      return;
-    }
-
-    final usuario = _sesion.usuarioActual.value;
-    if (usuario != null) {
-      try {
-        loadingPhoto.value = true;
-        profilePhotoUrl.value = ''; // Limpiar la URL actual
-
-        // Obtener la URL directamente del controlador de sesión
-        if (usuario.foto != null && usuario.foto!.isNotEmpty) {
-          profilePhotoUrl.value = usuario.foto!;
-          print(
-            'Foto de perfil cargada desde sesión: ${profilePhotoUrl.value}',
-          );
-        } else {
-          print('No hay foto de perfil en la sesión');
-          profilePhotoUrl.value = '';
-        }
-      } catch (e) {
-        print('Error al cargar foto de perfil: $e');
-        profilePhotoUrl.value = '';
-      } finally {
-        loadingPhoto.value = false;
-        _fotoYaCargada.value = true;
-
-        // Notificar al HomeController sobre el cambio
-        if (_homeController != null) {
-          _homeController!.profilePhotoUrl.value = profilePhotoUrl.value;
-          _homeController!.loadingPhoto.value = loadingPhoto.value;
-        }
-      }
-    } else {
-      print('Usuario no encontrado');
-      profilePhotoUrl.value = '';
-      loadingPhoto.value = false;
-    }
-  }
-
-  // Este método ahora sólo fuerza una recarga cuando es necesario
+  // Este método ahora delega al PrincipalController
   Future<void> forzarRecargaFoto() async {
-    _fotoYaCargada.value = false; // Reseteamos la bandera
-    await cargarFotoPerfil(); // Cargamos de nuevo
+    await _principalController.forzarRecargaFoto();
   }
 
   Future<bool> actualizarNombreUsuario(String nuevoNombre) async {
@@ -191,7 +147,7 @@ class ProfileTabController extends GetxController {
               );
               await _sesion.actualizarUsuario(usuarioActualizado);
 
-              forzarRecargaFoto();
+              await forzarRecargaFoto();
 
               Get.snackbar(
                 'Éxito',
@@ -238,7 +194,6 @@ class ProfileTabController extends GetxController {
           await _sesion.actualizarUsuario(usuarioActualizado);
 
           profilePhotoUrl.value = '';
-          _fotoYaCargada.value = false;
 
           Get.snackbar(
             'Éxito',

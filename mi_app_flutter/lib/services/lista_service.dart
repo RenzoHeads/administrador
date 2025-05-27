@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../../models/lista.dart';
+import '../../models/tarea.dart';
 import '../../configs/contants.dart';
 import '../../models/service_http_response.dart';
 
@@ -264,7 +265,7 @@ class ListaService {
     return responseWrapper;
   }
 
-  // Obtener todas las listas de un usuario, incluyendo sus tareas (sin tipar)
+  // Obtener todas las listas de un usuario, incluyendo sus tareas
   Future<ServiceHttpResponse> obtenerListasConTareas(int usuarioId) async {
     final url = Uri.parse('${BASE_URL}listas/tareas/$usuarioId');
     final responseWrapper = ServiceHttpResponse();
@@ -276,15 +277,24 @@ class ListaService {
       if (response.statusCode == 200) {
         try {
           final List<dynamic> jsonData = json.decode(response.body);
-          // Cada elemento es un Map con la lista y sus tareas (sin tipar)
-          final listas =
+          final listasConTareas =
               jsonData.map((listaJson) {
                 final listaMap =
                     listaJson is String ? json.decode(listaJson) : listaJson;
-                final tareas = listaMap['tareas'] ?? [];
-                return {...listaMap, 'tareas': tareas};
+
+                // Crear objeto Lista
+                final lista = Lista.fromMap(listaMap);
+
+                // Mapear las tareas
+                final tareasData = listaMap['tareas'] ?? [];
+                final tareas =
+                    (tareasData as List)
+                        .map((tareaMap) => Tarea.fromMap(tareaMap))
+                        .toList();
+
+                return {'lista': lista, 'tareas': tareas};
               }).toList();
-          responseWrapper.body = listas;
+          responseWrapper.body = listasConTareas;
         } catch (e) {
           responseWrapper.body = 'Error al procesar el JSON: $e';
         }
@@ -300,7 +310,7 @@ class ListaService {
     return responseWrapper;
   }
 
-  // Obtener una lista por id, incluyendo sus tareas (sin tipar)
+  // Obtener una lista por id, incluyendo sus tareas
   Future<ServiceHttpResponse> obtenerListaConTareas(int listaId) async {
     final url = Uri.parse('${BASE_URL}listas/tareas/$listaId');
     final responseWrapper = ServiceHttpResponse();
@@ -312,11 +322,20 @@ class ListaService {
       if (response.statusCode == 200) {
         try {
           final dynamic jsonData = json.decode(response.body);
-          // Puede venir como String o Map
           final listaMap =
               jsonData is String ? json.decode(jsonData) : jsonData;
-          final tareas = listaMap['tareas'] ?? [];
-          responseWrapper.body = {...listaMap, 'tareas': tareas};
+
+          // Crear objeto Lista
+          final lista = Lista.fromMap(listaMap);
+
+          // Mapear las tareas
+          final tareasData = listaMap['tareas'] ?? [];
+          final tareas =
+              (tareasData as List)
+                  .map((tareaMap) => Tarea.fromMap(tareaMap))
+                  .toList();
+
+          responseWrapper.body = {'lista': lista, 'tareas': tareas};
         } catch (e) {
           responseWrapper.body = 'Error al procesar el JSON: $e';
         }
@@ -350,8 +369,18 @@ class ListaService {
       if (response.statusCode == 200) {
         try {
           final dynamic jsonData = json.decode(response.body);
-          final lista = jsonData['lista'];
-          final tareas = jsonData['tareas'];
+
+          // Mapear la lista
+          final listaData = jsonData['lista'];
+          final lista = Lista.fromMap(listaData);
+
+          // Mapear las tareas
+          final tareasData = jsonData['tareas'] ?? [];
+          final tareas =
+              (tareasData as List)
+                  .map((tareaMap) => Tarea.fromMap(tareaMap))
+                  .toList();
+
           responseWrapper.body = {'lista': lista, 'tareas': tareas};
         } catch (e) {
           responseWrapper.body = 'Error al procesar el JSON: $e';
@@ -361,8 +390,7 @@ class ListaService {
       }
     } catch (e) {
       responseWrapper.status = 500;
-      responseWrapper.body =
-          'Ocurrió un error al obtener la lista con tareas: $e';
+      responseWrapper.body = 'Ocurrió un error al generar la lista con IA: $e';
     }
 
     return responseWrapper;

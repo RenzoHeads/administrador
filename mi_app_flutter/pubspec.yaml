@@ -51,8 +51,13 @@ dev_dependencies:
     sdk: flutter
   firebase_core: ^2.24.0
   firebase_messaging: ^14.7.10
+  flutter_lints: ^5.0.0
+  flutter_launcher_icons: ^0.13.1
 
-
+flutter_icons:
+  android: true
+  ios: false
+  image_path: "assets/icons/app_icon.png"
     
   
 

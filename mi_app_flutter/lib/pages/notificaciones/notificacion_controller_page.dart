@@ -2,19 +2,21 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import '../../models/recordatorio.dart';
+import '../../configs/contants.dart';
 
 class NotificacionController extends ChangeNotifier {
   List<Recordatorio> _recordatorios = [];
   List<Recordatorio> get recordatorios => _recordatorios;
 
-  final String baseUrl = 'http://192.168.100.169:3000'; // Cambia esto por tu backend real
-  final int usuarioId;  // Id del usuario para filtrar
+  final int usuarioId; // Id del usuario para filtrar
 
   NotificacionController({required this.usuarioId});
 
   Future<void> cargarRecordatoriosDelDia() async {
     try {
-      final response = await http.get(Uri.parse('$baseUrl/tareas/$usuarioId'));
+      final response = await http.get(
+        Uri.parse('${BASE_URL}tareas/$usuarioId'),
+      );
 
       if (response.statusCode == 200) {
         List<dynamic> data = json.decode(response.body);
@@ -27,7 +29,7 @@ class NotificacionController extends ChangeNotifier {
 
         for (var tareaJson in data) {
           // La fecha_vencimiento viene en formato "YYYY-MM-DD HH:MM:SS"
-          String fechaVencStr = tareaJson['fecha_vencimiento'];
+          String fechaVencStr = tareaJson['fecha_creacion'];
           DateTime fechaVenc = DateTime.parse(fechaVencStr).toLocal();
 
           // Filtrar solo tareas que vencen hoy
@@ -56,5 +58,9 @@ class NotificacionController extends ChangeNotifier {
       notifyListeners();
       print('Excepción al cargar tareas: $e');
     }
+  }
+
+  Future<void> RecargarRecordatorios() async {
+    await cargarRecordatoriosDelDia();
   }
 }

@@ -9,11 +9,16 @@ import '../../models/service_http_response.dart';
 import '../../services/controladorsesion.dart';
 import '../../models/lista.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import '../../services/usuario_service.dart';
 
 class PrincipalController extends GetxController {
   final InicioService _inicioService = InicioService();
   final ControladorSesionUsuario _sesionController =
       Get.find<ControladorSesionUsuario>();
+  final UsuarioService _usuarioService = UsuarioService();
+
+  // Getter público para acceder al controlador de sesión
+  ControladorSesionUsuario get sesionController => _sesionController;
 
   // Variables observables para almacenar datos
   var tareas = <Tarea>[].obs;
@@ -29,10 +34,23 @@ class PrincipalController extends GetxController {
   var errorMessage = ''.obs;
   var datosCargados = false.obs;
 
+  // Variables para la barra superior
+  RxString profilePhotoUrl = RxString('');
+  RxBool loadingPhoto = true.obs;
+  RxInt currentPageIndex = 0.obs;
+
+  // Títulos de las páginas
+  final List<String> pageTitles = [
+    'Principal',
+    'Calendario',
+    'Buscador',
+    'Notificaciones',
+  ];
   @override
   void onInit() {
     super.onInit();
     cargarDatosUsuario();
+    cargarFotoPerfil();
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
       print(
         'Notificación recibida en primer plano: ${message.notification?.title}',
@@ -240,5 +258,68 @@ class PrincipalController extends GetxController {
 
   Future<List<Tarea>> ObtenerTareasUsuario() async {
     return tareas;
+  }
+
+  // Método para cambiar el índice de la página actual
+  void cambiarPagina(int index) {
+    currentPageIndex.value = index;
+  }
+
+  // Método para obtener el título de la página actual
+  String get tituloActual =>
+      pageTitles[currentPageIndex
+          .value]; // Métodos para manejar la foto de perfil
+  Future<void> cargarFotoPerfil() async {
+    final usuario = _sesionController.usuarioActual.value;
+    if (usuario != null && usuario.id != null) {
+      try {
+        loadingPhoto.value = true;
+        profilePhotoUrl.value = '';
+
+        if (usuario.foto != null && usuario.foto!.isNotEmpty) {
+          profilePhotoUrl.value = usuario.foto!;
+          print(
+            'Foto de perfil cargada desde sesión: ${profilePhotoUrl.value}',
+          );
+        } else {
+          print(
+            'No hay foto de perfil en la sesión, cargando desde servidor...',
+          );
+          final response = await _usuarioService.getProfilePhotoUrl(
+            usuario.id!,
+          );
+
+          if (response != null &&
+              response.status == 200 &&
+              response.body != null) {
+            final fotoData = response.body as Map<String, dynamic>;
+            final nuevaUrl = fotoData['url_foto'] ?? '';
+
+            if (nuevaUrl.isNotEmpty) {
+              profilePhotoUrl.value = nuevaUrl;
+              print('Foto de perfil cargada desde servidor: $nuevaUrl');
+            } else {
+              print('No se encontró foto de perfil en el servidor');
+            }
+          }
+        }
+      } catch (e) {
+        print('Error al cargar foto de perfil: $e');
+      } finally {
+        loadingPhoto.value = false;
+      }
+    }
+  }
+
+  Future<void> forzarRecargaFoto() async {
+    loadingPhoto.value = true;
+    profilePhotoUrl.value = '';
+    await cargarFotoPerfil();
+  }
+
+  // Método para cerrar la sesión
+  void cerrarSesionCompleta() {
+    _sesionController.cerrarSesion();
+    Get.offAllNamed('/sign-in');
   }
 }

@@ -106,7 +106,7 @@ Content-Type: image/jpeg
 < C:\Users\RENZO\Desktop\Progra Movil\backend\backend\requests\prueba.jpg
 --boundary--
 #############################################
-GET {{baseUrl}}tareas/7
+GET {{baseUrl}}tareas/5
 
 #############################################
 

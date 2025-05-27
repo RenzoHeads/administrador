@@ -180,10 +180,9 @@ class TareaItem extends StatelessWidget {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
+      enableDrag: true,
+      isDismissible: true,
       builder: (context) => TareaDetalleModal(controller: controller),
-    ).then((_) {
-      // Desenfocar el teclado cuando se cierra el modal
-      FocusScope.of(context).unfocus();
-    });
+    );
   }
 }

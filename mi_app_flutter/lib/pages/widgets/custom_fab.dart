@@ -9,6 +9,9 @@ import '../../services/lista_service.dart';
 import '../../services/controladorsesion.dart';
 import '../../pages/home/home_controler.dart';
 import '../principal/principal_controller.dart';
+import '../calendario/calendario_controller_page.dart';
+import '../buscador/buscador_controller_page.dart';
+import '../notificaciones/notificacion_controller_page.dart';
 
 class CustomFAB extends StatelessWidget {
   final Function()? onTapTask;
@@ -205,6 +208,8 @@ class CustomFAB extends StatelessWidget {
                                 onGenerar: (prompt) async {
                                   final sesion =
                                       Get.find<ControladorSesionUsuario>();
+                                  final principal =
+                                      Get.find<PrincipalController>();
                                   final usuario = sesion.usuarioActual.value;
                                   if (usuario == null || usuario.id == null) {
                                     Get.snackbar(
@@ -220,29 +225,52 @@ class CustomFAB extends StatelessWidget {
                                         usuarioId: usuario.id!,
                                       );
                                   if (response.status == 200) {
-                                    // final homeController =
-                                    //     Get.find<HomeController>();
-                                    // final principalController =
-                                    //     Get.find<PrincipalController>();
+                                    // El response.body ahora contiene objetos mapeados
+                                    final data =
+                                        response.body as Map<String, dynamic>;
+                                    final Lista lista = data['lista'] as Lista;
+                                    final List<Tarea> tareas =
+                                        data['tareas'] as List<Tarea>;
 
-                                    // final nuevaLista = Lista.fromJson(
-                                    //   response.body['lista'],
-                                    // );
+                                    // Agregar la lista y las tareas al principal_controller
+                                    await principal.AgregarLista(lista);
+                                    for (Tarea tarea in tareas) {
+                                      await principal.AgregarTarea(tarea);
+                                    }
 
-                                    // final nuevasTareas =
-                                    //     response.body['tareas'];
+                                    // Recargar todas las páginas
+                                    if (Get.isRegistered<HomeController>()) {
+                                      final homeController =
+                                          Get.find<HomeController>();
+                                      await homeController.recargarTodo();
+                                    }
 
-                                    // for (var tarea in nuevasTareas) {
-                                    //   await principalController.AgregarTarea(
-                                    //     tarea,
-                                    //   );
-                                    // }
+                                    if (Get.isRegistered<
+                                      BuscadorController
+                                    >()) {
+                                      final buscadorController =
+                                          Get.find<BuscadorController>();
+                                      await buscadorController
+                                          .recargarBuscador();
+                                    }
 
-                                    // await principalController.AgregarLista(
-                                    //   nuevaLista,
-                                    // );
+                                    if (Get.isRegistered<
+                                      CalendarioController
+                                    >()) {
+                                      final calendarioController =
+                                          Get.find<CalendarioController>();
+                                      await calendarioController
+                                          .recargarCalendario();
+                                    }
 
-                                    // await homeController.recargarTodo();
+                                    if (Get.isRegistered<
+                                      NotificacionController
+                                    >()) {
+                                      final notificacionController =
+                                          Get.find<NotificacionController>();
+                                      await notificacionController
+                                          .cargarRecordatoriosDelDia();
+                                    }
 
                                     // Cerrar todos los modales y refrescar pantalla de listas
                                     Navigator.of(
@@ -252,7 +280,7 @@ class CustomFAB extends StatelessWidget {
 
                                     Get.snackbar(
                                       'Éxito',
-                                      'Lista generada correctamente',
+                                      'Lista generada correctamente con ${tareas.length} tareas',
                                       snackPosition: SnackPosition.BOTTOM,
                                       backgroundColor: Colors.green,
                                       colorText: Colors.white,

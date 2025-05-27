@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../models/lista.dart';
 import '../../models/tarea.dart';
-import '../../services/controladorsesion.dart';
 
 import '../../pages/principal/principal_controller.dart';
 import '../home/tabs/tarea_tab/task_tab_controller.dart';
@@ -13,8 +12,6 @@ import '../home/tabs/lista_tab/lista_tab_controller.dart';
 import '../home/tabs/perfil_tab/profile_tab_controller.dart';
 
 class HomeController extends GetxController {
-  final ControladorSesionUsuario _sesion = Get.find<ControladorSesionUsuario>();
-
   final PrincipalController _principalController =
       Get.find<PrincipalController>();
 
@@ -27,13 +24,25 @@ class HomeController extends GetxController {
   RxList<Lista> listas = <Lista>[].obs;
 
   RxBool cargando = true.obs;
-  RxString profilePhotoUrl = RxString('');
-  RxBool loadingPhoto = true.obs;
 
   RxInt pestanaSeleccionada = 0.obs;
 
   // Para la fecha actual
   RxString fechaActual = ''.obs;
+
+  // Subtítulo dinámico según la pestaña seleccionada
+  String get subtituloActual {
+    switch (pestanaSeleccionada.value) {
+      case 0:
+        return 'Tareas';
+      case 1:
+        return 'Objetivos';
+      case 2:
+        return 'Configuración';
+      default:
+        return 'Tareas';
+    }
+  }
 
   @override
   void onInit() {
@@ -99,7 +108,7 @@ class HomeController extends GetxController {
   }
 
   Future<void> recargarFotoPerfil() async {
-    await profileController.forzarRecargaFoto();
+    await _principalController.forzarRecargaFoto();
   }
 
   Color colorDesdeString(String colorString, {int alpha = 80}) {
@@ -120,8 +129,7 @@ class HomeController extends GetxController {
 
   // Método para cerrar la sesión
   void cerrarSesionCompleta() {
-    _sesion.cerrarSesion();
-    Get.offAllNamed('/sign-in');
+    _principalController.cerrarSesionCompleta();
   }
 
   // Métodos para obtener datos del PrincipalController

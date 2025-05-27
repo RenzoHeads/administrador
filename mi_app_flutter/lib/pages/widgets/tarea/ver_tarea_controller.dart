@@ -14,6 +14,7 @@ import '../../widgets/lista/lista_item_controller.dart';
 import '../../principal/principal_controller.dart';
 import '../../home/home_controler.dart';
 import '../../buscador/buscador_controller_page.dart';
+import '../../calendario/calendario_controller_page.dart';
 
 class VerTareaController extends GetxController {
   final TareaService _tareaService = TareaService();
@@ -21,6 +22,8 @@ class VerTareaController extends GetxController {
       Get.find<PrincipalController>();
   final HomeController _homeController = Get.find<HomeController>();
   final BuscadorController _buscadorController = Get.find<BuscadorController>();
+  final CalendarioController _calendarioController =
+      Get.find<CalendarioController>();
 
   // Variables (ya no son RxBool, son valores simples)
   bool cargando = false;
@@ -71,6 +74,17 @@ class VerTareaController extends GetxController {
       final controller = Get.find<VerTareaController>(tag: tag);
       await controller.cargarTarea(tareaId);
     }
+  }
+
+  // Metodo estatico para eliminar una tarea específica
+  static Future<bool> eliminarTareaDefinitivo(int tareaId) async {
+    // Buscar el controlador por su tag único
+    final String tag = 'tarea_$tareaId';
+    if (Get.isRegistered<VerTareaController>(tag: tag)) {
+      final controller = Get.find<VerTareaController>(tag: tag);
+      return await controller.eliminarTarea(tareaId);
+    }
+    return false; // Si no se encuentra el controlador, no se puede eliminar
   }
 
   // Cargar todos los datos de la tarea desde PrincipalController
@@ -180,23 +194,41 @@ class VerTareaController extends GetxController {
         false;
 
     if (!confirmar) return false;
-
     try {
       final resultado = await _tareaService.eliminarTarea(tareaId);
 
       // Si la eliminación fue exitosa
       if (resultado.status == 200) {
         // Actualizar la lista en PrincipalController
-
         await _principalController.EliminarTarea(tareaId);
         await ListaItemController.actualizarLista(tarea!.listaId!);
 
         await _homeController.recargarTodo();
         await _buscadorController.recargarBuscador();
+        await _calendarioController.recargarCalendario();
+
+        // Cerrar el modal después de eliminar exitosamente
+        Get.back();
+
+        // Mostrar mensaje de éxito
+        Get.snackbar(
+          'Éxito',
+          'Tarea eliminada correctamente',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.green,
+          colorText: Colors.white,
+        );
 
         return true;
       }
 
+      Get.snackbar(
+        'Error',
+        'No se pudo eliminar la tarea',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
       return false;
     } catch (e) {
       print('Excepción al eliminar tarea: $e');

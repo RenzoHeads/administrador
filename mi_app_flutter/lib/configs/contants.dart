@@ -1,1 +1,2 @@
-const BASE_URL = 'http://192.168.100.169:3000/'; // Usa la IP de tu computadora
+const BASE_URL =
+    'https://rubysinatra.agreeableisland-1cef4d7f.eastus2.azurecontainerapps.io/'; // Usa la IP de tu computadora

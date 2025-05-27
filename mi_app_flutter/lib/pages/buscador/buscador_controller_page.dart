@@ -4,11 +4,9 @@ import 'package:get/get.dart';
 
 import '../../models/tarea.dart';
 import '../../models/lista.dart';
-import '../../services/controladorsesion.dart';
 import '../principal/principal_controller.dart';
 
 class BuscadorController extends GetxController {
-  final ControladorSesionUsuario _sesion = Get.find<ControladorSesionUsuario>();
   final PrincipalController _principal = Get.find<PrincipalController>();
 
   final tareasEncontradas = <Tarea>[].obs;
@@ -62,12 +60,18 @@ class BuscadorController extends GetxController {
 
     cargando.value = true;
     try {
-      final tareasFiltradas = todasLasTareas
-          .where((t) => t.titulo.toLowerCase().contains(texto.toLowerCase()))
-          .toList();
-      final listasFiltradas = todasLasListas
-          .where((l) => l.nombre.toLowerCase().contains(texto.toLowerCase()))
-          .toList();
+      final tareasFiltradas =
+          todasLasTareas
+              .where(
+                (t) => t.titulo.toLowerCase().contains(texto.toLowerCase()),
+              )
+              .toList();
+      final listasFiltradas =
+          todasLasListas
+              .where(
+                (l) => l.nombre.toLowerCase().contains(texto.toLowerCase()),
+              )
+              .toList();
 
       tareasEncontradas.assignAll(tareasFiltradas);
       listasEncontradas.assignAll(listasFiltradas);

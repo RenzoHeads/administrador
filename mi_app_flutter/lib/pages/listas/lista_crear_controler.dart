@@ -5,6 +5,8 @@ import '../../services/lista_service.dart';
 import '../../services/controladorsesion.dart';
 import '../../pages/home/home_controler.dart';
 import '../../pages/principal/principal_controller.dart';
+import '../../pages/calendario/calendario_controller_page.dart';
+import '../../pages/buscador/buscador_controller_page.dart';
 
 class CrearListaController extends GetxController {
   final ListaService _listaService = ListaService();
@@ -15,6 +17,10 @@ class CrearListaController extends GetxController {
   final HomeController _homeController = Get.find<HomeController>();
   final PrincipalController _principalController =
       Get.find<PrincipalController>();
+
+  // Controladores para recargar páginas
+  CalendarioController? _calendarioController;
+  BuscadorController? _buscadorController;
 
   // Variables observables
   RxBool cargando = false.obs;
@@ -34,10 +40,16 @@ class CrearListaController extends GetxController {
     Color(0xFF009688), // Verde azulado
     Color(0xFFFFEB3B), // Amarillo
   ];
-
   @override
   void onInit() {
     super.onInit();
+    // Intentar obtener los controladores si están disponibles
+    if (Get.isRegistered<CalendarioController>()) {
+      _calendarioController = Get.find<CalendarioController>();
+    }
+    if (Get.isRegistered<BuscadorController>()) {
+      _buscadorController = Get.find<BuscadorController>();
+    }
   }
 
   @override
@@ -90,8 +102,17 @@ class CrearListaController extends GetxController {
         throw Exception('No se pudo crear la lista');
       }
       await _principalController.AgregarLista(resultado.body as Lista);
-      // Recargar datos
-      _homeController.recargarTodo();
+
+      // Recargar datos en Home
+      await _homeController.recargarTodo();
+
+      // Recargar calendario si está disponible
+
+      await _calendarioController!.recargarCalendario();
+
+      // Recargar buscador si está disponible
+
+      await _buscadorController!.recargarBuscador();
 
       Get.back(result: true);
 

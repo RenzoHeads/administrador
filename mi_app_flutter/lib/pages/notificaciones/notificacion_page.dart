@@ -1,9 +1,10 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'notificacion_controller_page.dart';
 import '../../models/recordatorio_tile.dart';
+import '../../services/controladorsesion.dart';
+import 'package:get/get.dart';
 
 class NotificacionPage extends StatefulWidget {
   @override
@@ -22,8 +23,10 @@ class _NotificacionPageState extends State<NotificacionPage> {
   }
 
   Future<void> _cargarUsuarioYRecordatorios() async {
-    final prefs = await SharedPreferences.getInstance();
-    final int? usuarioId = prefs.getInt('usuario_id');
+    final ControladorSesionUsuario _sesionController =
+        Get.find<ControladorSesionUsuario>();
+
+    final int? usuarioId = _sesionController.usuarioActual.value?.id;
 
     if (usuarioId != null) {
       final controller = NotificacionController(usuarioId: usuarioId);
@@ -55,23 +58,12 @@ class _NotificacionPageState extends State<NotificacionPage> {
   Widget build(BuildContext context) {
     // Estado 1: Cargando
     if (_isLoading) {
-      return Scaffold(
-        appBar: AppBar(
-          title: Text('Notificaciones'),
-          automaticallyImplyLeading: false,
-        ),
-        body: Center(child: CircularProgressIndicator()),
-        bottomNavigationBar: _buildBottomNavBar(),
-      );
+      return Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
     // Estado 2: No logueado
     if (_controller == null) {
       return Scaffold(
-        appBar: AppBar(
-          title: Text('Notificaciones'),
-          automaticallyImplyLeading: false,
-        ),
         body: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -85,18 +77,11 @@ class _NotificacionPageState extends State<NotificacionPage> {
             ],
           ),
         ),
-        bottomNavigationBar: _buildBottomNavBar(),
       );
-    }
-
-    // Estado 3: Sesión válida, tenemos controller
+    } // Estado 3: Sesión válida, tenemos controller
     return ChangeNotifierProvider.value(
       value: _controller!,
       child: Scaffold(
-        appBar: AppBar(
-          title: Text('Notificaciones'),
-          automaticallyImplyLeading: false,
-        ),
         body: Consumer<NotificacionController>(
           builder: (context, controller, _) {
             if (controller.recordatorios.isEmpty) {
@@ -106,8 +91,10 @@ class _NotificacionPageState extends State<NotificacionPage> {
                   children: [
                     Text(
                       'Todo está en orden',
-                      style:
-                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                     SizedBox(height: 8),
                     Text('No tienes notificaciones pendientes'),
@@ -124,28 +111,14 @@ class _NotificacionPageState extends State<NotificacionPage> {
                 itemCount: controller.recordatorios.length,
                 itemBuilder: (context, index) {
                   return RecordatorioTile(
-                      recordatorio: controller.recordatorios[index]);
+                    recordatorio: controller.recordatorios[index],
+                  );
                 },
               ),
             );
           },
         ),
       ),
-    );
-  }
-
-  BottomNavigationBar _buildBottomNavBar() {
-    return BottomNavigationBar(
-      currentIndex: 3,
-      type: BottomNavigationBarType.fixed,
-      items: const [
-        BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Inicio'),
-        BottomNavigationBarItem(
-            icon: Icon(Icons.calendar_today), label: 'Calendario'),
-        BottomNavigationBarItem(icon: Icon(Icons.search), label: 'Buscar'),
-        BottomNavigationBarItem(
-            icon: Icon(Icons.notifications), label: 'Notificaciones'),
-      ],
     );
   }
 }

@@ -4,27 +4,12 @@ import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 
 import './calendario_controller_page.dart';
-import '../../models/tarea.dart';
 
 class CalendarioPage extends StatelessWidget {
   final CalendarioController controller = Get.put(CalendarioController());
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Calendario'),
-        automaticallyImplyLeading: false,
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 16),
-            child: CircleAvatar(
-              radius: 16,
-              child: Icon(Icons.person, size: 18),
-            ),
-          )
-        ],
-      ),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -40,15 +25,18 @@ class CalendarioPage extends StatelessWidget {
               child: Column(
                 children: [
                   Padding(
-                    padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
                     child: Row(
                       children: [
                         Expanded(
                           child: Obx(() {
                             return Text(
-                              DateFormat.yMMMM('es_ES')
-                                  .format(controller.focusedDay.value),
+                              DateFormat.yMMMM(
+                                'es_ES',
+                              ).format(controller.focusedDay.value),
                               style: const TextStyle(
                                 fontSize: 24,
                                 fontWeight: FontWeight.bold,
@@ -67,43 +55,50 @@ class CalendarioPage extends StatelessWidget {
                       ],
                     ),
                   ),
-                  Obx(() => TableCalendar(
-                    locale: 'es_ES',
-                    firstDay: DateTime(2020),
-                    lastDay: DateTime(2100),
-                    focusedDay: controller.focusedDay.value,
-                    selectedDayPredicate: (day) =>
-                        isSameDay(controller.selectedDay.value, day),
-                    onDaySelected: controller.onDaySelected,
-                    startingDayOfWeek: StartingDayOfWeek.monday,
-                    daysOfWeekHeight: 24,
-                    daysOfWeekStyle: const DaysOfWeekStyle(
-                      weekdayStyle: TextStyle(fontWeight: FontWeight.bold),
-                      weekendStyle: TextStyle(
-                          fontWeight: FontWeight.bold, color: Colors.red),
-                    ),
-                    headerVisible: false,
-                    calendarStyle: CalendarStyle(
-                      todayDecoration: BoxDecoration(
-                        color: Colors.green[100],
-                        shape: BoxShape.circle,
+                  Obx(
+                    () => TableCalendar(
+                      locale: 'es_ES',
+                      firstDay: DateTime(2020),
+                      lastDay: DateTime(2100),
+                      focusedDay: controller.focusedDay.value,
+                      selectedDayPredicate:
+                          (day) => isSameDay(controller.selectedDay.value, day),
+                      onDaySelected: controller.onDaySelected,
+                      startingDayOfWeek: StartingDayOfWeek.monday,
+                      daysOfWeekHeight: 24,
+                      daysOfWeekStyle: const DaysOfWeekStyle(
+                        weekdayStyle: TextStyle(fontWeight: FontWeight.bold),
+                        weekendStyle: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: Colors.red,
+                        ),
                       ),
-                      selectedDecoration: BoxDecoration(
-                        color: Colors.green,
-                        shape: BoxShape.circle,
+                      headerVisible: false,
+                      calendarStyle: CalendarStyle(
+                        todayDecoration: BoxDecoration(
+                          color: Colors.green[100],
+                          shape: BoxShape.circle,
+                        ),
+                        selectedDecoration: BoxDecoration(
+                          color: Colors.green,
+                          shape: BoxShape.circle,
+                        ),
+                        outsideDaysVisible: false,
                       ),
-                      outsideDaysVisible: false,
                     ),
-                  )),
+                  ),
                 ],
               ),
             ),
             const SizedBox(height: 16),
             Obx(() {
-              final wd = DateFormat.EEEE('es_ES')
-                  .format(controller.selectedDay.value);
-              final dia = DateFormat('d MMMM, yyyy', 'es_ES')
-                  .format(controller.selectedDay.value);
+              final wd = DateFormat.EEEE(
+                'es_ES',
+              ).format(controller.selectedDay.value);
+              final dia = DateFormat(
+                'd MMMM, yyyy',
+                'es_ES',
+              ).format(controller.selectedDay.value);
               final diaCapitalizado =
                   '${wd[0].toUpperCase()}${wd.substring(1)}';
 
@@ -112,7 +107,9 @@ class CalendarioPage extends StatelessWidget {
                 child: Text(
                   '$diaCapitalizado $dia',
                   style: const TextStyle(
-                      fontSize: 16, fontWeight: FontWeight.bold),
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               );
             }),
@@ -132,18 +129,25 @@ class CalendarioPage extends StatelessWidget {
                     child: TextButton.icon(
                       style: TextButton.styleFrom(
                         padding: const EdgeInsets.symmetric(
-                            vertical: 16, horizontal: 24),
+                          vertical: 16,
+                          horizontal: 24,
+                        ),
                         backgroundColor: Colors.transparent,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
                       ),
                       onPressed: () {
-                        Get.toNamed('/crear-tarea',
-                            arguments: controller.selectedDay.value);
+                        Get.toNamed(
+                          '/crear-tarea',
+                          arguments: controller.selectedDay.value,
+                        );
                       },
-                      icon: const Icon(Icons.add_circle_outline,
-                          color: Colors.green, size: 28),
+                      icon: const Icon(
+                        Icons.add_circle_outline,
+                        color: Colors.green,
+                        size: 28,
+                      ),
                       label: const Text(
                         'Agregar tarea',
                         style: TextStyle(
@@ -163,7 +167,8 @@ class CalendarioPage extends StatelessWidget {
                       final t = tareas[i];
                       return Card(
                         shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12)),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
                         color: Colors.green[50],
                         margin: const EdgeInsets.symmetric(vertical: 6),
                         child: ListTile(

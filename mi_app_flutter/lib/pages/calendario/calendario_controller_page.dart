@@ -1,5 +1,4 @@
 import 'package:get/get.dart';
-import 'package:intl/intl.dart';
 
 import '../../models/tarea.dart';
 import '../../services/tarea_service.dart';
@@ -25,11 +24,24 @@ class CalendarioController extends GetxController {
   }
 
   void previousMonth() {
-    focusedDay.value = DateTime(focusedDay.value.year, focusedDay.value.month - 1, 1);
+    focusedDay.value = DateTime(
+      focusedDay.value.year,
+      focusedDay.value.month - 1,
+      1,
+    );
   }
 
   void nextMonth() {
-    focusedDay.value = DateTime(focusedDay.value.year, focusedDay.value.month + 1, 1);
+    focusedDay.value = DateTime(
+      focusedDay.value.year,
+      focusedDay.value.month + 1,
+      1,
+    );
+  }
+
+  // Función de recarga para actualizar el calendario
+  Future<void> recargarCalendario() async {
+    await _loadTareasDelDia(selectedDay.value);
   }
 
   Future<void> _loadTareasDelDia(DateTime day) async {
@@ -38,10 +50,13 @@ class CalendarioController extends GetxController {
     final resp = await TareaService().obtenerTareasPorUsuario(uid);
     if (resp.status == 200 && resp.body is List<Tarea>) {
       final todas = resp.body as List<Tarea>;
-      tareasDelDia.value = todas.where((t) {
-        final f = t.fechaVencimiento;
-        return f.year == day.year && f.month == day.month && f.day == day.day;
-      }).toList();
+      tareasDelDia.value =
+          todas.where((t) {
+            final f = t.fechaCreacion;
+            return f.year == day.year &&
+                f.month == day.month &&
+                f.day == day.day;
+          }).toList();
     } else {
       tareasDelDia.clear();
     }
