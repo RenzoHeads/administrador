@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:mi_app_flutter/models/lista_con_tareas.dart';
 import '../../models/lista.dart';
 import '../../models/tarea.dart';
 import '../../configs/contants.dart';
@@ -127,7 +128,18 @@ class ListaService {
       responseWrapper.status = response.statusCode;
 
       final messageResponse = jsonDecode(response.body);
-      responseWrapper.body = messageResponse['message'];
+
+      if (response.statusCode == 200) {
+        responseWrapper.body = {
+          'message': messageResponse['message'],
+          'tareas_ids':
+              (messageResponse['tareas_ids'] as List?)
+                  ?.map((e) => e as int)
+                  .toList(),
+        };
+      } else {
+        responseWrapper.body = messageResponse;
+      }
     } catch (_) {
       responseWrapper.status = 500;
       responseWrapper.body = 'Ocurrió un error al eliminar la lista';
@@ -260,51 +272,6 @@ class ListaService {
     return responseWrapper;
   }
 
-  // Obtener todas las listas de un usuario, incluyendo sus tareas
-  Future<ServiceHttpResponse> obtenerListasConTareas(int usuarioId) async {
-    final url = Uri.parse('${BASE_URL}listas/tareas/$usuarioId');
-    final responseWrapper = ServiceHttpResponse();
-
-    try {
-      final response = await http.get(url);
-      responseWrapper.status = response.statusCode;
-
-      if (response.statusCode == 200) {
-        try {
-          final List<dynamic> jsonData = json.decode(response.body);
-          final listasConTareas =
-              jsonData.map((listaJson) {
-                final listaMap =
-                    listaJson is String ? json.decode(listaJson) : listaJson;
-
-                // Crear objeto Lista
-                final lista = Lista.fromMap(listaMap);
-
-                // Mapear las tareas
-                final tareasData = listaMap['tareas'] ?? [];
-                final tareas =
-                    (tareasData as List)
-                        .map((tareaMap) => Tarea.fromMap(tareaMap))
-                        .toList();
-
-                return {'lista': lista, 'tareas': tareas};
-              }).toList();
-          responseWrapper.body = listasConTareas;
-        } catch (e) {
-          responseWrapper.body = 'Error al procesar el JSON: $e';
-        }
-      } else {
-        responseWrapper.body = 'Error: ${response.body}';
-      }
-    } catch (e) {
-      responseWrapper.status = 500;
-      responseWrapper.body =
-          'Ocurrió un error al obtener las listas con tareas: $e';
-    }
-
-    return responseWrapper;
-  }
-
   // Obtener una lista por id, incluyendo sus tareas
   Future<ServiceHttpResponse> obtenerListaConTareas(int listaId) async {
     final url = Uri.parse('${BASE_URL}listas/tareas/$listaId');
@@ -312,25 +279,15 @@ class ListaService {
 
     try {
       final response = await http.get(url);
+
       responseWrapper.status = response.statusCode;
 
       if (response.statusCode == 200) {
         try {
-          final dynamic jsonData = json.decode(response.body);
-          final listaMap =
-              jsonData is String ? json.decode(jsonData) : jsonData;
+          final jsonData = json.decode(response.body);
+          final listaConTareas = ListaConTareas.fromMap(jsonData);
 
-          // Crear objeto Lista
-          final lista = Lista.fromMap(listaMap);
-
-          // Mapear las tareas
-          final tareasData = listaMap['tareas'] ?? [];
-          final tareas =
-              (tareasData as List)
-                  .map((tareaMap) => Tarea.fromMap(tareaMap))
-                  .toList();
-
-          responseWrapper.body = {'lista': lista, 'tareas': tareas};
+          responseWrapper.body = listaConTareas;
         } catch (e) {
           responseWrapper.body = 'Error al procesar el JSON: $e';
         }

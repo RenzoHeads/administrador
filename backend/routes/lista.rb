@@ -52,8 +52,14 @@ delete '/listas/eliminar/:id' do
 
   return [404, { message: 'Lista no encontrada' }.to_json] unless lista
 
+  tareas_ids = []
+
   begin
-    Tarea.where(lista_id: lista.id).destroy
+    tareas = Tarea.where(lista_id: lista.id)
+
+    tareas_ids = tareas.map(&:id)
+
+    tareas.destroy
 
     lista.destroy
 
@@ -62,7 +68,7 @@ delete '/listas/eliminar/:id' do
     [500, { message: 'Error al eliminar los datos' }.to_json]
   end
   
-  [200, { message: 'Lista y tareas relacionadas eliminadas' }.to_json]
+  [200, { message: 'Lista y tareas relacionadas eliminadas', tareas_ids: tareas_ids }.to_json]
 end
 
   #Obtener cantidad de tareas por lista
