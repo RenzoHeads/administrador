@@ -355,14 +355,21 @@ class ListaService {
     try {
       final response = await http.post(
         url,
-        headers: {'Content-Type': 'application/json; charset=UTF-8'},
-        body: jsonEncode({'prompt': prompt, 'usuario_id': usuarioId}),
+        headers: {
+          'Content-Type': 'application/json; charset=UTF-8',
+          'Accept': 'application/json; charset=UTF-8',
+        },
+        body: utf8.encode(
+          jsonEncode({'prompt': prompt, 'usuario_id': usuarioId}),
+        ),
       );
       responseWrapper.status = response.statusCode;
 
       if (response.statusCode == 200) {
         try {
-          final dynamic jsonData = json.decode(response.body);
+          // Decodificar correctamente la respuesta con UTF-8
+          final String responseBody = utf8.decode(response.bodyBytes);
+          final dynamic jsonData = json.decode(responseBody);
 
           // Mapear la lista
           final listaData = jsonData['lista'];
@@ -380,7 +387,8 @@ class ListaService {
           responseWrapper.body = 'Error al procesar el JSON: $e';
         }
       } else {
-        responseWrapper.body = 'Error: ${response.body}';
+        final String errorBody = utf8.decode(response.bodyBytes);
+        responseWrapper.body = 'Error: $errorBody';
       }
     } catch (e) {
       responseWrapper.status = 500;

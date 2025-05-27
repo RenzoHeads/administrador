@@ -494,6 +494,7 @@ class TaskFormController extends GetxController {
       );
 
       await _principalController.AgregarTarea(tareita);
+      await ListaItemController.actualizarLista(tareita.listaId!);
       // Recargar datos en el homeController
       await _principalController.AgregarEtiquetasPorTarea(
         tareita.id!,
