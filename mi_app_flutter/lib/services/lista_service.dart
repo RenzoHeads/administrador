@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:mi_app_flutter/models/lista_con_tareas.dart';
 import '../../models/lista.dart';
 import '../../models/tarea.dart';
 import '../../configs/contants.dart';
@@ -267,37 +266,6 @@ class ListaService {
     } catch (e) {
       responseWrapper.status = 500;
       responseWrapper.body = 'Ocurrió un error al obtener la lista: $e';
-    }
-
-    return responseWrapper;
-  }
-
-  // Obtener una lista por id, incluyendo sus tareas
-  Future<ServiceHttpResponse> obtenerListaConTareas(int listaId) async {
-    final url = Uri.parse('${BASE_URL}listas/tareas/$listaId');
-    final responseWrapper = ServiceHttpResponse();
-
-    try {
-      final response = await http.get(url);
-
-      responseWrapper.status = response.statusCode;
-
-      if (response.statusCode == 200) {
-        try {
-          final jsonData = json.decode(response.body);
-          final listaConTareas = ListaConTareas.fromMap(jsonData);
-
-          responseWrapper.body = listaConTareas;
-        } catch (e) {
-          responseWrapper.body = 'Error al procesar el JSON: $e';
-        }
-      } else {
-        responseWrapper.body = 'Error: ${response.body}';
-      }
-    } catch (e) {
-      responseWrapper.status = 500;
-      responseWrapper.body =
-          'Ocurrió un error al obtener la lista con tareas: $e';
     }
 
     return responseWrapper;
