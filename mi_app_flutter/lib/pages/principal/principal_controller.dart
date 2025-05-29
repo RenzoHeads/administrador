@@ -228,6 +228,18 @@ class PrincipalController extends GetxController {
     return listas;
   }
 
+  Future<Map<String, dynamic>?> ObtenerListaConTareas(int listaId) async {
+    final lista = listas.firstWhereOrNull((l) => l.id == listaId);
+
+    if (lista == null) {
+      return null;
+    }
+
+    final tareasDeLista = tareas.where((t) => t.listaId == listaId).toList();
+
+    return {'lista': lista, 'tareas': tareasDeLista};
+  }
+
   Future<List<Categoria>> ObtenerCategoriasUsuario() async {
     return categorias;
   }
