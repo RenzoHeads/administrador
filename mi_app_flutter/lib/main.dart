@@ -6,7 +6,6 @@ import 'package:intl/date_symbol_data_local.dart';
 
 import 'services/controladorsesion.dart';
 import 'services/usuario_service.dart';
-import 'manejador_token.dart';
 
 import 'pages/sign_in/sign_in_page.dart';
 import 'pages/sign_up/sign_up_page.dart';
@@ -69,17 +68,10 @@ class _MyAppState extends State<MyApp> {
   void initState() {
     super.initState();
 
-    // Manejo de enlaces profundos
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      DeepLinkingHandler.setupDeepLinks(navigatorKey.currentContext!);
-    });
-
     // Notificaciones en primer plano
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
       if (message.notification != null) {
-        print(
-          ' Notificación en primer plano: ${message.notification!.title}',
-        );
+        print(' Notificación en primer plano: ${message.notification!.title}');
         Get.snackbar(
           message.notification!.title ?? 'Notificación',
           message.notification!.body ?? '',

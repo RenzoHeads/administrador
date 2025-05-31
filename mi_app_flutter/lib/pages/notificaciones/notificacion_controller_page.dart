@@ -60,7 +60,8 @@ class NotificacionController extends ChangeNotifier {
     }
   }
 
-  Future<void> RecargarRecordatorios() async {
+  //metodo para recargar pagina desde cualquier lugar
+  Future<void> recargarNotificaciones() async {
     await cargarRecordatoriosDelDia();
   }
 }

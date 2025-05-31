@@ -126,22 +126,45 @@ class ListaService {
       final response = await http.delete(url);
       responseWrapper.status = response.statusCode;
 
-      final messageResponse = jsonDecode(response.body);
-
       if (response.statusCode == 200) {
-        responseWrapper.body = {
-          'message': messageResponse['message'],
-          'tareas_ids':
-              (messageResponse['tareas_ids'] as List?)
-                  ?.map((e) => e as int)
-                  .toList(),
-        };
+        // Verificar si el response body tiene contenido antes de decodificar
+        if (response.body.isNotEmpty) {
+          try {
+            final messageResponse = jsonDecode(response.body);
+            responseWrapper.body = {
+              'message':
+                  messageResponse['message'] ?? 'Lista eliminada correctamente',
+              'tareas_ids':
+                  (messageResponse['tareas_ids'] as List?)
+                      ?.map((e) => e as int)
+                      .toList(),
+            };
+          } catch (e) {
+            // Si hay error al decodificar JSON pero el status es 200, considerarlo exitoso
+            responseWrapper.body = {
+              'message': 'Lista eliminada correctamente',
+              'tareas_ids': <int>[],
+            };
+          }
+        } else {
+          // Si el response body está vacío pero el status es 200, considerarlo exitoso
+          responseWrapper.body = {
+            'message': 'Lista eliminada correctamente',
+            'tareas_ids': <int>[],
+          };
+        }
       } else {
-        responseWrapper.body = messageResponse;
+        // Para otros status codes, intentar decodificar el mensaje de error
+        try {
+          final messageResponse = jsonDecode(response.body);
+          responseWrapper.body = messageResponse;
+        } catch (e) {
+          responseWrapper.body = 'Error: ${response.body}';
+        }
       }
-    } catch (_) {
+    } catch (e) {
       responseWrapper.status = 500;
-      responseWrapper.body = 'Ocurrió un error al eliminar la lista';
+      responseWrapper.body = 'Ocurrió un error al eliminar la lista: $e';
     }
 
     return responseWrapper;

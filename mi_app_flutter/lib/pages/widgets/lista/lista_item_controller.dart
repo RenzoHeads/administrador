@@ -62,4 +62,14 @@ class ListaItemController extends GetxController {
       }
     }
   }
+
+  //Metodo para eliminar una lista específica desde cualquier lugar y que se destruya
+  static Future<void> eliminarLista(int? listaId) async {
+    if (listaId != null) {
+      final String tag = 'lista_$listaId';
+      if (Get.isRegistered<ListaItemController>(tag: tag)) {
+        Get.delete<ListaItemController>(tag: tag);
+      }
+    }
+  }
 }

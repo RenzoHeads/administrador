@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-
+import '../../../models/tarea.dart';
 import '../../../services/lista_service.dart';
 import '../../../services/tarea_service.dart';
 import '../../buscador/buscador_controller_page.dart';
@@ -30,28 +30,32 @@ class VisualizarListaController extends GetxController {
   Future<bool> eliminarLista() async {
     final response = await _listaService.eliminarLista(listaId);
     if (response.status != 200) {
+      // Obtener el mensaje de error específico del servidor si está disponible
+      String errorMessage = 'No se pudo eliminar la lista';
+      if (response.body is String) {
+        errorMessage = response.body;
+      } else if (response.body is Map && response.body['message'] != null) {
+        errorMessage = response.body['message'];
+      }
+
       Get.snackbar(
         'Error',
-        response.body['message'],
+        errorMessage,
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: Colors.red,
         colorText: Colors.white,
       );
       return false;
     }
-    final tareaIds = response.body['tareas_ids'] as List<int>?;
-    await _principalController.EliminarLista(listaId);
-    if (tareaIds != null) {
-      for (final tareaId in tareaIds) {
-        await _principalController.EliminarTarea(tareaId);
-      }
-    }
+
+    await _principalController.verificarYEliminarListaConTareas(listaId);
     await _homeController.recargarTodo();
     await _buscadorController.recargarBuscador();
     await _calendarioController.recargarCalendario();
+
     Get.snackbar(
       'Éxito',
-      response.body['message'],
+      'Lista eliminada correctamente',
       snackPosition: SnackPosition.BOTTOM,
       backgroundColor: Colors.green,
       colorText: Colors.white,
@@ -59,7 +63,7 @@ class VisualizarListaController extends GetxController {
     return true;
   }
 
-  Future<bool> actualizarEstadoTarea(dynamic tarea, int nuevoEstadoId) async {
+  Future<bool> actualizarEstadoTarea(Tarea tarea, int nuevoEstadoId) async {
     final response = await _tareaService.actualizarEstadoTarea(
       tarea.id as int,
       nuevoEstadoId,
@@ -85,6 +89,7 @@ class VisualizarListaController extends GetxController {
 
   Future<bool> eliminarTarea(int tareaId) async {
     await _principalController.EliminarTarea(tareaId);
+    await ListaItemController.actualizarLista(listaId);
     await _homeController.recargarTodo();
     await _buscadorController.recargarBuscador();
     await _calendarioController.recargarCalendario();

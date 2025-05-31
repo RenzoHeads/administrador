@@ -19,9 +19,10 @@ class Comentario {
       id: map['id'],
       tareaId: map['tarea_id'],
       texto: map['texto'],
-      fechaCreacion: map['fecha_creacion'] != null 
-          ? DateTime.parse(map['fecha_creacion']) 
-          : DateTime.now(),
+      fechaCreacion:
+          map['fecha_creacion'] != null
+              ? DateTime.parse(map['fecha_creacion'])
+              : DateTime.now(),
     );
   }
 
@@ -54,7 +55,8 @@ class Comentario {
   String toJson() => json.encode(toMap());
 
   // Factory para crear desde JSON
-  factory Comentario.fromJson(String source) => Comentario.fromMap(json.decode(source));
+  factory Comentario.fromJson(String source) =>
+      Comentario.fromMap(json.decode(source));
 
   @override
   String toString() {
