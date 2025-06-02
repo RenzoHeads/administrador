@@ -5,36 +5,20 @@ class Etiqueta {
   final String nombre;
   final String color;
 
-  Etiqueta({
-    this.id,
-    required this.nombre,
-    required this.color,
-  });
+  Etiqueta({this.id, required this.nombre, required this.color});
 
   // Factory para crear desde un mapa (JSON)
   factory Etiqueta.fromMap(Map<String, dynamic> map) {
-    return Etiqueta(
-      id: map['id'],
-      nombre: map['nombre'],
-      color: map['color'],
-    );
+    return Etiqueta(id: map['id'], nombre: map['nombre'], color: map['color']);
   }
 
   // Método para convertir a mapa
   Map<String, dynamic> toMap() {
-    return {
-      'id': id,
-      'nombre': nombre,
-      'color': color,
-    };
+    return {'id': id, 'nombre': nombre, 'color': color};
   }
 
   // Método para crear una copia del objeto con algunos cambios
-  Etiqueta copyWith({
-    int? id,
-    String? nombre,
-    String? color,
-  }) {
+  Etiqueta copyWith({int? id, String? nombre, String? color}) {
     return Etiqueta(
       id: id ?? this.id,
       nombre: nombre ?? this.nombre,
@@ -46,7 +30,8 @@ class Etiqueta {
   String toJson() => json.encode(toMap());
 
   // Factory para crear desde JSON
-  factory Etiqueta.fromJson(String source) => Etiqueta.fromMap(json.decode(source));
+  factory Etiqueta.fromJson(String source) =>
+      Etiqueta.fromMap(json.decode(source));
 
   @override
   String toString() {

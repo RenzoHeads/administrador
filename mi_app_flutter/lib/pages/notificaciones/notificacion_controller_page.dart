@@ -51,7 +51,6 @@ class NotificacionController extends ChangeNotifier {
         // Si falla, vaciar lista y notificar
         _recordatorios = [];
         notifyListeners();
-        print('Error al cargar tareas: ${response.statusCode}');
       }
     } catch (e) {
       _recordatorios = [];
