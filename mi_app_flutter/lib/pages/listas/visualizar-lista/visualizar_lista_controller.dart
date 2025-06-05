@@ -48,7 +48,7 @@ class VisualizarListaController extends GetxController {
       return false;
     }
 
-    await _principalController.verificarYEliminarListaConTareas(listaId);
+    await _principalController.eliminarListaConTareas(listaId);
     await _homeController.recargarTodo();
     await _buscadorController.recargarBuscador();
     await _calendarioController.recargarCalendario();

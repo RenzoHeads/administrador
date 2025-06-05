@@ -37,9 +37,4 @@ class Estado {
     if (identical(this, other)) return true;
     return other is Estado && other.id == id && other.nombre == nombre;
   }
-
-  @override
-  int get hashCode {
-    return id.hashCode ^ nombre.hashCode;
-  }
 }

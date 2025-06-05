@@ -25,8 +25,6 @@ class ListaItemWidget extends StatelessWidget {
       tag: 'lista_$listaId',
     );
 
-    // Ya no usamos ever para suscribirnos a eventos
-    // El controlador ahora se actualizará mediante llamadas directas
 
     return GetBuilder<ListaItemController>(
       init: controller,

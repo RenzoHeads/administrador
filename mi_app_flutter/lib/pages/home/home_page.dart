@@ -22,156 +22,105 @@ class HomePage extends StatelessWidget {
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Subtítulo dinámico
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-              child: Obx(
-                () => Text(
-                  controller.subtituloActual,
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.grey[700],
-                  ),
-                ),
-              ),
-            ),
-
-            // Pestañas personalizadas
-            _buildTabs(),
-
-            // Contenido según la pestaña seleccionada
-            Expanded(
-              child: Obx(() {
-                switch (controller.pestanaSeleccionada.value) {
-                  case 0:
-                    return TasksTab();
-                  case 1:
-                    return ListsTab();
-                  case 2:
-                    return ProfileTab();
-                  default:
-                    return TasksTab();
-                }
-              }),
-            ),
-          ],
+          children: [_buildSubtitle(), _buildTabs(), _buildTabContent()],
         );
       }),
-
-      // Botón flotante para agregar tarea o lista
-
-      // Barra de navegación inferior
     );
   }
 
-  // Pestañas (Tareas, Listas, Perfil)
+  // Widget para el subtítulo dinámico
+  Widget _buildSubtitle() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      child: Obx(
+        () => Text(
+          controller.subtituloActual,
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w600,
+            color: Colors.grey[700],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // Widget para las pestañas personalizadas
   Widget _buildTabs() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
       child: Row(
         children: [
-          // Pestaña: Tareas
-          Expanded(
-            child: GestureDetector(
-              onTap: () => controller.cambiarPestana(0),
-              child: Obx(
-                () => Container(
-                  decoration: BoxDecoration(
-                    color:
-                        controller.pestanaSeleccionada.value == 0
-                            ? Colors.green[400]
-                            : Colors.grey[200],
-                    borderRadius: BorderRadius.circular(30),
-                  ),
-                  padding: EdgeInsets.symmetric(vertical: 8),
-                  alignment: Alignment.center,
-                  child: Text(
-                    "Tareas",
-                    style: TextStyle(
-                      color:
-                          controller.pestanaSeleccionada.value == 0
-                              ? Colors.white
-                              : Colors.grey[600],
-                      fontWeight:
-                          controller.pestanaSeleccionada.value == 0
-                              ? FontWeight.bold
-                              : FontWeight.normal,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ),
+          _buildTabButton(index: 0, title: "Tareas"),
           SizedBox(width: 8),
-          // Pestaña: Listas
-          Expanded(
-            child: GestureDetector(
-              onTap: () => controller.cambiarPestana(1),
-              child: Obx(
-                () => Container(
-                  decoration: BoxDecoration(
-                    color:
-                        controller.pestanaSeleccionada.value == 1
-                            ? Colors.green[400]
-                            : Colors.grey[200],
-                    borderRadius: BorderRadius.circular(30),
-                  ),
-                  padding: EdgeInsets.symmetric(vertical: 8),
-                  alignment: Alignment.center,
-                  child: Text(
-                    "Objetivos",
-                    style: TextStyle(
-                      color:
-                          controller.pestanaSeleccionada.value == 1
-                              ? Colors.white
-                              : Colors.grey[600],
-                      fontWeight:
-                          controller.pestanaSeleccionada.value == 1
-                              ? FontWeight.bold
-                              : FontWeight.normal,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ),
+          _buildTabButton(index: 1, title: "Objetivos"),
           SizedBox(width: 8),
-          // Pestaña: Perfil
-          Expanded(
-            child: GestureDetector(
-              onTap: () => controller.cambiarPestana(2),
-              child: Obx(
-                () => Container(
-                  decoration: BoxDecoration(
-                    color:
-                        controller.pestanaSeleccionada.value == 2
-                            ? Colors.green[400]
-                            : Colors.grey[200],
-                    borderRadius: BorderRadius.circular(30),
-                  ),
-                  padding: EdgeInsets.symmetric(vertical: 8),
-                  alignment: Alignment.center,
-                  child: Text(
-                    "Perfil",
-                    style: TextStyle(
-                      color:
-                          controller.pestanaSeleccionada.value == 2
-                              ? Colors.white
-                              : Colors.grey[600],
-                      fontWeight:
-                          controller.pestanaSeleccionada.value == 2
-                              ? FontWeight.bold
-                              : FontWeight.normal,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ),
+          _buildTabButton(index: 2, title: "Perfil"),
         ],
       ),
     );
+  }
+
+  // Widget individual para cada botón de pestaña
+  Widget _buildTabButton({required int index, required String title}) {
+    return Expanded(
+      child: GestureDetector(
+        onTap: () => controller.cambiarPestana(index),
+        child: Obx(
+          () => Container(
+            decoration: BoxDecoration(
+              color: _getTabBackgroundColor(index),
+              borderRadius: BorderRadius.circular(30),
+            ),
+            padding: EdgeInsets.symmetric(vertical: 8),
+            alignment: Alignment.center,
+            child: Text(
+              title,
+              style: TextStyle(
+                color: _getTabTextColor(index),
+                fontWeight: _getTabFontWeight(index),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // Widget para el contenido de las pestañas
+  Widget _buildTabContent() {
+    return Expanded(
+      child: Obx(() {
+        switch (controller.pestanaSeleccionada.value) {
+          case 0:
+            return TasksTab();
+          case 1:
+            return ListsTab();
+          case 2:
+            return ProfileTab();
+          default:
+            return TasksTab();
+        }
+      }),
+    );
+  }
+
+  // Métodos auxiliares para los estilos de las pestañas
+  Color _getTabBackgroundColor(int index) {
+    return controller.pestanaSeleccionada.value == index
+        ? Colors.green[400]!
+        : Colors.grey[200]!;
+  }
+
+  Color _getTabTextColor(int index) {
+    return controller.pestanaSeleccionada.value == index
+        ? Colors.white
+        : Colors.grey[600]!;
+  }
+
+  FontWeight _getTabFontWeight(int index) {
+    return controller.pestanaSeleccionada.value == index
+        ? FontWeight.bold
+        : FontWeight.normal;
   }
 }

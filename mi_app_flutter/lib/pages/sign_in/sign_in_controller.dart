@@ -3,7 +3,8 @@ import 'package:flutter/material.dart';
 import 'dart:convert';
 
 import '../../models/service_http_response.dart';
-import '../../models/index.dart';
+
+import '../../models/usuario.dart';
 import '../../services/controladorsesion.dart';
 import '../../services/usuario_service.dart';
 import '../principal/principal_page.dart';
@@ -14,11 +15,23 @@ class SignInController extends GetxController {
   TextEditingController txtContrasena = TextEditingController();
   RxString mensaje = ''.obs;
   RxBool enabled = true.obs;
+  RxBool obscurePassword = true.obs; // Add this line
   UsuarioService usuarioService = UsuarioService();
 
   RxBool hayError = false.obs;
   final ControladorSesionUsuario controladorSesion =
       Get.find<ControladorSesionUsuario>();
+
+  // Add this method
+  void togglePasswordVisibility() {
+    obscurePassword.value = !obscurePassword.value;
+  }
+
+  // Add this method for showing errors (used in _handleLogin)
+  void showError(String message) {
+    _showError(message);
+  }
+
   void goToSignUp(BuildContext context) {
     if (enabled.value) {
       Navigator.pushNamed(context, '/sign-up');

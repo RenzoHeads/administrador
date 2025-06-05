@@ -12,60 +12,71 @@ class TasksTab extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Fecha actual
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: Text(
-            'Hoy, ${DateFormat('d').format(DateTime.now())} de ${DateFormat('MMMM', 'es_ES').format(DateTime.now())}',
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
-          ),
-        ),
+        _buildDateHeader(),
         SizedBox(height: 16),
-
-        // Lista de tareas del día con Debug
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: Obx(
-            () => Text(
-              'Tareas encontradas: ${controller.tareasDeHoy.length}',
-              style: TextStyle(fontSize: 14, color: Colors.grey[600]),
-            ),
-          ),
-        ),
+        _buildTasksCounter(),
         SizedBox(height: 8),
-
-        // Lista de tareas del día
-        Expanded(
-          child: Obx(() {
-            if (controller.tareasDeHoy.isEmpty) {
-              return Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.check_circle_outline,
-                      size: 48,
-                      color: Colors.grey[400],
-                    ),
-                    SizedBox(height: 16),
-                    Text(
-                      'No hay tareas para hoy',
-                      style: TextStyle(color: Colors.grey, fontSize: 16),
-                    ),
-                  ],
-                ),
-              );
-            } else {
-              return TareasGridWidget(
-                tareas: controller.tareasDeHoy,
-                onTap: (id) {
-                  print('Tarea seleccionada: $id');
-                },
-              );
-            }
-          }),
-        ),
+        _buildTasksList(),
       ],
+    );
+  }
+
+  Widget _buildDateHeader() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Text(
+        'Hoy, ${DateFormat('d').format(DateTime.now())} de ${DateFormat('MMMM', 'es_ES').format(DateTime.now())}',
+        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+      ),
+    );
+  }
+
+  Widget _buildTasksCounter() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Obx(
+        () => Text(
+          'Tareas encontradas: ${controller.tareasDeHoy.length}',
+          style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTasksList() {
+    return Expanded(
+      child: Obx(() {
+        if (controller.tareasDeHoy.isEmpty) {
+          return _buildEmptyTasksView();
+        } else {
+          return _buildTasksGrid();
+        }
+      }),
+    );
+  }
+
+  Widget _buildEmptyTasksView() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.check_circle_outline, size: 48, color: Colors.grey[400]),
+          SizedBox(height: 16),
+          Text(
+            'No hay tareas para hoy',
+            style: TextStyle(color: Colors.grey, fontSize: 16),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTasksGrid() {
+    return TareasGridWidget(
+      tareas: controller.tareasDeHoy,
+      onTap: (id) {
+        print('Tarea seleccionada: $id');
+      },
     );
   }
 }

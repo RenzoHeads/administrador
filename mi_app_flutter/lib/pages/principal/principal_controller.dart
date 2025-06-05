@@ -329,17 +329,12 @@ class PrincipalController extends GetxController {
     await cargarFotoPerfil();
   }
 
-  //Verificar si hay tareas en una lista por su id , eliminar las tareas de esa lista y la lista tambien
-  Future<bool> verificarYEliminarListaConTareas(int listaId) async {
-    final tareasEnLista = tareas.where((t) => t.listaId == listaId).toList();
-    if (tareasEnLista.isNotEmpty) {
-      // Eliminar las tareas de la lista
-      tareas.removeWhere((t) => t.listaId == listaId);
-      // Eliminar la lista
-      listas.removeWhere((l) => l.id == listaId);
-      return true;
-    }
-    return false;
+  //Eliminar una lista y sus tareas asociadas ya sea tenga tareas o no
+  Future<void> eliminarListaConTareas(int listaId) async {
+    // Eliminar tareas asociadas a la lista
+    await EliminarTareasPorLista(listaId);
+    // Luego eliminar la lista
+    await EliminarLista(listaId);
   }
 
   // Método para cerrar la sesión

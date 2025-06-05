@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'ver_tarea_controller.dart';
 
+/// Modal principal que muestra los detalles completos de una tarea
+/// Incluye información como título, descripción, fecha, categoría y etiquetas
 class TareaDetalleModal extends StatelessWidget {
   final VerTareaController controller;
   final Function? onEliminacionExitosa;
@@ -11,139 +13,121 @@ class TareaDetalleModal extends StatelessWidget {
     this.onEliminacionExitosa,
     Key? key,
   }) : super(key: key);
+
   @override
   Widget build(BuildContext context) {
-    // Usar WillPopScope para manejar el cierre del modal
     return WillPopScope(
       onWillPop: () async {
-        // Ocultar teclado antes de cerrar
         FocusScope.of(context).unfocus();
         return true;
       },
       child: GestureDetector(
-        onTap: () {
-          // Desenfocar el teclado cuando se toca fuera del contenido
-          FocusScope.of(context).unfocus();
-        },
+        onTap: () => FocusScope.of(context).unfocus(),
         child: GetBuilder<VerTareaController>(
           init: controller,
           tag: 'tarea_${controller.tareaId}',
           id: 'tarea_${controller.tareaId}',
           builder: (controller) {
+            // Widget de carga mientras se obtienen los datos de la tarea
             if (controller.cargando) {
-              return Container(
-                constraints: BoxConstraints(
-                  maxHeight: MediaQuery.of(context).size.height * 0.3,
-                ),
-                decoration: const BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(20),
-                    topRight: Radius.circular(20),
-                  ),
-                ),
-                child: const Center(
-                  child: Padding(
-                    padding: EdgeInsets.all(20.0),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        CircularProgressIndicator(),
-                        SizedBox(height: 16),
-                        Text(
-                          'Cargando...',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              );
+              return _buildLoadingContainer(context);
             }
 
+            // Si no hay tarea disponible, no mostrar nada
             if (controller.tarea == null) {
               return const SizedBox.shrink();
             }
 
             final tarea = controller.tarea!;
-
-            return Container(
-              constraints: BoxConstraints(
-                maxHeight: MediaQuery.of(context).size.height * 0.9,
-              ),
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.only(
-                  topLeft: Radius.circular(20),
-                  topRight: Radius.circular(20),
-                ),
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Flexible(
-                    child: SingleChildScrollView(
-                      padding: const EdgeInsets.all(20.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          _Header(tarea: tarea, controller: controller),
-                          const SizedBox(height: 24),
-                          _Descripcion(tarea: tarea),
-                          const SizedBox(height: 24),
-                          _FechaHorario(controller: controller),
-                          const SizedBox(height: 24),
-                          _Categoria(controller: controller),
-                          const SizedBox(height: 24),
-                          _Etiquetas(controller: controller),
-                        ],
-                      ),
-                    ),
-                  ),
-                  _BotonesAccion(
-                    tarea: tarea,
-                    controller: controller,
-                    onEliminacionExitosa: onEliminacionExitosa,
-                  ),
-                ],
-              ),
-            );
+            return _buildModalContent(context, tarea, controller);
           },
         ),
       ),
     );
   }
 
-  void mostrarDetalleModal(
-    BuildContext context,
-    VerTareaController controller,
-  ) {
-    // Desenfocar el teclado antes de mostrar el modal
-    FocusScope.of(context).unfocus();
-
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      isDismissible: true,
-      enableDrag: true,
-      builder: (context) => TareaDetalleModal(controller: controller),
+  /// Contenedor que se muestra mientras se cargan los datos de la tarea
+  Widget _buildLoadingContainer(BuildContext context) {
+    return Container(
+      constraints: BoxConstraints(
+        maxHeight: MediaQuery.of(context).size.height * 0.3,
+      ),
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(20),
+          topRight: Radius.circular(20),
+        ),
+      ),
+      child: const Center(
+        child: Padding(
+          padding: EdgeInsets.all(20.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              CircularProgressIndicator(),
+              SizedBox(height: 16),
+              Text(
+                'Cargando...',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
-}
 
-class _Header extends StatelessWidget {
-  final dynamic tarea;
-  final VerTareaController controller;
+  /// Contenido principal del modal con toda la información de la tarea
+  Widget _buildModalContent(
+    BuildContext context,
+    dynamic tarea,
+    VerTareaController controller,
+  ) {
+    return Container(
+      constraints: BoxConstraints(
+        maxHeight: MediaQuery.of(context).size.height * 0.9,
+      ),
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(20),
+          topRight: Radius.circular(20),
+        ),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Flexible(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(20.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildHeader(tarea, controller),
+                  const SizedBox(height: 24),
+                  _buildDescripcion(tarea),
+                  const SizedBox(height: 24),
+                  _buildFechaHorario(controller),
+                  const SizedBox(height: 24),
+                  _buildCategoria(controller),
+                  const SizedBox(height: 24),
+                  _buildEtiquetas(controller),
+                ],
+              ),
+            ),
+          ),
+          _buildBotonesAccion(tarea, controller),
+        ],
+      ),
+    );
+  }
 
-  const _Header({required this.tarea, required this.controller});
-
-  @override
-  Widget build(BuildContext context) {
+  /// Cabecera del modal que muestra el título de la tarea y su prioridad
+  /// Incluye el nombre de la tarea y una etiqueta colorizada según la prioridad
+  Widget _buildHeader(dynamic tarea, VerTareaController controller) {
     final colorPrioridad = controller.obtenerColorPrioridad(tarea.prioridadId);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -170,15 +154,10 @@ class _Header extends StatelessWidget {
       ],
     );
   }
-}
 
-class _Descripcion extends StatelessWidget {
-  final dynamic tarea;
-
-  const _Descripcion({required this.tarea});
-
-  @override
-  Widget build(BuildContext context) {
+  /// Sección que muestra la descripción detallada de la tarea
+  /// Presenta el contenido descriptivo en un formato legible
+  Widget _buildDescripcion(dynamic tarea) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -191,15 +170,10 @@ class _Descripcion extends StatelessWidget {
       ],
     );
   }
-}
 
-class _FechaHorario extends StatelessWidget {
-  final VerTareaController controller;
-
-  const _FechaHorario({required this.controller});
-
-  @override
-  Widget build(BuildContext context) {
+  /// Widget que muestra la información temporal de la tarea
+  /// Incluye fecha de creación y horario de inicio y vencimiento
+  Widget _buildFechaHorario(VerTareaController controller) {
     return Row(
       children: [
         Expanded(
@@ -241,15 +215,10 @@ class _FechaHorario extends StatelessWidget {
       ],
     );
   }
-}
 
-class _Categoria extends StatelessWidget {
-  final VerTareaController controller;
-
-  const _Categoria({required this.controller});
-
-  @override
-  Widget build(BuildContext context) {
+  /// Sección que muestra la categoría asignada a la tarea
+  /// Presenta la categoría en una etiqueta con estilo visual distintivo
+  Widget _buildCategoria(VerTareaController controller) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -276,79 +245,68 @@ class _Categoria extends StatelessWidget {
       ],
     );
   }
-}
 
-class _Etiquetas extends StatelessWidget {
-  final VerTareaController controller;
-
-  const _Etiquetas({required this.controller});
-
-  @override
-  Widget build(BuildContext context) {
+  /// Widget que muestra todas las etiquetas asociadas con la tarea
+  /// Cada etiqueta se presenta con su color característico en un layout envolvente
+  Widget _buildEtiquetas(VerTareaController controller) {
     final etiquetas = controller.etiquetas;
-    return etiquetas.isEmpty
-        ? const SizedBox.shrink()
-        : Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              "Etiquetas",
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children:
-                  etiquetas.map((etiqueta) {
-                    Color etiquetaColor;
-                    try {
-                      etiquetaColor = Color(int.parse(etiqueta.color));
-                    } catch (e) {
-                      etiquetaColor = Colors.purple;
-                    }
-                    return Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 6,
-                      ),
-                      decoration: BoxDecoration(
-                        color: etiquetaColor.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: Text(
-                        etiqueta.nombre,
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: etiquetaColor,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    );
-                  }).toList(),
-            ),
-          ],
-        );
+
+    if (etiquetas.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          "Etiquetas",
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children:
+              etiquetas.map((etiqueta) {
+                Color etiquetaColor;
+                try {
+                  etiquetaColor = Color(int.parse(etiqueta.color));
+                } catch (e) {
+                  etiquetaColor = Colors.purple;
+                }
+
+                return Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
+                  decoration: BoxDecoration(
+                    color: etiquetaColor.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Text(
+                    etiqueta.nombre,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: etiquetaColor,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                );
+              }).toList(),
+        ),
+      ],
+    );
   }
-}
 
-class _BotonesAccion extends StatelessWidget {
-  final dynamic tarea;
-  final VerTareaController controller;
-  final Function? onEliminacionExitosa;
-
-  const _BotonesAccion({
-    required this.tarea,
-    required this.controller,
-    this.onEliminacionExitosa,
-  });
-
-  @override
-  Widget build(BuildContext context) {
+  /// Sección inferior con botones de acción para editar y eliminar la tarea
+  /// Proporciona las opciones principales de gestión de la tarea
+  Widget _buildBotonesAccion(dynamic tarea, VerTareaController controller) {
     return Padding(
       padding: const EdgeInsets.all(20.0),
       child: Row(
         children: [
+          // Botón para editar la tarea existente
           Expanded(
             child: Container(
               height: 50,
@@ -380,6 +338,7 @@ class _BotonesAccion extends StatelessWidget {
               ),
             ),
           ),
+          // Botón para eliminar permanentemente la tarea
           Expanded(
             child: Container(
               height: 50,
@@ -396,7 +355,6 @@ class _BotonesAccion extends StatelessWidget {
                       tarea.id!,
                     );
 
-                    // Solo ejecutar el callback si existe y la eliminación fue exitosa
                     if (eliminacionExitosa && onEliminacionExitosa != null) {
                       onEliminacionExitosa!();
                     }
@@ -422,6 +380,24 @@ class _BotonesAccion extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+
+  /// Método auxiliar para mostrar el modal de detalles
+  /// Maneja la presentación del modal con configuraciones específicas
+  void mostrarDetalleModal(
+    BuildContext context,
+    VerTareaController controller,
+  ) {
+    FocusScope.of(context).unfocus();
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      isDismissible: true,
+      enableDrag: true,
+      builder: (context) => TareaDetalleModal(controller: controller),
     );
   }
 }

@@ -6,13 +6,26 @@ import '../../services/usuario_service.dart';
 
 class SignUpController extends GetxController {
   TextEditingController txtUsuario = TextEditingController();
-  // Email is now required for the API
   TextEditingController txtCorreo = TextEditingController();
   TextEditingController txtContrasenia = TextEditingController();
   TextEditingController txtContrasenia2 = TextEditingController();
   UsuarioService usuarioService = UsuarioService();
   RxBool enabled = true.obs;
   RxString mensaje = ''.obs;
+
+  // Observables para controlar la visibilidad de las contraseñas
+  RxBool obscurePassword = true.obs;
+  RxBool obscureConfirmPassword = true.obs;
+
+  // Método para alternar la visibilidad de la contraseña principal
+  void togglePasswordVisibility() {
+    obscurePassword.value = !obscurePassword.value;
+  }
+
+  // Método para alternar la visibilidad de la confirmación de contraseña
+  void toggleConfirmPasswordVisibility() {
+    obscureConfirmPassword.value = !obscureConfirmPassword.value;
+  }
 
   void goToSignIn(BuildContext context) {
     if (enabled.value) {

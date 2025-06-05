@@ -46,9 +46,4 @@ class Etiqueta {
         other.nombre == nombre &&
         other.color == color;
   }
-
-  @override
-  int get hashCode {
-    return id.hashCode ^ nombre.hashCode ^ color.hashCode;
-  }
 }

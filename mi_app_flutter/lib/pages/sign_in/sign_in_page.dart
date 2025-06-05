@@ -20,17 +20,28 @@ class SignInPage extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const _Header(),
+                  // Título principal de la página
+                  _buildHeader(),
                   const SizedBox(height: 32),
-                  _UserField(controller: control.txtUsuario),
+
+                  // Campo de entrada para el usuario
+                  _buildUserField(),
                   const SizedBox(height: 16),
-                  _PasswordField(controller: control.txtContrasena),
+
+                  // Campo de entrada para la contraseña
+                  _buildPasswordField(),
                   const SizedBox(height: 4),
-                  _ForgotPassword(onTap: () => control.goReset(context)),
+
+                  // Enlace para recuperar contraseña
+                  _buildForgotPasswordLink(context),
                   const SizedBox(height: 24),
-                  _LoginButton(control: control),
+
+                  // Botón principal de inicio de sesión
+                  _buildLoginButton(context),
                   const SizedBox(height: 16),
-                  _RegisterLink(onTap: () => control.goSignUp(context)),
+
+                  // Enlace para registro de nuevos usuarios
+                  _buildRegisterLink(context),
                 ],
               ),
             ),
@@ -39,15 +50,12 @@ class SignInPage extends StatelessWidget {
       ),
     );
   }
-}
 
-class _Header extends StatelessWidget {
-  const _Header();
-  @override
-  Widget build(BuildContext context) {
-    return Column(
+  // Widget del encabezado con título
+  Widget _buildHeader() {
+    return const Column(
       crossAxisAlignment: CrossAxisAlignment.start,
-      children: const [
+      children: [
         SizedBox(height: 24),
         Center(
           child: Text(
@@ -63,25 +71,21 @@ class _Header extends StatelessWidget {
       ],
     );
   }
-}
 
-class _UserField extends StatelessWidget {
-  final TextEditingController controller;
-  const _UserField({required this.controller});
-  @override
-  Widget build(BuildContext context) {
+  // Widget del campo de usuario con validación visual
+  Widget _buildUserField() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          children: const [
+        const Row(
+          children: [
             Text('Usuario', style: TextStyle(fontSize: 14, color: Colors.grey)),
             Text(' *', style: TextStyle(color: Colors.red, fontSize: 14)),
           ],
         ),
         const SizedBox(height: 6),
         TextFormField(
-          controller: controller,
+          controller: control.txtUsuario,
           decoration: InputDecoration(
             hintText: 'Ingresa tu nombre',
             prefixIcon: const Icon(Icons.person_outline),
@@ -100,68 +104,60 @@ class _UserField extends StatelessWidget {
       ],
     );
   }
-}
 
-class _PasswordField extends StatefulWidget {
-  final TextEditingController controller;
-  const _PasswordField({required this.controller});
-  @override
-  State<_PasswordField> createState() => _PasswordFieldState();
-}
-
-class _PasswordFieldState extends State<_PasswordField> {
-  bool _obscure = true;
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: const [
-            Text(
-              'Contraseña',
-              style: TextStyle(fontSize: 14, color: Colors.grey),
-            ),
-            Text(' *', style: TextStyle(color: Colors.red, fontSize: 14)),
-          ],
-        ),
-        const SizedBox(height: 6),
-        TextFormField(
-          controller: widget.controller,
-          obscureText: _obscure,
-          decoration: InputDecoration(
-            hintText: 'Ingresa tu contraseña',
-            prefixIcon: const Icon(Icons.lock_outline),
-            suffixIcon: IconButton(
-              icon: Icon(_obscure ? Icons.visibility_off : Icons.visibility),
-              onPressed: () => setState(() => _obscure = !_obscure),
-            ),
-            filled: true,
-            fillColor: const Color(0xFFF6F7F9),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide.none,
-            ),
-            contentPadding: const EdgeInsets.symmetric(
-              vertical: 0,
-              horizontal: 12,
+  // Widget del campo de contraseña con toggle de visibilidad
+  Widget _buildPasswordField() {
+    return Obx(
+      () => Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Row(
+            children: [
+              Text(
+                'Contraseña',
+                style: TextStyle(fontSize: 14, color: Colors.grey),
+              ),
+              Text(' *', style: TextStyle(color: Colors.red, fontSize: 14)),
+            ],
+          ),
+          const SizedBox(height: 6),
+          TextFormField(
+            controller: control.txtContrasena,
+            obscureText: control.obscurePassword.value,
+            decoration: InputDecoration(
+              hintText: 'Ingresa tu contraseña',
+              prefixIcon: const Icon(Icons.lock_outline),
+              suffixIcon: IconButton(
+                icon: Icon(
+                  control.obscurePassword.value
+                      ? Icons.visibility_off
+                      : Icons.visibility,
+                ),
+                onPressed: () => control.togglePasswordVisibility(),
+              ),
+              filled: true,
+              fillColor: const Color(0xFFF6F7F9),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide.none,
+              ),
+              contentPadding: const EdgeInsets.symmetric(
+                vertical: 0,
+                horizontal: 12,
+              ),
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
-}
 
-class _ForgotPassword extends StatelessWidget {
-  final VoidCallback onTap;
-  const _ForgotPassword({required this.onTap});
-  @override
-  Widget build(BuildContext context) {
+  // Widget del enlace para recuperar contraseña
+  Widget _buildForgotPasswordLink(BuildContext context) {
     return Align(
       alignment: Alignment.centerRight,
       child: GestureDetector(
-        onTap: onTap,
+        onTap: () => control.goReset(context),
         child: const Text(
           '¿Olvidaste tu contraseña?',
           style: TextStyle(
@@ -173,40 +169,16 @@ class _ForgotPassword extends StatelessWidget {
       ),
     );
   }
-}
 
-class _LoginButton extends StatelessWidget {
-  final SignInController control;
-  const _LoginButton({required this.control});
-  @override
-  Widget build(BuildContext context) {
+  // Widget del botón de inicio de sesión con estados de carga
+  Widget _buildLoginButton(BuildContext context) {
     return Obx(() {
       final isLoading = control.mensaje.value != '' && !control.hayError.value;
+
       return SizedBox(
         width: double.infinity,
         child: ElevatedButton(
-          onPressed:
-              isLoading
-                  ? null
-                  : () {
-                    if (control.txtUsuario.text.trim().isEmpty) {
-                      control.mensaje.value = 'Por favor ingresa tu usuario';
-                      control.hayError.value = true;
-                      Future.delayed(const Duration(seconds: 3), () {
-                        control.mensaje.value = '';
-                      });
-                      return;
-                    }
-                    if (control.txtContrasena.text.isEmpty) {
-                      control.mensaje.value = 'Por favor ingresa tu contraseña';
-                      control.hayError.value = true;
-                      Future.delayed(const Duration(seconds: 3), () {
-                        control.mensaje.value = '';
-                      });
-                      return;
-                    }
-                    control.goHome(context);
-                  },
+          onPressed: isLoading ? null : () => _handleLogin(context),
           style: ElevatedButton.styleFrom(
             backgroundColor: const Color(0xFF5DB075),
             foregroundColor: Colors.white,
@@ -231,13 +203,9 @@ class _LoginButton extends StatelessWidget {
       );
     });
   }
-}
 
-class _RegisterLink extends StatelessWidget {
-  final VoidCallback onTap;
-  const _RegisterLink({required this.onTap});
-  @override
-  Widget build(BuildContext context) {
+  // Widget del enlace para registro de nuevos usuarios
+  Widget _buildRegisterLink(BuildContext context) {
     return Center(
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -247,7 +215,7 @@ class _RegisterLink extends StatelessWidget {
             style: TextStyle(color: Colors.black87, fontSize: 14),
           ),
           GestureDetector(
-            onTap: onTap,
+            onTap: () => control.goSignUp(context),
             child: const Text(
               'Regístrate',
               style: TextStyle(
@@ -260,5 +228,20 @@ class _RegisterLink extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  // Método para manejar la lógica de inicio de sesión
+  void _handleLogin(BuildContext context) {
+    if (control.txtUsuario.text.trim().isEmpty) {
+      control.showError('Por favor ingresa tu usuario');
+      return;
+    }
+
+    if (control.txtContrasena.text.isEmpty) {
+      control.showError('Por favor ingresa tu contraseña');
+      return;
+    }
+
+    control.goHome(context);
   }
 }

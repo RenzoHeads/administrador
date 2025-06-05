@@ -75,13 +75,4 @@ class Lista {
         other.descripcion == descripcion &&
         other.color == color;
   }
-
-  @override
-  int get hashCode {
-    return id.hashCode ^
-        usuarioId.hashCode ^
-        nombre.hashCode ^
-        descripcion.hashCode ^
-        color.hashCode;
-  }
 }
