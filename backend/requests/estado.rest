@@ -1,0 +1,20 @@
+@baseUrl = https://rubysinatra.agreeableisland-1cef4d7f.eastus2.azurecontainerapps.io
+#@baseUrl = http://localhost:4567/
+
+#############################################
+# OBTENER TODOS LOS ESTADOS
+GET {{baseUrl}}/estados
+
+#############################################
+# OBTENER ESTADO POR ID
+GET {{baseUrl}}/estados/1
+
+#############################################
+# OBTENER ESTADO POR ID (ejemplo con ID 2)
+GET {{baseUrl}}/estados/2
+
+#############################################
+# OBTENER ESTADO POR ID (ejemplo con ID 3)
+GET {{baseUrl}}/estados/3
+
+#############################################

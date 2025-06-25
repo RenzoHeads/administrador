@@ -1,123 +1,107 @@
-@baseUrl = http://localhost:4567/
-
+@baseUrl = https://rubysinatra.agreeableisland-1cef4d7f.eastus2.azurecontainerapps.io
+#@baseUrl = http://localhost:4567/
 #############################################
-
-POST {{baseUrl}}usuario/validar 
-content-type: application/json
+# VALIDAR USUARIO
+POST {{baseUrl}}/usuario/validar
+Content-Type: application/json
 
 {
-  "usuario": "Ana García",
-  "contrasena": "1234"
+  "nombre": "renzo455",
+  "contrasena": "12345678renzo"
 }
 
-
 #############################################
-POST {{baseUrl}}usuario/cambiar-contrasenia
+# CREAR USUARIO
+POST {{baseUrl}}/usuario/crear-usuario
 Content-Type: application/x-www-form-urlencoded
 
-usuario=renzito&contrasenia=3972re
+nombre=Prueba3&contrasena=password123&email=renzoedgar68@gmail.com
 
 #############################################
-POST {{baseUrl}}usuario/crear-usuario
-Content-Type: application/x-www-form-urlencoded
-
-usuario=sapo&contrasenia=3972re
+# ELIMINAR USUARIO
+DELETE {{baseUrl}}/usuario/eliminar/12
 
 #############################################
-GET {{baseUrl}}usuarios/7/datos_completos
+# VERIFICAR SI CORREO EXISTE
+GET {{baseUrl}}/usuario/verificar-correo/renzoedgar68@gmail.com
 
 #############################################
-#############################################
-GET {{baseUrl}}tareas/7
+# OBTENER USUARIO POR ID
+GET {{baseUrl}}/usuario/1
 
 #############################################
-#############################################
-POST {{baseUrl}}tareaetiqueta/85/18
-Content-Type: application/json
-
-{}
-
-
-
-#############################################
-GET {{baseUrl}}adjuntos/1/url
-  ?adjunto_id=1
-
-#############################################
-GET {{baseUrl}}usuario/7/foto-perfil
-  ?usuario_id=7
-#############################################
-
-POST {{baseUrl}}usuario/7/token-fcm
+# SOLICITAR RECUPERACIÓN DE CONTRASEÑA
+POST {{baseUrl}}/usuario/solicitar-recuperacion
 Content-Type: application/json
 
 {
-  "token_fcm": "1234567890"
+  "email": "ana@example.com"
 }
 
-
-
-
 #############################################
-PUT {{baseUrl}}usuario/restablecer-contrasena
+# RESTABLECER CONTRASEÑA CON TOKEN
+PUT {{baseUrl}}/usuario/restablecer-contrasena
 Content-Type: application/json
 
 {
-  "reset_token": "971bc67c5e5357d5a6dcbe5d40cadfe7",
-  "contrasena": "456123"
-
+  "reset_token": "1cee00f753830752cf82826cdc2e5572",
+  "contrasena": "nueva_password123"
 }
 
+#############################################
+# VERIFICAR TOKEN DE RECUPERACIÓN
+GET {{baseUrl}}/usuario/verificar-token/abc123def456
 
 #############################################
+# SUBIR FOTO DE PERFIL
+POST {{baseUrl}}/usuario/1/foto-perfil
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
 
-DELETE {{baseUrl}}tareas/eliminar/71
-
-
-#############################################
-POST {{baseUrl}}adjuntos/subir
-Content-Type: multipart/form-data; boundary=boundary
-
---boundary
+------WebKitFormBoundary7MA4YWxkTrZu0gW
 Content-Disposition: form-data; name="file"; filename="prueba.jpg"
 Content-Type: image/jpeg
 
-< C:\Users\RENZO\Desktop\Progra Movil\backend\backend\requests\prueba.jpg
---boundary
-Content-Disposition: form-data; name="tarea_id"
-
-1
---boundary--
+< prueba.jpg
+------WebKitFormBoundary7MA4YWxkTrZu0gW--
 
 #############################################
-curl -X POST {{baseUrl}}adjuntos/subir \
-  -F "file=@prueba.jpg" \
-  -F "tarea_id=1"
+# OBTENER URL DE FOTO DE PERFIL
+GET {{baseUrl}}/usuario/1/foto-perfil
 
 #############################################
-
-POST {{baseUrl}}usuario//foto-perfil
-Content-Type: multipart/form-data; boundary=boundary
-
---boundary
-Content-Disposition: form-data; name="file"; filename="foto_perfil.jpg"
-Content-Type: image/jpeg
-
-< C:\Users\RENZO\Desktop\Progra Movil\backend\backend\requests\prueba.jpg
---boundary--
-#############################################
-GET {{baseUrl}}tareas/5
+# ELIMINAR FOTO DE PERFIL
+DELETE {{baseUrl}}/usuario/1/foto-perfil
 
 #############################################
-
-PUT {{baseUrl}}tareas/estado/80
+# ACTUALIZAR NOMBRE DE USUARIO
+PUT {{baseUrl}}/usuario/actualizar-nombre/1
 Content-Type: application/json
 
 {
-  "estado_id": 1
+  "nombre": "nuevo_nombre_usuario"
 }
 
 #############################################
-DELETE  {{baseUrl}}tareaetiqueta/5/125
+# ACTUALIZAR CORREO DE USUARIO
+PUT {{baseUrl}}/usuario/actualizar-correo/1
+Content-Type: application/json
+
+{
+  "email": "nuevo_email@ejemplo.com"
+}
+
+
+#############################################
+# ASIGNAR TOKEN FCM A USUARIO
+POST {{baseUrl}}/usuario/1/token-fcm
+Content-Type: application/json
+
+{
+  "token_fcm": "token_fcm_del_dispositivo_ejemplo"
+}
+
+#############################################
+# OBTENER DATOS COMPLETOS DE USUARIO
+GET {{baseUrl}}/usuarios/1/datos_completos
 
 #############################################

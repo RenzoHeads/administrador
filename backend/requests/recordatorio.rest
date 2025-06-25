@@ -1,0 +1,36 @@
+@baseUrl = https://rubysinatra.agreeableisland-1cef4d7f.eastus2.azurecontainerapps.io
+#@baseUrl = http://localhost:4567/
+#############################################
+# CREAR RECORDATORIO
+POST {{baseUrl}}/recordatorios/crear
+Content-Type: application/json
+
+{
+  "tarea_id": 426,
+  "fecha_hora": "2025-06-25T14:30:00",
+  "token_fcm": "token_fcm_del_dispositivo_ejemplo",
+  "mensaje": "Recordatorio: Completar tarea pendiente"
+}
+
+#############################################
+# ACTUALIZAR RECORDATORIO
+PUT {{baseUrl}}/recordatorios/actualizar
+Content-Type: application/json
+
+{
+  "id": 1,
+  "tarea_id": 1,
+  "fecha_hora": "2025-06-25T16:00:00",
+  "token_fcm": "token_fcm_actualizado",
+  "mensaje": "Recordatorio actualizado: No olvides la tarea"
+}
+
+#############################################
+# ELIMINAR RECORDATORIO
+DELETE {{baseUrl}}/recordatorios/eliminar/1
+
+#############################################
+# OBTENER RECORDATORIOS POR TAREA
+GET {{baseUrl}}/recordatorios/422
+
+#############################################

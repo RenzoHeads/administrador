@@ -8,7 +8,7 @@ post '/recordatorios/crear' do
       tarea_id: data['tarea_id'],
       fecha_hora: data['fecha_hora'],
       token_fcm: data['token_fcm'],
-      mensaje: data['mensaje'],
+      mensaje: data['mensaje']
       
     )
     recordatorio.save

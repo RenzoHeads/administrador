@@ -54,12 +54,3 @@ class Recordatorio < Sequel::Model(DB[:recordatorios])
   many_to_one :tarea
 end
 
-# Comentario
-class Comentario < Sequel::Model(DB[:comentarios])
-  many_to_one :tarea
-end
-
-# Adjunto
-class Adjunto < Sequel::Model(DB[:adjuntos])
-  many_to_one :tarea
-end

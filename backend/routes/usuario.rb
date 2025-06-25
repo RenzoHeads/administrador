@@ -59,54 +59,8 @@ post '/usuario/crear-usuario' do
   resp
 end
 
-# Obtener todos los usuarios
-get '/usuarios' do
-  status = 500
-  resp = ''
-  begin
-    usuarios = Usuario.all
-    if usuarios.any?
-      status = 200
-      resp = usuarios.to_json
-    else
-      status = 404
-      resp = 'No hay usuarios registrados'
-    end
-  rescue => e
-    resp = 'Error al obtener usuarios'
-    puts e.message
-  end
-  status status
-  resp
-end
 
-# Actualizar usuario
-put '/usuario/actualizar/:id' do
-  status = 500
-  resp = ''
-  begin
-    data = JSON.parse(request.body.read)
-    usuario = Usuario.first(id: params[:id])
-    if usuario
-      usuario.update(
-        nombre: data['nombre'],
-        contrasena: data['contrasena'],
-        email: data['email'],
-        imagen: data['imagen_perfil'] # si has añadido imagen de perfil
-      )
-      resp = usuario.to_json
-      status = 200
-    else
-      status = 404
-      resp = 'Usuario no encontrado'
-    end
-  rescue => e
-    resp = 'Error al actualizar usuario'
-    puts e.message
-  end
-  status status
-  resp
-end
+
 
 # Eliminar usuario
 delete '/usuario/eliminar/:id' do
@@ -540,23 +494,6 @@ put '/usuario/actualizar-correo/:id' do
   resp
 end
 
-#Obtener todas las etiquetas de todas las tareas de un usuario
-get '/tareaetiqueta/usuario/:usuario_id' do
-  begin
-    tareaetiquetas = TareaEtiqueta.where(usuario_id: params[:usuario_id]).all
-    if tareaetiquetas.any?
-      status 200
-      return tareaetiquetas.to_json
-    else
-      status 404
-      return { error: 'Sin etiquetas' }.to_json
-    end
-  rescue => e
-    puts "Error al obtener etiquetas de usuario: #{e.message}"
-    status 500
-    return { error: 'Error interno al procesar la solicitud' }.to_json
-  end
-end
 
 
 # Asignar un token FCM a un usuario
@@ -593,10 +530,10 @@ post '/usuario/:id/token-fcm' do
 end
 
 
-# Global connection pool warming at application startup
-DB.fetch("SELECT 1").all  # Warm up the connection pool when app starts
+# Precalentamiento del pool de conexiones globales al inicio de la aplicación
+DB.fetch("SELECT 1").all  # Precalienta el pool de conexiones cuando inicia la app
 
-# Pre-load common object classes
+# Pre-carga de clases de objetos comunes
 DB[:tareas].first  # Force load of Sequel dataset and row classes
 DB[:listas].first
 DB[:etiquetas].first

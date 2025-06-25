@@ -1,23 +1,6 @@
 require 'json'
 require 'securerandom'
 
-# Crear tarea (POST está bien aquí)
-post '/tareas/crear' do
-    data = JSON.parse(request.body.read)
-    tarea = Tarea.new(
-      usuario_id: data['usuario_id'],
-      lista_id: data['lista_id'],
-      titulo: data['titulo'],
-      descripcion: data['descripcion'],
-      fecha_creacion: data['fecha_creacion'],
-      fecha_vencimiento: data['fecha_vencimiento'],
-      categoria_id: data['categoria_id'],
-      estado_id: data['estado_id'],
-      prioridad_id: data['prioridad_id']
-    )
-    tarea.save
-    [200, tarea.to_json]
-end
 
 post '/tareas/crear_con_etiquetas' do
   data = JSON.parse(request.body.read, symbolize_names: true)
@@ -98,28 +81,6 @@ rescue => e
 end
 
 
-# Actualizar tarea (Se debe usar PUT)
-put '/tareas/actualizar/:id' do
-    data = JSON.parse(request.body.read)
-    tarea = Tarea.first(id: params[:id])
-    if tarea
-      tarea.update(
-          usuario_id: data['usuario_id'],
-          lista_id: data['lista_id'],
-          titulo: data['titulo'],
-          descripcion: data['descripcion'],
-          fecha_creacion: data['fecha_creacion'],
-          fecha_vencimiento: data['fecha_vencimiento'], 
-          categoria_id: data['categoria_id'],
-          estado_id: data['estado_id'],
-          prioridad_id: data['prioridad_id']
-        )
-      [200, tarea.to_json]
-    else
-      [404, 'Tarea no encontrada']
-    end
-end
-
 delete '/tareas/eliminar/:id' do
   content_type :json  # Establecer el tipo de contenido como JSON
   tarea = Tarea.first(id: params[:id])
@@ -131,23 +92,6 @@ delete '/tareas/eliminar/:id' do
   end
 end
 
-# Obtener tareas por usuario (GET está bien)
-get '/tareas/:usuario_id' do
-    tareas = Tarea.where(usuario_id: params[:usuario_id]).all
-    tareas.empty? ? [404, 'Sin tareas'] : [200, tareas.to_json]
-end
-
-# Obtener tareas por lista (GET está bien)
-get '/tareas/lista/:lista_id' do
-    tareas = Tarea.where(lista_id: params[:lista_id]).all
-    tareas.empty? ? [404, 'Sin tareas'] : [200, tareas.to_json]
-end
-
-#Obtener tareas por etiqueta (GET está bien)
-get '/tareas/etiqueta/:etiqueta_id' do
-    tareas = TareaEtiqueta.where(etiqueta_id: params[:etiqueta_id]).all
-    tareas.empty? ? [404, 'Sin tareas'] : [200, tareas.to_json]
-end
 
 #Mostrar tarea por id
 get '/tareas/obtener/:id' do
@@ -209,25 +153,6 @@ put '/tareas/estado/:id' do
   end
 end
  
-
-get '/tareas/buscar/:usuario_id/:titulo' do
-  begin
-    tareas = Tarea.where(usuario_id: params[:usuario_id])
-                  .where(Sequel.ilike(:titulo, "%#{params[:titulo]}%"))
-                  .all
-
-    if tareas.empty?
-      halt 404, { mensaje: 'Sin tareas' }.to_json
-    else
-      content_type :json
-      tareas.to_json
-    end
-  rescue => e
-    halt 500, { error: "Error en el servidor: #{e.message}" }.to_json
-  end
-end
-
-
 
 
 

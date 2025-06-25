@@ -27,8 +27,8 @@ put '/etiquetas/actualizar/:id' do
     end
   end
 
-  # Eliminar etiqueta
-    delete '/etiquetas/eliminar/:id' do
+# Eliminar etiqueta
+delete '/etiquetas/eliminar/:id' do
         etiqueta = Etiqueta.first(id: params[:id])
         if etiqueta
           etiqueta.destroy

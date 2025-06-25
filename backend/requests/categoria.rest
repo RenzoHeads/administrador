@@ -1,0 +1,30 @@
+@baseUrl = https://rubysinatra.agreeableisland-1cef4d7f.eastus2.azurecontainerapps.io
+#@baseUrl = http://localhost:4567/
+#############################################
+# CREAR CATEGORIA
+POST {{baseUrl}}/categorias/crear
+Content-Type: application/json
+
+{
+  "nombre": "Trabajo",
+  "color": "#FF5722"
+}
+
+#############################################
+# OBTENER TODAS LAS CATEGORIAS
+GET {{baseUrl}}/categorias
+
+#############################################
+# ACTUALIZAR CATEGORIA
+PUT {{baseUrl}}/categorias/actualizar/1
+Content-Type: application/json
+
+{
+  "nombre": "Trabajo Actualizado",
+  "color": "#2196F3"
+}
+
+#############################################
+# ELIMINAR CATEGORIA
+DELETE {{baseUrl}}/categorias/eliminar/1
+

@@ -102,24 +102,6 @@ class UsuarioService {
     return serviceResponse;
   }
 
-  // Obtener todos los usuarios
-  Future<ServiceHttpResponse?> getUsuarios() async {
-    ServiceHttpResponse serviceResponse = ServiceHttpResponse();
-    final url = Uri.parse('${BASE_URL}usuarios');
-
-    try {
-      final response = await http.get(url);
-      serviceResponse.status = response.statusCode;
-      serviceResponse.body = response.body;
-    } catch (e) {
-      print('Error: $e');
-      serviceResponse.status = 500;
-      serviceResponse.body = 'Ocurrió un error al obtener los usuarios';
-    }
-
-    return serviceResponse;
-  }
-
   // Actualizar usuario
   Future<ServiceHttpResponse?> updateUsuario(int id, Usuario usuario) async {
     ServiceHttpResponse serviceResponse = ServiceHttpResponse();
@@ -161,32 +143,6 @@ class UsuarioService {
       print('Error: $e');
       serviceResponse.status = 500;
       serviceResponse.body = 'Ocurrió un error al eliminar el usuario';
-    }
-
-    return serviceResponse;
-  }
-
-  // Actualizar contraseña por email
-  Future<ServiceHttpResponse?> updatePasswordByEmail(
-    String email,
-    String newPassword,
-  ) async {
-    ServiceHttpResponse serviceResponse = ServiceHttpResponse();
-    final url = Uri.parse('${BASE_URL}usuario/actualizar-contrasena');
-
-    try {
-      final response = await http.put(
-        url,
-        headers: {'Content-Type': 'application/json; charset=UTF-8'},
-        body: json.encode({'email': email, 'contrasena': newPassword}),
-      );
-
-      serviceResponse.status = response.statusCode;
-      serviceResponse.body = response.body;
-    } catch (e) {
-      print('Error: $e');
-      serviceResponse.status = 500;
-      serviceResponse.body = 'Ocurrió un error al actualizar la contraseña';
     }
 
     return serviceResponse;

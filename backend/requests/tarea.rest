@@ -1,0 +1,62 @@
+@baseUrl = https://rubysinatra.agreeableisland-1cef4d7f.eastus2.azurecontainerapps.io
+#@baseUrl = http://localhost:4567/
+#############################################
+# CREAR TAREA CON ETIQUETAS
+POST {{baseUrl}}/tareas/crear_con_etiquetas
+Content-Type: application/json
+
+{
+  "usuario_id": 1,
+  "lista_id": 1,
+  "titulo": "Nueva tarea",
+  "descripcion": "Descripción de la tarea",
+  "fecha_creacion": "2025-06-24T10:00:00",
+  "fecha_vencimiento": "2025-06-30T18:00:00",
+  "categoria_id": 1,
+  "estado_id": 1,
+  "prioridad_id": 1,
+  "etiquetas": [1, 2, 3]
+}
+
+#############################################
+# ACTUALIZAR TAREA CON ETIQUETAS
+PUT {{baseUrl}}/tareas/1/actualizar_con_etiquetas
+Content-Type: application/json
+
+{
+  "usuario_id": 1,
+  "lista_id": 1,
+  "titulo": "Tarea actualizada",
+  "descripcion": "Descripción actualizada",
+  "fecha_creacion": "2025-06-24T10:00:00",
+  "fecha_vencimiento": "2025-07-01T18:00:00",
+  "categoria_id": 2,
+  "estado_id": 2,
+  "prioridad_id": 2,
+  "etiquetas": [2, 4, 5]
+}
+
+#############################################
+# ELIMINAR TAREA
+DELETE {{baseUrl}}/tareas/eliminar/1
+
+#############################################
+# OBTENER TAREA POR ID
+GET {{baseUrl}}/tareas/obtener/1
+
+#############################################
+# OBTENER TAREAS DE HOY POR USUARIO
+GET {{baseUrl}}/tareas/hoy/1
+
+#############################################
+# OBTENER ESTADO DE UNA TAREA
+GET {{baseUrl}}/tareas/estado/1
+
+#############################################
+# ACTUALIZAR ESTADO DE UNA TAREA
+PUT {{baseUrl}}/tareas/estado/1
+Content-Type: application/json
+
+{
+  "estado_id": 2
+}

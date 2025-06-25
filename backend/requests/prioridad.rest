@@ -1,0 +1,11 @@
+@baseUrl = https://rubysinatra.agreeableisland-1cef4d7f.eastus2.azurecontainerapps.io
+#@baseUrl = http://localhost:4567/
+#############################################
+# OBTENER TODAS LAS PRIORIDADES
+GET {{baseUrl}}/prioridades
+
+#############################################
+# OBTENER PRIORIDAD POR ID
+GET {{baseUrl}}/prioridades/1
+
+#############################################

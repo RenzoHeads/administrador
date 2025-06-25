@@ -1,0 +1,57 @@
+@baseUrl = https://rubysinatra.agreeableisland-1cef4d7f.eastus2.azurecontainerapps.io
+#@baseUrl = http://localhost:4567/
+#############################################
+# CREAR LISTA
+POST {{baseUrl}}/listas/crear
+Content-Type: application/json
+
+{
+  "usuario_id": 1,
+  "nombre": "Mi Lista Personal",
+  "descripcion": "Lista de tareas personales",
+  "color": "#4CAF50"
+}
+
+#############################################
+# OBTENER LISTAS POR USUARIO
+GET {{baseUrl}}/listas/1
+
+#############################################
+# ACTUALIZAR LISTA
+PUT {{baseUrl}}/listas/actualizar/1
+Content-Type: application/json
+
+{
+  "usuario_id": 1,
+  "nombre": "Lista Actualizada",
+  "descripcion": "Descripción actualizada",
+  "color": "#2196F3"
+}
+
+#############################################
+# ELIMINAR LISTA Y SUS TAREAS
+DELETE {{baseUrl}}/listas/eliminar/1
+
+#############################################
+# OBTENER CANTIDAD DE TAREAS POR LISTA
+GET {{baseUrl}}/listas/cantidad_tareas/1
+
+#############################################
+# OBTENER CANTIDAD DE TAREAS PENDIENTES POR LISTA
+GET {{baseUrl}}/listas/cantidad_tareas_pendientes/1
+
+#############################################
+# OBTENER CANTIDAD DE TAREAS COMPLETADAS POR LISTA
+GET {{baseUrl}}/listas/cantidad_tareas_completadas/1
+
+#############################################
+# GENERAR LISTA CON TAREAS USANDO IA
+POST {{baseUrl}}/listas/generar_ia
+Content-Type: application/json
+
+{
+  "usuario_id": 1,
+  "prompt": "Crear una lista de tareas para organizar una fiesta de cumpleaños"
+}
+
+#############################################

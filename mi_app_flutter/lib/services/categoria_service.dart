@@ -126,32 +126,4 @@ class CategoriaService {
 
     return responseWrapper;
   }
-
-  //Creame este servicio
-  // Obtener categoría por ID de tarea
-  Future<ServiceHttpResponse> obtenerCategoriaPorTareaId(int tareaId) async {
-    final url = Uri.parse('${BASE_URL}categorias/tarea/$tareaId');
-    final responseWrapper = ServiceHttpResponse();
-
-    try {
-      final response = await http.get(url);
-      responseWrapper.status = response.statusCode;
-
-      if (response.statusCode == 200) {
-        try {
-          final jsonData = json.decode(response.body);
-          responseWrapper.body = Categoria.fromMap(jsonData);
-        } catch (e) {
-          responseWrapper.body = 'Error al procesar el JSON: $e';
-        }
-      } else {
-        responseWrapper.body = 'Error: ${response.body}';
-      }
-    } catch (e) {
-      responseWrapper.status = 500;
-      responseWrapper.body = 'Ocurrió un error al obtener la categoría: $e';
-    }
-
-    return responseWrapper;
-  }
 }
