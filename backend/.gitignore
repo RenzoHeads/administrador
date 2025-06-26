@@ -15,7 +15,7 @@
 
 # Firebase credentials
 firebase-credentials.json
-firebase-adminsdk-*.json
+
 
 
 # Ignore Byebug command history file.

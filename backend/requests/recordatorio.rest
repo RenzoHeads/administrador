@@ -11,7 +11,7 @@ Authorization: Bearer {{token}}
 
 {
   "tarea_id": 426,
-  "fecha_hora": "2025-06-26T17:16:00",
+  "fecha_hora": "2025-06-26T17:22:00",
   "token_fcm": "e8ep0QXLTyq_iX-7cgJ0iy:APA91bFZ29M5oE26x-2HEcXvABJyiHbvMFzevPClUwfYNMgFnd99kRIXP3kQtLQxin_9vAEpa8aXNQj4S1sHYWmlVSTbyQ3cr7sNwhWYSxjZ6FdE8y0lO-I",
   "mensaje": "Renzo listo"
 }
