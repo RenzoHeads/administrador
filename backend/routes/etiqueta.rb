@@ -75,31 +75,4 @@ end
   
 
   
-# Obtener etiquetas completas de una tarea - PROTEGIDO
-get '/tareas/:tarea_id/etiquetas' do
-  authenticate_jwt!
-  content_type :json
-  
-  tareaetiquetas = TareaEtiqueta.where(tarea_id: params[:tarea_id]).all
-  if tareaetiquetas.empty?
-    [404, 'Sin etiquetas']
-  else
-    etiquetas = tareaetiquetas.map { |te| Etiqueta.first(id: te.etiqueta_id) }.compact
-    [200, etiquetas.to_json]
-  end
-end
-
-# Obtener etiquetas completas de todas las tareas de un usuario - PROTEGIDO
-get '/usuarios/:usuario_id/etiquetas' do
-  authenticate_jwt!
-  content_type :json
-  
-  tareaetiquetas = TareaEtiqueta.where(usuario_id: params[:usuario_id]).all
-  if tareaetiquetas.empty?
-    [404, 'Sin etiquetas']
-  else
-    etiquetas = tareaetiquetas.map { |te| Etiqueta.first(id: te.etiqueta_id) }.compact
-    [200, etiquetas.to_json]
-  end
-end
   

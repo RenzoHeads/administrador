@@ -46,15 +46,7 @@ Authorization: Bearer {{token}}
 DELETE {{baseUrl}}/tareas/eliminar/1
 Authorization: Bearer {{token}}
 
-#############################################
-# OBTENER TAREA POR ID [PROTEGIDO]
-GET {{baseUrl}}/tareas/obtener/426
-Authorization: Bearer {{token}}
 
-#############################################
-# OBTENER TODAS LAS TAREAS DE UN USUARIO [PROTEGIDO]
-GET {{baseUrl}}/tareas/1
-Authorization: Bearer {{token}}
 
 #############################################
 # OBTENER ESTADO DE UNA TAREA [PROTEGIDO]
