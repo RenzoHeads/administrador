@@ -1,7 +1,8 @@
 require 'json'
-require 'securerandom'
 
+# CRUD Endpoints para Recordatorios
 
+# CREATE - Crear recordatorio
 post '/recordatorios/crear' do
     data = JSON.parse(request.body.read)
     recordatorio = Recordatorio.new(
@@ -9,12 +10,18 @@ post '/recordatorios/crear' do
       fecha_hora: data['fecha_hora'],
       token_fcm: data['token_fcm'],
       mensaje: data['mensaje']
-      
     )
     recordatorio.save
     [200, recordatorio.to_json]
-  end
+end
 
+# READ - Obtener recordatorios por tarea
+get '/recordatorios/:tarea_id' do
+    recordatorios = Recordatorio.where(tarea_id: params[:tarea_id]).all
+    recordatorios.empty? ? [404, 'Sin recordatorios'] : [200, recordatorios.to_json]
+end
+
+# UPDATE - Actualizar recordatorio
 put '/recordatorios/actualizar' do
     data = JSON.parse(request.body.read)
     recordatorio = Recordatorio.first(id: data['id'])
@@ -23,15 +30,15 @@ put '/recordatorios/actualizar' do
         tarea_id: data['tarea_id'],
         fecha_hora: data['fecha_hora'],
         token_fcm: data['token_fcm'],
-        mensaje: data['mensaje'],
-        
+        mensaje: data['mensaje']
       )
       [200, recordatorio.to_json]
     else
       [404, 'Recordatorio no encontrado']
     end
-  end
+end
 
+# DELETE - Eliminar recordatorio
 delete '/recordatorios/eliminar/:id' do
     recordatorio = Recordatorio.first(id: params[:id])
     if recordatorio
@@ -40,10 +47,5 @@ delete '/recordatorios/eliminar/:id' do
     else
       [404, 'Recordatorio no encontrado']
     end
-  end
-
-get '/recordatorios/:tarea_id' do
-    recordatorios = Recordatorio.where(tarea_id: params[:tarea_id]).all
-    recordatorios.empty? ? [404, 'Sin recordatorios'] : [200, recordatorios.to_json]
-  end
+end
 

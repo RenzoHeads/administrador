@@ -1,15 +1,15 @@
 @baseUrl = https://rubysinatra.agreeableisland-1cef4d7f.eastus2.azurecontainerapps.io
 #@baseUrl = http://localhost:4567/
 #############################################
-# CREAR RECORDATORIO
+# CREAR RECORDATORIO CON NOTIFICACIÓN FCM
 POST {{baseUrl}}/recordatorios/crear
 Content-Type: application/json
 
 {
   "tarea_id": 426,
-  "fecha_hora": "2025-06-25T14:30:00",
-  "token_fcm": "token_fcm_del_dispositivo_ejemplo",
-  "mensaje": "Recordatorio: Completar tarea pendiente"
+  "fecha_hora": "2025-06-25T23:04:00",
+  "token_fcm": "e8ep0QXLTyq_iX-7cgJ0iy:APA91bFZ29M5oE26x-2HEcXvABJyiHbvMFzevPClUwfYNMgFnd99kRIXP3kQtLQxin_9vAEpa8aXNQj4S1sHYWmlVSTbyQ3cr7sNwhWYSxjZ6FdE8y0lO-I",
+  "mensaje": "Test Firebase Admin SDK - ¡Funciona!"
 }
 
 #############################################
@@ -20,8 +20,8 @@ Content-Type: application/json
 {
   "id": 1,
   "tarea_id": 1,
-  "fecha_hora": "2025-06-25T16:00:00",
-  "token_fcm": "token_fcm_actualizado",
+  "fecha_hora": "2025-06-25T01:47:00",
+  "token_fcm": "e8ep0QXLTyq_iX-7cgJ0iy:APA91bFZ29M5oE26x-2HEcXvABJyiHbvMFzevPClUwfYNMgFnd99kRIXP3kQtLQxin_9vAEpa8aXNQj4S1sHYWmlVSTbyQ3cr7sNwhWYSxjZ6FdE8y0lO-I",
   "mensaje": "Recordatorio actualizado: No olvides la tarea"
 }
 
@@ -33,4 +33,3 @@ DELETE {{baseUrl}}/recordatorios/eliminar/1
 # OBTENER RECORDATORIOS POR TAREA
 GET {{baseUrl}}/recordatorios/422
 
-#############################################

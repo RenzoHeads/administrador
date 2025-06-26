@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../../models/tarea.dart';
-import '../../models/tareaetiqueta.dart';
+
 import '../../configs/contants.dart';
 import '../../models/service_http_response.dart';
 
@@ -192,95 +192,6 @@ class TareaService {
       print('Error en solicitud HTTP: $e'); // Log detallado
       responseWrapper.status = 500;
       responseWrapper.body = 'Ocurrió un error al eliminar la tarea: $e';
-    }
-
-    return responseWrapper;
-  }
-
-  // Crear etiqueta para tarea
-  Future<ServiceHttpResponse> crearTareaEtiqueta(
-    int tareaId,
-    int etiquetaId,
-  ) async {
-    final url = Uri.parse('${BASE_URL}tareaetiqueta/$tareaId/$etiquetaId');
-    final responseWrapper = ServiceHttpResponse();
-
-    try {
-      final response = await http.post(
-        url,
-        headers: {'Content-Type': 'application/json'},
-        // No body needed as IDs are in the URL path
-      );
-
-      responseWrapper.status = response.statusCode;
-      if (response.statusCode == 200) {
-        final jsonData = json.decode(response.body);
-        responseWrapper.body = TareaEtiqueta.fromMap(jsonData);
-      } else {
-        responseWrapper.body = 'Error: ${response.body}';
-      }
-    } catch (e) {
-      responseWrapper.status = 500;
-      responseWrapper.body =
-          'Ocurrió un error al crear la etiqueta para la tarea: $e';
-    }
-
-    return responseWrapper;
-  }
-
-  // Actualizar etiqueta de tarea
-  Future<ServiceHttpResponse> actualizarTareaEtiqueta(
-    int id,
-    int tareaId,
-    int etiquetaId,
-  ) async {
-    final url = Uri.parse('${BASE_URL}tareaetiqueta/actualizar/$id');
-    final responseWrapper = ServiceHttpResponse();
-
-    try {
-      final response = await http.put(
-        url,
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'tarea_id': tareaId, 'etiqueta_id': etiquetaId}),
-      );
-
-      responseWrapper.status = response.statusCode;
-      if (response.statusCode == 200) {
-        final jsonData = json.decode(response.body);
-        responseWrapper.body = TareaEtiqueta.fromMap(jsonData);
-      } else {
-        responseWrapper.body = 'Error: ${response.body}';
-      }
-    } catch (e) {
-      responseWrapper.status = 500;
-      responseWrapper.body = 'Ocurrió un error al actualizar la etiqueta: $e';
-    }
-
-    return responseWrapper;
-  }
-
-  Future<ServiceHttpResponse> eliminarTareaEtiqueta(
-    int tareaId,
-    int etiquetaId,
-  ) async {
-    final url = Uri.parse('${BASE_URL}tareaetiqueta/$tareaId/$etiquetaId');
-    final responseWrapper = ServiceHttpResponse();
-
-    try {
-      final response = await http.delete(url);
-
-      responseWrapper.status = response.statusCode;
-
-      if (response.statusCode == 200) {
-        responseWrapper.body = 'Etiqueta eliminada de la tarea';
-      } else if (response.statusCode == 404) {
-        responseWrapper.body = 'Relación entre tarea y etiqueta no encontrada';
-      } else {
-        responseWrapper.body = 'Error: ${response.body}';
-      }
-    } catch (e) {
-      responseWrapper.status = 500;
-      responseWrapper.body = 'Ocurrió un error al eliminar la etiqueta: $e';
     }
 
     return responseWrapper;

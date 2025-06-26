@@ -12,3 +12,7 @@ gem 'pg'
 gem 'concurrent-ruby'
 gem 'langchainrb', "~> 0.19.5"
 gem 'mail'  # <- Agregado
+gem 'rufus-scheduler'
+gem 'google-apis-fcm_v1'  # <- Firebase Admin SDK
+gem 'googleauth'           # <- Para autenticación
+gem 'tzinfo-data'          # <- Necesario para Windows

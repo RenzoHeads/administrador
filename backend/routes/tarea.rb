@@ -103,18 +103,13 @@ get '/tareas/obtener/:id' do
     end
 end
 
-get '/tareas/hoy/:usuario_id' do
-  fecha = Date.today
-  inicio_dia = Time.new(fecha.year, fecha.month, fecha.day, 0, 0, 0)
-  fin_dia = Time.new(fecha.year, fecha.month, fecha.day, 23, 59, 59)
-
-  tareas = Tarea.where(
-    usuario_id: params[:usuario_id],
-    fecha_creacion: inicio_dia..fin_dia
-  )
-
+# Obtener todas las tareas de un usuario
+get '/tareas/:usuario_id' do
+  tareas = Tarea.where(usuario_id: params[:usuario_id]).all
   tareas.empty? ? [404, 'Sin tareas'] : [200, tareas.to_json]
 end
+
+
 
 
 

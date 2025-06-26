@@ -50,29 +50,6 @@ class UsuarioService {
     return serviceResponse;
   }
 
-  // Método reset - Modificado para usar la nueva API de actualizar contraseña
-  Future<ServiceHttpResponse?> reset(String email, String newPassword) async {
-    ServiceHttpResponse serviceResponse = ServiceHttpResponse();
-    final url = Uri.parse('${BASE_URL}usuario/actualizar-contrasena');
-
-    try {
-      final response = await http.put(
-        url,
-        headers: {'Content-Type': 'application/json; charset=UTF-8'},
-        body: json.encode({'email': email, 'contrasena': newPassword}),
-      );
-
-      serviceResponse.status = response.statusCode;
-      serviceResponse.body = response.body;
-    } catch (e) {
-      print("Error: $e");
-      serviceResponse.status = 500;
-      serviceResponse.body = 'Ocurrió un error al recuperar la contraseña';
-    }
-
-    return serviceResponse;
-  }
-
   // Método signUp
   Future<ServiceHttpResponse?> signUp(
     String nombre,
@@ -97,34 +74,6 @@ class UsuarioService {
       print('Error: $e');
       serviceResponse.status = 503;
       serviceResponse.body = 'Ocurrió un error al comunicarse con el servidor';
-    }
-
-    return serviceResponse;
-  }
-
-  // Actualizar usuario
-  Future<ServiceHttpResponse?> updateUsuario(int id, Usuario usuario) async {
-    ServiceHttpResponse serviceResponse = ServiceHttpResponse();
-    final url = Uri.parse('${BASE_URL}usuario/actualizar/$id');
-
-    try {
-      final response = await http.put(
-        url,
-        headers: {'Content-Type': 'application/json; charset=UTF-8'},
-        body: json.encode({
-          'nombre': usuario.nombre,
-          'contrasena': usuario.contrasena,
-          'email': usuario.email,
-          'imagen_perfil': usuario.foto,
-        }),
-      );
-
-      serviceResponse.status = response.statusCode;
-      serviceResponse.body = response.body;
-    } catch (e) {
-      print('Error: $e');
-      serviceResponse.status = 500;
-      serviceResponse.body = 'Ocurrió un error al actualizar el usuario';
     }
 
     return serviceResponse;
