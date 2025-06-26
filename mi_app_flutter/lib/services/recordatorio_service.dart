@@ -3,6 +3,7 @@ import 'package:http/http.dart' as http;
 import '../../models/recordatorio.dart';
 import '../../configs/contants.dart';
 import '../../models/service_http_response.dart';
+import 'auth_service.dart';
 
 class RecordatorioService {
   // Crear recordatorio
@@ -16,9 +17,10 @@ class RecordatorioService {
     final responseWrapper = ServiceHttpResponse();
 
     try {
+      final headers = await AuthService.getAuthHeaders();
       final response = await http.post(
         url,
-        headers: {'Content-Type': 'application/json; charset=UTF-8'},
+        headers: headers,
         body: jsonEncode({
           'tarea_id': tareaId,
           'fecha_hora': fechaHora.toIso8601String(),
@@ -39,6 +41,9 @@ class RecordatorioService {
       } else {
         responseWrapper.body = 'Error: ${response.body}';
       }
+
+      // Manejar respuesta de autenticación
+      AuthService.handleHttpResponse(response);
     } catch (e) {
       responseWrapper.status = 500;
       responseWrapper.body = 'Ocurrió un error al crear el recordatorio: $e';

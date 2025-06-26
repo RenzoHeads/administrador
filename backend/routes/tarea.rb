@@ -1,8 +1,11 @@
 require 'json'
 require 'securerandom'
 
-
+# Crear tarea con etiquetas - PROTEGIDO
 post '/tareas/crear_con_etiquetas' do
+  authenticate_jwt!
+  content_type :json
+  
   data = JSON.parse(request.body.read, symbolize_names: true)
 
   DB.transaction do
@@ -36,8 +39,11 @@ rescue => e
   { error: e.message }.to_json
 end
 
-
+# Actualizar tarea con etiquetas - PROTEGIDO
 put '/tareas/:id/actualizar_con_etiquetas' do
+  authenticate_jwt!
+  content_type :json
+  
   tarea_id = params[:id].to_i
   data = JSON.parse(request.body.read, symbolize_names: true)
 
@@ -81,40 +87,47 @@ rescue => e
 end
 
 
+# Eliminar tarea - PROTEGIDO
 delete '/tareas/eliminar/:id' do
-  content_type :json  # Establecer el tipo de contenido como JSON
+  authenticate_jwt!
+  content_type :json
+  
   tarea = Tarea.first(id: params[:id])
   if tarea
     tarea.destroy
-    { status: 200, mensaje: 'Tarea eliminada' }.to_json  # Devolver un objeto JSON
+    { status: 200, mensaje: 'Tarea eliminada' }.to_json
   else
-    { status: 404, mensaje: 'Tarea no encontrada' }.to_json  # Devolver un objeto JSON
+    { status: 404, mensaje: 'Tarea no encontrada' }.to_json
   end
 end
 
-
-#Mostrar tarea por id
+# Mostrar tarea por id - PROTEGIDO
 get '/tareas/obtener/:id' do
-    tarea = Tarea.first(id: params[:id])
-    if tarea
-      [200, tarea.to_json]
-    else
-      [404, 'Tarea no encontrada']
-    end
+  authenticate_jwt!
+  content_type :json
+  
+  tarea = Tarea.first(id: params[:id])
+  if tarea
+    [200, tarea.to_json]
+  else
+    [404, 'Tarea no encontrada']
+  end
 end
 
-# Obtener todas las tareas de un usuario
+# Obtener todas las tareas de un usuario - PROTEGIDO
 get '/tareas/:usuario_id' do
+  authenticate_jwt!
+  content_type :json
+  
   tareas = Tarea.where(usuario_id: params[:usuario_id]).all
   tareas.empty? ? [404, 'Sin tareas'] : [200, tareas.to_json]
 end
 
-
-
-
-
-#mostrar estado de una tarea
+# Mostrar estado de una tarea - PROTEGIDO
 get '/tareas/estado/:id' do
+  authenticate_jwt!
+  content_type :json
+  
   tarea = Tarea.first(id: params[:id])
   if tarea
     estado = Estado.first(id: tarea.estado)
@@ -128,8 +141,11 @@ get '/tareas/estado/:id' do
   end
 end
 
-#actualizar estado de una tarea por estadoid
+# Actualizar estado de una tarea por estadoid - PROTEGIDO
 put '/tareas/estado/:id' do
+  authenticate_jwt!
+  content_type :json
+  
   data = JSON.parse(request.body.read)
   tarea = Tarea.first(id: params[:id].to_i)
 

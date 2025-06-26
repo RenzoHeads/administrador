@@ -1,0 +1,51 @@
+#@baseUrl = http://localhost:4567
+@baseUrl = https://rubysinatra.agreeableisland-1cef4d7f.eastus2.azurecontainerapps.io
+
+# Variables para JWT (actualiza el token después del login)
+@token = eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2lkIjo3LCJlbWFpbCI6IjIwMjI0NTU4QGFsb2UudWxpbWEuZWR1LnBlIiwibm9tYnJlIjoiSGVhZHM5MCIsImV4cCI6MTc1MTU3NzcxNSwiaWF0IjoxNzUwOTcyOTE1fQ.me7W-cis4yHa1uq4xj7zd23258dDSiDpqOUQB0J7s24
+#############################################
+# CREAR ETIQUETA [PROTEGIDO]
+POST {{baseUrl}}/etiquetas/crear
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "nombre": "Urgente",
+  "color": "#F44336"
+}
+
+#############################################
+# ACTUALIZAR ETIQUETA [PROTEGIDO]
+PUT {{baseUrl}}/etiquetas/actualizar/1
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "nombre": "Muy Urgente",
+  "color": "#D32F2F"
+}
+
+#############################################
+# ELIMINAR ETIQUETA [PROTEGIDO]
+DELETE {{baseUrl}}/etiquetas/eliminar/1
+Authorization: Bearer {{token}}
+
+#############################################
+# OBTENER ETIQUETA POR NOMBRE [PROTEGIDO]
+GET {{baseUrl}}/etiquetas/obtener/Urgente
+Authorization: Bearer {{token}}
+
+#############################################
+# OBTENER ETIQUETA POR ID [PROTEGIDO]
+GET {{baseUrl}}/etiquetas/1
+Authorization: Bearer {{token}}
+
+#############################################
+# OBTENER ETIQUETAS DE UNA TAREA [PROTEGIDO]
+GET {{baseUrl}}/tareas/1/etiquetas
+Authorization: Bearer {{token}}
+
+#############################################
+# OBTENER ETIQUETAS DE TODAS LAS TAREAS DE UN USUARIO [PROTEGIDO]
+GET {{baseUrl}}/usuarios/1/etiquetas
+Authorization: Bearer {{token}}

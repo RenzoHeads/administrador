@@ -45,11 +45,10 @@ class SignInController extends GetxController {
   }
 
   void goHome(BuildContext context) async {
-    print('estoy en el controlador');
     UsuarioService service = UsuarioService();
-    String usuario = txtUsuario.text;
+    String nombre = txtUsuario.text;
     String contrasena = txtContrasena.text;
-    Usuario u = Usuario(nombre: usuario, contrasena: contrasena, email: '');
+    Usuario u = Usuario(nombre: nombre, contrasena: contrasena, email: '');
 
     // Hacer login y obtener el id del usuario
     ServiceHttpResponse? serviceReponse = await service.login(u);
@@ -69,65 +68,65 @@ class SignInController extends GetxController {
       Future.delayed(Duration(seconds: 3), () async {
         try {
           // Procesamos la respuesta
-          int usuarioId =
+          Map<String, dynamic> responseData =
               serviceReponse.body is Map<String, dynamic>
-                  ? serviceReponse.body['id'] ?? -1
-                  : json.decode(serviceReponse.body)['id'] ?? -1;
+                  ? serviceReponse.body
+                  : json.decode(serviceReponse.body);
 
-          // Si obtenemos el id, hacemos la segunda llamada para obtener los datos completos del usuario
-          if (usuarioId != -1) {
-            ServiceHttpResponse? userDetailsResponse = await service
-                .getUsuarioById(usuarioId);
-            if (userDetailsResponse != null &&
-                userDetailsResponse.status == 200) {
-              // Mapear los detalles del usuario
-              var userMap =
-                  userDetailsResponse.body is Map<String, dynamic>
-                      ? userDetailsResponse.body
-                      : json.decode(userDetailsResponse.body);
+          print(
+            'Respuesta del servidor: $responseData',
+          ); // Debug          // Verificar que la respuesta sea exitosa
+          if (responseData['success'] == true) {
+            Map<String, dynamic> userData = responseData['user'];
+            String? jwtToken = responseData['token'];
 
-              Usuario usuarioResponse = Usuario.fromMap(userMap);
+            print(
+              '🎯 JWT Token extraído: ${jwtToken != null ? "Token presente (${jwtToken.length} chars)" : "Sin token"}',
+            );
 
-              final tokenActual = await FirebaseMessaging.instance.getToken();
-              String tokenGuardado = usuarioResponse.tokenFCM ?? '';
+            // Crear usuario con los datos recibidos
+            Usuario usuarioResponse = Usuario(
+              id: userData['id'],
+              nombre: userData['nombre'],
+              email: userData['email'],
+              contrasena: contrasena, // Usar la contraseña ingresada
+            );
 
-              if (tokenActual != null && tokenActual != tokenGuardado) {
-                await service.updateUserTokenFCM(usuarioId, tokenActual);
-                tokenGuardado = tokenActual;
-              }
+            // Obtener token FCM
+            final tokenActual = await FirebaseMessaging.instance.getToken();
 
-              // Guardar la información del usuario en el controlador de sesión
-              controladorSesion.usuarioActual.value = usuarioResponse;
-
-              controladorSesion.sesionIniciada.value = true;
-              controladorSesion.iniciarSesion(
-                usuarioResponse.id,
-                usuarioResponse.nombre,
-                usuarioResponse.contrasena,
-                usuarioResponse.email,
-                usuarioResponse.foto,
-                tokenGuardado,
+            // Actualizar token FCM si es necesario
+            if (tokenActual != null && usuarioResponse.id != null) {
+              await service.updateUserTokenFCM(
+                usuarioResponse.id!,
+                tokenActual,
               );
-
-              // Navegar a la página de inicio
-              Navigator.of(context).pushAndRemoveUntil(
-                MaterialPageRoute(
-                  builder:
-                      (context) =>
-                          PrincipalPage(), // Cambia a tu página de inicio
-                  settings: RouteSettings(arguments: usuarioResponse.toJson()),
-                ),
-                (Route<dynamic> route) => false,
-              );
-            } else {
-              _showError('No se encontraron los datos del usuario');
             }
+
+            // Guardar la información del usuario en el controlador de sesión
+            await controladorSesion.iniciarSesion(
+              usuarioResponse.id,
+              usuarioResponse.nombre,
+              usuarioResponse.contrasena,
+              usuarioResponse.email,
+              usuarioResponse.foto,
+              tokenActual,
+              jwtToken: jwtToken,
+            );
+
+            // Navegar a la página de inicio
+            Navigator.of(context).pushAndRemoveUntil(
+              MaterialPageRoute(
+                builder: (context) => PrincipalPage(),
+                settings: RouteSettings(arguments: usuarioResponse.toJson()),
+              ),
+              (Route<dynamic> route) => false,
+            );
           } else {
-            _showError('No se pudo obtener el id del usuario');
+            _showError(responseData['message'] ?? 'Error en el login');
           }
         } catch (e) {
-          print('Error al procesar la respuesta: $e');
-          _showError('Error procesando la respuesta');
+          _showError('Error procesando la respuesta del servidor');
         }
       });
     } else {

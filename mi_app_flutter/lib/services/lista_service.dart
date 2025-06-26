@@ -1,9 +1,11 @@
 import 'dart:convert';
+
 import 'package:http/http.dart' as http;
 import '../../models/lista.dart';
 import '../../models/tarea.dart';
 import '../../configs/contants.dart';
 import '../../models/service_http_response.dart';
+import 'auth_service.dart';
 
 class ListaService {
   // Crear lista
@@ -16,9 +18,10 @@ class ListaService {
     final url = Uri.parse('${BASE_URL}listas/crear');
     final responseWrapper = ServiceHttpResponse();
     try {
+      final headers = await AuthService.getAuthHeaders();
       final response = await http.post(
         url,
-        headers: {'Content-Type': 'application/json; charset=UTF-8'},
+        headers: headers,
         body: jsonEncode({
           'usuario_id': usuarioId,
           'nombre': nombre,
@@ -39,6 +42,9 @@ class ListaService {
       } else {
         responseWrapper.body = 'Error: ${response.body}';
       }
+
+      // Manejar respuesta de autenticación
+      AuthService.handleHttpResponse(response);
     } catch (e) {
       responseWrapper.status = 500;
       responseWrapper.body = 'Ocurrió un error al crear la lista: $e';
@@ -58,9 +64,10 @@ class ListaService {
     final url = Uri.parse('${BASE_URL}listas/actualizar/$id');
     final responseWrapper = ServiceHttpResponse();
     try {
+      final headers = await AuthService.getAuthHeaders();
       final response = await http.put(
         url,
-        headers: {'Content-Type': 'application/json; charset=UTF-8'},
+        headers: headers,
         body: jsonEncode({
           'usuario_id': usuarioId,
           'nombre': nombre,
@@ -81,6 +88,9 @@ class ListaService {
       } else {
         responseWrapper.body = 'Error: ${response.body}';
       }
+
+      // Manejar respuesta de autenticación
+      AuthService.handleHttpResponse(response);
     } catch (e) {
       responseWrapper.status = 500;
       responseWrapper.body = 'Ocurrió un error al actualizar la lista: $e';
@@ -95,7 +105,9 @@ class ListaService {
     final responseWrapper = ServiceHttpResponse();
 
     try {
-      final response = await http.delete(url);
+      final headers = await AuthService.getAuthHeaders();
+      final response = await http.delete(url, headers: headers);
+
       responseWrapper.status = response.statusCode;
 
       if (response.statusCode == 200) {
@@ -134,6 +146,9 @@ class ListaService {
           responseWrapper.body = 'Error: ${response.body}';
         }
       }
+
+      // Manejar respuesta de autenticación
+      AuthService.handleHttpResponse(response);
     } catch (e) {
       responseWrapper.status = 500;
       responseWrapper.body = 'Ocurrió un error al eliminar la lista: $e';
@@ -149,12 +164,13 @@ class ListaService {
     final url = Uri.parse('${BASE_URL}listas/generar_ia');
     final responseWrapper = ServiceHttpResponse();
     try {
+      final headers = await AuthService.getAuthHeaders();
+      // Agregar headers específicos para UTF-8
+      headers['Accept'] = 'application/json; charset=UTF-8';
+
       final response = await http.post(
         url,
-        headers: {
-          'Content-Type': 'application/json; charset=UTF-8',
-          'Accept': 'application/json; charset=UTF-8',
-        },
+        headers: headers,
         body: utf8.encode(
           jsonEncode({'prompt': prompt, 'usuario_id': usuarioId}),
         ),
@@ -186,6 +202,9 @@ class ListaService {
         final String errorBody = utf8.decode(response.bodyBytes);
         responseWrapper.body = 'Error: $errorBody';
       }
+
+      // Manejar respuesta de autenticación
+      AuthService.handleHttpResponse(response);
     } catch (e) {
       responseWrapper.status = 500;
       responseWrapper.body = 'Ocurrió un error al generar la lista con IA: $e';

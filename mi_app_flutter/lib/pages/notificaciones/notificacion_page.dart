@@ -11,15 +11,42 @@ class NotificacionPage extends StatefulWidget {
   State<NotificacionPage> createState() => _NotificacionPageState();
 }
 
-class _NotificacionPageState extends State<NotificacionPage> {
+class _NotificacionPageState extends State<NotificacionPage>
+    with WidgetsBindingObserver {
   NotificacionController? _controller;
   bool _isLoading = true;
   Timer? _timer;
+  bool _isPageVisible = true;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _cargarUsuarioYRecordatorios();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    // Solo actualizar cuando la app esté en primer plano
+    if (state == AppLifecycleState.resumed) {
+      _isPageVisible = true;
+      _startTimer();
+    } else {
+      _isPageVisible = false;
+      _timer?.cancel();
+    }
+  }
+
+  void _startTimer() {
+    _timer?.cancel();
+    if (_controller != null && _isPageVisible) {
+      _timer = Timer.periodic(Duration(minutes: 5), (_) {
+        if (_isPageVisible) {
+          _controller!.cargarRecordatoriosDelDia();
+        }
+      });
+    }
   }
 
   Future<void> _cargarUsuarioYRecordatorios() async {
@@ -36,9 +63,8 @@ class _NotificacionPageState extends State<NotificacionPage> {
         _isLoading = false;
       });
 
-      _timer = Timer.periodic(Duration(seconds: 10), (_) {
-        controller.cargarRecordatoriosDelDia();
-      });
+      // Iniciar el timer para actualizaciones periódicas
+      _startTimer();
     } else {
       // Sin sesión iniciada
       setState(() {
@@ -50,6 +76,7 @@ class _NotificacionPageState extends State<NotificacionPage> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _timer?.cancel();
     super.dispose();
   }

@@ -7,13 +7,16 @@ import '../../models/categoria.dart';
 import '../../models/prioridad.dart';
 import '../../configs/contants.dart';
 import '../../models/service_http_response.dart';
+import 'auth_service.dart';
 
 class InicioService {
   // InicioService - Método corregido
   Future<ServiceHttpResponse> fetchCompleteDatosUsuario(int usuarioId) async {
     try {
+      final headers = await AuthService.getAuthHeaders();
       final response = await http.get(
         Uri.parse('${BASE_URL}usuarios/$usuarioId/datos_completos'),
+        headers: headers,
       );
 
       if (response.statusCode == 200) {
@@ -78,6 +81,8 @@ class InicioService {
           body: {'message': 'No se encontraron datos para este usuario'},
         );
       } else {
+        // Manejar respuesta de autenticación
+        AuthService.handleHttpResponse(response);
         return ServiceHttpResponse(
           status: response.statusCode,
           body: {'message': 'Error al obtener datos: ${response.statusCode}'},

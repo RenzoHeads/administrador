@@ -1,9 +1,13 @@
+#@baseUrl = http://localhost:4567
 @baseUrl = https://rubysinatra.agreeableisland-1cef4d7f.eastus2.azurecontainerapps.io
-#@baseUrl = http://localhost:4567/
+
+# Variables para JWT (actualiza el token después del login)
+@token = eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2lkIjo3LCJlbWFpbCI6IjIwMjI0NTU4QGFsb2UudWxpbWEuZWR1LnBlIiwibm9tYnJlIjoiSGVhZHM5MCIsImV4cCI6MTc1MTU3NzcxNSwiaWF0IjoxNzUwOTcyOTE1fQ.me7W-cis4yHa1uq4xj7zd23258dDSiDpqOUQB0J7s24
 #############################################
-# CREAR LISTA
+# CREAR LISTA [PROTEGIDO]
 POST {{baseUrl}}/listas/crear
 Content-Type: application/json
+Authorization: Bearer {{token}}
 
 {
   "usuario_id": 1,
@@ -13,13 +17,15 @@ Content-Type: application/json
 }
 
 #############################################
-# OBTENER LISTAS POR USUARIO
+# OBTENER LISTAS POR USUARIO [PROTEGIDO]
 GET {{baseUrl}}/listas/1
+Authorization: Bearer {{token}}
 
 #############################################
-# ACTUALIZAR LISTA
+# ACTUALIZAR LISTA [PROTEGIDO]
 PUT {{baseUrl}}/listas/actualizar/1
 Content-Type: application/json
+Authorization: Bearer {{token}}
 
 {
   "usuario_id": 1,
@@ -29,25 +35,30 @@ Content-Type: application/json
 }
 
 #############################################
-# ELIMINAR LISTA Y SUS TAREAS
+# ELIMINAR LISTA Y SUS TAREAS [PROTEGIDO]
 DELETE {{baseUrl}}/listas/eliminar/1
+Authorization: Bearer {{token}}
 
 #############################################
-# OBTENER CANTIDAD DE TAREAS POR LISTA
+# OBTENER CANTIDAD DE TAREAS POR LISTA [PROTEGIDO]
 GET {{baseUrl}}/listas/cantidad_tareas/1
+Authorization: Bearer {{token}}
 
 #############################################
-# OBTENER CANTIDAD DE TAREAS PENDIENTES POR LISTA
+# OBTENER CANTIDAD DE TAREAS PENDIENTES POR LISTA [PROTEGIDO]
 GET {{baseUrl}}/listas/cantidad_tareas_pendientes/1
+Authorization: Bearer {{token}}
 
 #############################################
-# OBTENER CANTIDAD DE TAREAS COMPLETADAS POR LISTA
+# OBTENER CANTIDAD DE TAREAS COMPLETADAS POR LISTA [PROTEGIDO]
 GET {{baseUrl}}/listas/cantidad_tareas_completadas/1
+Authorization: Bearer {{token}}
 
 #############################################
-# GENERAR LISTA CON TAREAS USANDO IA
+# GENERAR LISTA CON TAREAS USANDO IA [PROTEGIDO]
 POST {{baseUrl}}/listas/generar_ia
 Content-Type: application/json
+Authorization: Bearer {{token}}
 
 {
   "usuario_id": 1,

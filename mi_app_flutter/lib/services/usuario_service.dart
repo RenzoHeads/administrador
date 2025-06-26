@@ -4,6 +4,7 @@ import '../../configs/contants.dart';
 import '../../models/service_http_response.dart';
 import 'package:http/http.dart' as http;
 import '../../models/usuario.dart';
+import 'auth_service.dart';
 
 class UsuarioService {
   // Método login
@@ -38,9 +39,14 @@ class UsuarioService {
     final url = Uri.parse('${BASE_URL}usuario/$id');
 
     try {
-      final response = await http.get(url);
+      final headers = await AuthService.getAuthHeaders();
+      final response = await http.get(url, headers: headers);
+
       serviceResponse.status = response.statusCode;
       serviceResponse.body = response.body;
+
+      // Manejar respuesta de autenticación
+      AuthService.handleHttpResponse(response);
     } catch (e) {
       print("Error: $e");
       serviceResponse.status = 500;
@@ -85,9 +91,14 @@ class UsuarioService {
     final url = Uri.parse('${BASE_URL}usuario/eliminar/$id');
 
     try {
-      final response = await http.delete(url);
+      final headers = await AuthService.getAuthHeaders();
+      final response = await http.delete(url, headers: headers);
+
       serviceResponse.status = response.statusCode;
       serviceResponse.body = response.body;
+
+      // Manejar respuesta de autenticación
+      AuthService.handleHttpResponse(response);
     } catch (e) {
       print('Error: $e');
       serviceResponse.status = 500;
@@ -170,6 +181,13 @@ class UsuarioService {
 
     try {
       var request = http.MultipartRequest('POST', url);
+
+      // Agregar headers JWT
+      final token = await AuthService.getJwtToken();
+      if (token != null) {
+        request.headers['Authorization'] = 'Bearer $token';
+      }
+
       request.files.add(await http.MultipartFile.fromPath('file', photo.path));
 
       var streamedResponse = await request.send();
@@ -177,6 +195,9 @@ class UsuarioService {
 
       serviceResponse.status = response.statusCode;
       serviceResponse.body = response.body;
+
+      // Manejar respuesta de autenticación
+      AuthService.handleHttpResponse(response);
     } catch (e) {
       print('Error: $e');
       serviceResponse.status = 500;
@@ -192,11 +213,15 @@ class UsuarioService {
     final url = Uri.parse('${BASE_URL}usuario/$id/foto-perfil');
 
     try {
-      final response = await http.get(url);
+      final headers = await AuthService.getAuthHeaders();
+      final response = await http.get(url, headers: headers);
+
       serviceResponse.status = response.statusCode;
       serviceResponse.body = response.body;
+
+      // Manejar respuesta de autenticación
+      AuthService.handleHttpResponse(response);
     } catch (e) {
-      print('Error: $e');
       serviceResponse.status = 500;
       serviceResponse.body = 'Error al obtener la URL de la foto de perfil';
     }
@@ -210,9 +235,14 @@ class UsuarioService {
     final url = Uri.parse('${BASE_URL}usuario/$id/foto-perfil');
 
     try {
-      final response = await http.delete(url);
+      final headers = await AuthService.getAuthHeaders();
+      final response = await http.delete(url, headers: headers);
+
       serviceResponse.status = response.statusCode;
       serviceResponse.body = response.body;
+
+      // Manejar respuesta de autenticación
+      AuthService.handleHttpResponse(response);
     } catch (e) {
       print('Error: $e');
       serviceResponse.status = 500;
@@ -227,14 +257,18 @@ class UsuarioService {
     ServiceHttpResponse serviceResponse = ServiceHttpResponse();
     final url = Uri.parse('${BASE_URL}usuario/actualizar-nombre/$id');
     try {
+      final headers = await AuthService.getAuthHeaders();
       final response = await http.put(
         url,
-        headers: {'Content-Type': 'application/json; charset=UTF-8'},
+        headers: headers,
         body: json.encode({'nombre': newName}),
       );
 
       serviceResponse.status = response.statusCode;
       serviceResponse.body = response.body;
+
+      // Manejar respuesta de autenticación
+      AuthService.handleHttpResponse(response);
     } catch (e) {
       print('Error: $e');
       serviceResponse.status = 500;
@@ -250,14 +284,18 @@ class UsuarioService {
     final url = Uri.parse('${BASE_URL}usuario/actualizar-correo/$id');
 
     try {
+      final headers = await AuthService.getAuthHeaders();
       final response = await http.put(
         url,
-        headers: {'Content-Type': 'application/json; charset=UTF-8'},
+        headers: headers,
         body: json.encode({'email': newEmail}),
       );
 
       serviceResponse.status = response.statusCode;
       serviceResponse.body = response.body;
+
+      // Manejar respuesta de autenticación
+      AuthService.handleHttpResponse(response);
     } catch (e) {
       print('Error: $e');
       serviceResponse.status = 500;
@@ -276,14 +314,18 @@ class UsuarioService {
     final url = Uri.parse('${BASE_URL}usuario/$id/token-fcm');
 
     try {
+      final headers = await AuthService.getAuthHeaders();
       final response = await http.post(
         url,
-        headers: {'Content-Type': 'application/json; charset=UTF-8'},
+        headers: headers,
         body: json.encode({'token_fcm': tokenFCM}),
       );
 
       serviceResponse.status = response.statusCode;
       serviceResponse.body = response.body;
+
+      // Manejar respuesta de autenticación
+      AuthService.handleHttpResponse(response);
     } catch (e) {
       print('Error: $e');
       serviceResponse.status = 500;

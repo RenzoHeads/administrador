@@ -1,9 +1,13 @@
+#@baseUrl = http://localhost:4567
 @baseUrl = https://rubysinatra.agreeableisland-1cef4d7f.eastus2.azurecontainerapps.io
-#@baseUrl = http://localhost:4567/
+
+# Variables para JWT (actualiza el token después del login)
+@token = eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2lkIjo3LCJlbWFpbCI6IjIwMjI0NTU4QGFsb2UudWxpbWEuZWR1LnBlIiwibm9tYnJlIjoiSGVhZHM5MCIsImV4cCI6MTc1MTU3NzcxNSwiaWF0IjoxNzUwOTcyOTE1fQ.me7W-cis4yHa1uq4xj7zd23258dDSiDpqOUQB0J7s24
 #############################################
-# CREAR TAREA CON ETIQUETAS
+# CREAR TAREA CON ETIQUETAS [PROTEGIDO]
 POST {{baseUrl}}/tareas/crear_con_etiquetas
 Content-Type: application/json
+Authorization: Bearer {{token}}
 
 {
   "usuario_id": 1,
@@ -19,9 +23,10 @@ Content-Type: application/json
 }
 
 #############################################
-# ACTUALIZAR TAREA CON ETIQUETAS
+# ACTUALIZAR TAREA CON ETIQUETAS [PROTEGIDO]
 PUT {{baseUrl}}/tareas/1/actualizar_con_etiquetas
 Content-Type: application/json
+Authorization: Bearer {{token}}
 
 {
   "usuario_id": 1,
@@ -37,25 +42,30 @@ Content-Type: application/json
 }
 
 #############################################
-# ELIMINAR TAREA
+# ELIMINAR TAREA [PROTEGIDO]
 DELETE {{baseUrl}}/tareas/eliminar/1
+Authorization: Bearer {{token}}
 
 #############################################
-# OBTENER TAREA POR ID
-GET {{baseUrl}}/tareas/obtener/1
+# OBTENER TAREA POR ID [PROTEGIDO]
+GET {{baseUrl}}/tareas/obtener/426
+Authorization: Bearer {{token}}
 
 #############################################
-# OBTENER TAREAS DE HOY POR USUARIO
-GET {{baseUrl}}/tareas/hoy/1
+# OBTENER TODAS LAS TAREAS DE UN USUARIO [PROTEGIDO]
+GET {{baseUrl}}/tareas/1
+Authorization: Bearer {{token}}
 
 #############################################
-# OBTENER ESTADO DE UNA TAREA
+# OBTENER ESTADO DE UNA TAREA [PROTEGIDO]
 GET {{baseUrl}}/tareas/estado/1
+Authorization: Bearer {{token}}
 
 #############################################
-# ACTUALIZAR ESTADO DE UNA TAREA
+# ACTUALIZAR ESTADO DE UNA TAREA [PROTEGIDO]
 PUT {{baseUrl}}/tareas/estado/1
 Content-Type: application/json
+Authorization: Bearer {{token}}
 
 {
   "estado_id": 2

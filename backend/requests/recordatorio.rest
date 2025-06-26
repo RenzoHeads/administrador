@@ -1,21 +1,26 @@
+#@baseUrl = http://localhost:4567
 @baseUrl = https://rubysinatra.agreeableisland-1cef4d7f.eastus2.azurecontainerapps.io
-#@baseUrl = http://localhost:4567/
+
+# Variables para JWT (actualiza el token después del login)
+@token = eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2lkIjo3LCJlbWFpbCI6IjIwMjI0NTU4QGFsb2UudWxpbWEuZWR1LnBlIiwibm9tYnJlIjoiSGVhZHM5MCIsImV4cCI6MTc1MTU3NzcxNSwiaWF0IjoxNzUwOTcyOTE1fQ.me7W-cis4yHa1uq4xj7zd23258dDSiDpqOUQB0J7s24
 #############################################
-# CREAR RECORDATORIO CON NOTIFICACIÓN FCM
+# CREAR RECORDATORIO CON NOTIFICACIÓN FCM [PROTEGIDO]
 POST {{baseUrl}}/recordatorios/crear
 Content-Type: application/json
+Authorization: Bearer {{token}}
 
 {
   "tarea_id": 426,
-  "fecha_hora": "2025-06-25T23:04:00",
+  "fecha_hora": "2025-06-26T17:16:00",
   "token_fcm": "e8ep0QXLTyq_iX-7cgJ0iy:APA91bFZ29M5oE26x-2HEcXvABJyiHbvMFzevPClUwfYNMgFnd99kRIXP3kQtLQxin_9vAEpa8aXNQj4S1sHYWmlVSTbyQ3cr7sNwhWYSxjZ6FdE8y0lO-I",
-  "mensaje": "Test Firebase Admin SDK - ¡Funciona!"
+  "mensaje": "Renzo listo"
 }
 
 #############################################
-# ACTUALIZAR RECORDATORIO
+# ACTUALIZAR RECORDATORIO [PROTEGIDO]
 PUT {{baseUrl}}/recordatorios/actualizar
 Content-Type: application/json
+Authorization: Bearer {{token}}
 
 {
   "id": 1,
@@ -26,10 +31,12 @@ Content-Type: application/json
 }
 
 #############################################
-# ELIMINAR RECORDATORIO
-DELETE {{baseUrl}}/recordatorios/eliminar/1
+# ELIMINAR RECORDATORIO [PROTEGIDO]
+DELETE {{baseUrl}}/recordatorios/eliminar/426
+Authorization: Bearer {{token}}
 
 #############################################
-# OBTENER RECORDATORIOS POR TAREA
-GET {{baseUrl}}/recordatorios/422
+# OBTENER RECORDATORIOS POR TAREA [PROTEGIDO]
+GET {{baseUrl}}/recordatorios/426
+Authorization: Bearer {{token}}
 

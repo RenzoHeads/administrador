@@ -1,4 +1,5 @@
 import 'package:get/get.dart';
+import 'dart:convert';
 import '../../services/inicio_service.dart';
 import '../../models/tarea.dart';
 import '../../models/etiqueta.dart';
@@ -10,6 +11,7 @@ import '../../services/controladorsesion.dart';
 import '../../models/lista.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import '../../services/usuario_service.dart';
+import '../../services/auth_service.dart';
 
 class PrincipalController extends GetxController {
   final InicioService _inicioService = InicioService();
@@ -64,6 +66,21 @@ class PrincipalController extends GetxController {
       isLoading(true);
       hasError(false);
       datosCargados(false);
+
+      print('🔄 Iniciando carga de datos del usuario...');
+
+      // Verificar que hay token antes de hacer peticiones
+      final hasValidToken = await AuthService.hasValidToken();
+      if (!hasValidToken) {
+        // Esperar un poco y verificar de nuevo
+        await Future.delayed(Duration(milliseconds: 500));
+        final hasValidTokenAfterWait = await AuthService.hasValidToken();
+        if (!hasValidTokenAfterWait) {
+          hasError(true);
+          errorMessage('No se pudo autenticar el usuario');
+          return;
+        }
+      }
 
       final usuarioId = _sesionController.usuarioActual.value?.id;
 
@@ -283,6 +300,7 @@ class PrincipalController extends GetxController {
           .value]; // Métodos para manejar la foto de perfil
   Future<void> cargarFotoPerfil() async {
     final usuario = _sesionController.usuarioActual.value;
+
     if (usuario != null && usuario.id != null) {
       try {
         loadingPhoto.value = true;
@@ -290,13 +308,7 @@ class PrincipalController extends GetxController {
 
         if (usuario.foto != null && usuario.foto!.isNotEmpty) {
           profilePhotoUrl.value = usuario.foto!;
-          print(
-            'Foto de perfil cargada desde sesión: ${profilePhotoUrl.value}',
-          );
         } else {
-          print(
-            'No hay foto de perfil en la sesión, cargando desde servidor...',
-          );
           final response = await _usuarioService.getProfilePhotoUrl(
             usuario.id!,
           );
@@ -304,19 +316,39 @@ class PrincipalController extends GetxController {
           if (response != null &&
               response.status == 200 &&
               response.body != null) {
-            final fotoData = response.body as Map<String, dynamic>;
-            final nuevaUrl = fotoData['url_foto'] ?? '';
+            try {
+              // Manejar diferentes tipos de respuesta del servidor
+              Map<String, dynamic> fotoData;
 
-            if (nuevaUrl.isNotEmpty) {
-              profilePhotoUrl.value = nuevaUrl;
-              print('Foto de perfil cargada desde servidor: $nuevaUrl');
-            } else {
-              print('No se encontró foto de perfil en el servidor');
+              if (response.body is String) {
+                // Si es String, intentar parsearlo como JSON
+                fotoData = json.decode(response.body) as Map<String, dynamic>;
+              } else if (response.body is Map<String, dynamic>) {
+                // Si ya es Map, usarlo directamente
+                fotoData = response.body as Map<String, dynamic>;
+              } else {
+                // Tipo no esperado
+                return;
+              }
+
+              // Intentar múltiples nombres de campo para la URL de la imagen
+              final nuevaUrl =
+                  fotoData['imagen_perfil'] ??
+                  fotoData['url_foto'] ??
+                  fotoData['foto'] ??
+                  fotoData['image_url'] ??
+                  '';
+
+              if (nuevaUrl.isNotEmpty) {
+                profilePhotoUrl.value = nuevaUrl;
+              }
+            } catch (e) {
+              // Error al parsear respuesta
             }
           }
         }
       } catch (e) {
-        print('Error al cargar foto de perfil: $e');
+        // Error general al cargar foto de perfil
       } finally {
         loadingPhoto.value = false;
       }

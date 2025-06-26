@@ -2,46 +2,56 @@ require 'json'
 require 'securerandom'
 require 'langchain'
 
-# # === CONTROLADORES PARA listas ===
+# === CONTROLADORES PARA LISTAS ===
 
-# # Crear lista
+# Crear lista - PROTEGIDO
 post '/listas/crear' do
-    data = JSON.parse(request.body.read)
-    lista = Lista.new(
+  authenticate_jwt!
+  content_type :json
+  
+  data = JSON.parse(request.body.read)
+  lista = Lista.new(
+    usuario_id: data['usuario_id'],
+    nombre: data['nombre'],
+    descripcion: data['descripcion'],
+    color: data['color']
+  )
+  lista.save
+  [200, lista.to_json]
+end
+
+# Obtener listas por usuario - PROTEGIDO
+get '/listas/:usuario_id' do
+  authenticate_jwt!
+  content_type :json
+  
+  listas = Lista.where(usuario_id: params[:usuario_id]).all
+  listas.empty? ? [404, 'Sin listas'] : [200, listas.to_json]
+end
+
+# Actualizar lista - PROTEGIDO
+put '/listas/actualizar/:id' do
+  authenticate_jwt!
+  content_type :json
+  
+  data = JSON.parse(request.body.read)
+  lista = Lista.first(id: params[:id])
+  if lista
+    lista.update(
       usuario_id: data['usuario_id'],
       nombre: data['nombre'],
       descripcion: data['descripcion'],
       color: data['color']
     )
-    lista.save
     [200, lista.to_json]
+  else
+    [404, 'Lista no encontrada']
   end
-  
-get '/listas/:usuario_id' do
-    listas = Lista.where(usuario_id: params[:usuario_id]).all
-    listas.empty? ? [404, 'Sin listas'] : [200, listas.to_json]
-  end
+end
 
-
-    # Actualizar lista
-put '/listas/actualizar/:id' do
-    data = JSON.parse(request.body.read)
-    lista = Lista.first(id: params[:id])
-    if lista
-      lista.update(
-        usuario_id: data['usuario_id'],
-        nombre: data['nombre'],
-        descripcion: data['descripcion'],
-        color: data['color']
-      )
-      [200, lista.to_json]
-    else
-      [404, 'Lista no encontrada']
-    end
-  end
-
-# Eliminar lista y sus tareas relacionadas
+# Eliminar lista y sus tareas relacionadas - PROTEGIDO
 delete '/listas/eliminar/:id' do
+  authenticate_jwt!
   content_type 'application/json; charset=utf-8'
 
   begin
@@ -71,9 +81,11 @@ delete '/listas/eliminar/:id' do
   [200, { message: 'Lista y tareas relacionadas eliminadas', tareas_ids: tareas_ids }.to_json]
 end
 
-  #Obtener cantidad de tareas por lista
+# Obtener cantidad de tareas por lista - PROTEGIDO
 get '/listas/cantidad_tareas/:id' do
+  authenticate_jwt!
   content_type :json
+  
   lista = Lista.first(id: params[:id])
   if lista
     cantidad_tareas = Tarea.where(lista_id: lista.id).count
@@ -84,9 +96,11 @@ get '/listas/cantidad_tareas/:id' do
   end
 end
 
-#Obtener cantidad de tareas en estado pendiente por lista
+# Obtener cantidad de tareas en estado pendiente por lista - PROTEGIDO
 get '/listas/cantidad_tareas_pendientes/:id' do
+  authenticate_jwt!
   content_type :json
+  
   lista = Lista.first(id: params[:id])
   if lista
     cantidad_tareas_pendientes = Tarea.where(lista_id: lista.id, estado_id: 1).count # Asumiendo que el estado "pendiente" tiene id 1
@@ -97,7 +111,20 @@ get '/listas/cantidad_tareas_pendientes/:id' do
   end
 end
 
-#Obtener cantidad de tareas en estado completada por lista
+# Obtener cantidad de tareas en estado completada por lista - PROTEGIDO
+get '/listas/cantidad_tareas_completadas/:id' do
+  authenticate_jwt!
+  content_type :json
+  
+  lista = Lista.first(id: params[:id])
+  if lista
+    cantidad_tareas_completadas = Tarea.where(lista_id: lista.id, estado_id: 2).count # Asumiendo que el estado "completada" tiene id 2
+    { cantidad_tareas_completadas: cantidad_tareas_completadas }.to_json
+  else
+    status 404
+    { error: 'Lista no encontrada' }.to_json
+  end
+end
 get '/listas/cantidad_tareas_completadas/:id' do
   content_type :json
   lista = Lista.first(id: params[:id])
@@ -115,6 +142,7 @@ end
 
 # Generar lista con tareas usando IA
 post '/listas/generar_ia' do
+  authenticate_jwt!
   content_type :json
 
   request_payload = JSON.parse(request.body.read)

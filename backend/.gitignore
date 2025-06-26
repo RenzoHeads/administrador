@@ -11,7 +11,12 @@
 /tmp/
 
 # Used by dotenv library to load environment variables.
-# .env
+.env
+
+# Firebase credentials
+firebase-credentials.json
+firebase-adminsdk-*.json
+
 
 # Ignore Byebug command history file.
 .byebug_history

@@ -4,6 +4,7 @@ import '../../models/tarea.dart';
 
 import '../../configs/contants.dart';
 import '../../models/service_http_response.dart';
+import 'auth_service.dart';
 
 class TareaService {
   // Parte del servicio de tareas que necesita ser corregido
@@ -13,7 +14,9 @@ class TareaService {
     final responseWrapper = ServiceHttpResponse();
 
     try {
-      final response = await http.get(url);
+      final headers = await AuthService.getAuthHeaders();
+      final response = await http.get(url, headers: headers);
+
       responseWrapper.status = response.statusCode;
 
       if (response.statusCode == 200) {
@@ -31,6 +34,9 @@ class TareaService {
       } else {
         responseWrapper.body = 'Error: ${response.body}';
       }
+
+      // Manejar respuesta de autenticación
+      AuthService.handleHttpResponse(response);
     } catch (e) {
       responseWrapper.status = 500;
       responseWrapper.body = 'Ocurrió un error al obtener tareas: $e';
@@ -69,12 +75,7 @@ class TareaService {
         'etiquetas': etiquetas,
       };
 
-      print('Payload: ${jsonEncode(payload)}');
-
-      final headers = {
-        'Content-Type': 'application/json; charset=UTF-8',
-        'Accept': 'application/json',
-      };
+      final headers = await AuthService.getAuthHeaders();
 
       final response = await http.post(
         url,
@@ -94,6 +95,9 @@ class TareaService {
       } else {
         responseWrapper.body = 'Error: ${response.body}';
       }
+
+      // Manejar respuesta de autenticación
+      AuthService.handleHttpResponse(response);
     } catch (e, stackTrace) {
       print('Error en crearTareaConEtiquetas: $e');
       print('Stack trace: $stackTrace');
@@ -136,9 +140,10 @@ class TareaService {
         'etiquetas': etiquetas,
       };
 
+      final headers = await AuthService.getAuthHeaders();
       final response = await http.put(
         url,
-        headers: {'Content-Type': 'application/json'},
+        headers: headers,
         body: jsonEncode(payload),
       );
 
@@ -151,6 +156,9 @@ class TareaService {
       } else {
         responseWrapper.body = 'Error: ${response.body}';
       }
+
+      // Manejar respuesta de autenticación
+      AuthService.handleHttpResponse(response);
     } catch (e) {
       responseWrapper.status = 500;
       responseWrapper.body =
@@ -167,7 +175,9 @@ class TareaService {
 
     try {
       print('Enviando solicitud DELETE a: $url'); // Log para debug
-      final response = await http.delete(url);
+      final headers = await AuthService.getAuthHeaders();
+      final response = await http.delete(url, headers: headers);
+
       responseWrapper.status = response.statusCode;
       print(
         'Respuesta recibida: ${response.statusCode} - ${response.body}',
@@ -188,6 +198,9 @@ class TareaService {
       } else {
         responseWrapper.body = 'Error: ${response.body}';
       }
+
+      // Manejar respuesta de autenticación
+      AuthService.handleHttpResponse(response);
     } catch (e) {
       print('Error en solicitud HTTP: $e'); // Log detallado
       responseWrapper.status = 500;
@@ -206,9 +219,10 @@ class TareaService {
     final responseWrapper = ServiceHttpResponse();
 
     try {
+      final headers = await AuthService.getAuthHeaders();
       final response = await http.put(
         url,
-        headers: {'Content-Type': 'application/json'},
+        headers: headers,
         body: jsonEncode({'estado_id': estadoId}),
       );
 
@@ -227,6 +241,9 @@ class TareaService {
       } else {
         responseWrapper.body = 'Error: ${response.body}';
       }
+
+      // Manejar respuesta de autenticación
+      AuthService.handleHttpResponse(response);
     } catch (e) {
       responseWrapper.status = 500;
       responseWrapper.body =

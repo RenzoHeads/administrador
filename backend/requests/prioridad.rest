@@ -1,11 +1,16 @@
+#@baseUrl = http://localhost:4567
 @baseUrl = https://rubysinatra.agreeableisland-1cef4d7f.eastus2.azurecontainerapps.io
-#@baseUrl = http://localhost:4567/
+
+# Variables para JWT (actualiza el token después del login)
+@token = eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2lkIjo3LCJlbWFpbCI6IjIwMjI0NTU4QGFsb2UudWxpbWEuZWR1LnBlIiwibm9tYnJlIjoiSGVhZHM5MCIsImV4cCI6MTc1MTU3NzcxNSwiaWF0IjoxNzUwOTcyOTE1fQ.me7W-cis4yHa1uq4xj7zd23258dDSiDpqOUQB0J7s24
 #############################################
-# OBTENER TODAS LAS PRIORIDADES
+# OBTENER TODAS LAS PRIORIDADES [PROTEGIDO]
 GET {{baseUrl}}/prioridades
+Authorization: Bearer {{token}}
 
 #############################################
-# OBTENER PRIORIDAD POR ID
+# OBTENER PRIORIDAD POR ID [PROTEGIDO]
 GET {{baseUrl}}/prioridades/1
+Authorization: Bearer {{token}}
 
 #############################################

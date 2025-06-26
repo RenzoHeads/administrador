@@ -188,6 +188,7 @@ DEPENDENCIES
   dotenv
   google-apis-fcm_v1
   googleauth
+  jwt
   langchainrb (~> 0.19.5)
   mail
   mime-types

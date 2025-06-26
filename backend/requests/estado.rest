@@ -1,20 +1,26 @@
+#@baseUrl = http://localhost:4567
 @baseUrl = https://rubysinatra.agreeableisland-1cef4d7f.eastus2.azurecontainerapps.io
-#@baseUrl = http://localhost:4567/
 
+# Variables para JWT (actualiza el token después del login)
+@token = eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2lkIjo3LCJlbWFpbCI6IjIwMjI0NTU4QGFsb2UudWxpbWEuZWR1LnBlIiwibm9tYnJlIjoiSGVhZHM5MCIsImV4cCI6MTc1MTU3NzcxNSwiaWF0IjoxNzUwOTcyOTE1fQ.me7W-cis4yHa1uq4xj7zd23258dDSiDpqOUQB0J7s24
 #############################################
-# OBTENER TODOS LOS ESTADOS
+# OBTENER TODOS LOS ESTADOS [PROTEGIDO]
 GET {{baseUrl}}/estados
+Authorization: Bearer {{token}}
 
 #############################################
-# OBTENER ESTADO POR ID
+# OBTENER ESTADO POR ID [PROTEGIDO]
 GET {{baseUrl}}/estados/1
+Authorization: Bearer {{token}}
 
 #############################################
-# OBTENER ESTADO POR ID (ejemplo con ID 2)
+# OBTENER ESTADO POR ID (ejemplo con ID 2) [PROTEGIDO]
 GET {{baseUrl}}/estados/2
+Authorization: Bearer {{token}}
 
 #############################################
-# OBTENER ESTADO POR ID (ejemplo con ID 3)
+# OBTENER ESTADO POR ID (ejemplo con ID 3) [PROTEGIDO]
 GET {{baseUrl}}/estados/3
+Authorization: Bearer {{token}}
 
 #############################################

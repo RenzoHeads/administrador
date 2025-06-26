@@ -21,6 +21,8 @@ require_relative 'configs/models'
 
 # Servicios
 require_relative 'services/reminder_scheduler'
+require_relative 'services/jwt_service'
+require_relative 'middleware/auth_middleware'
 
 # Inicializar scheduler de forma global
 scheduler = Rufus::Scheduler.new

@@ -1,9 +1,13 @@
+#@baseUrl = http://localhost:4567
 @baseUrl = https://rubysinatra.agreeableisland-1cef4d7f.eastus2.azurecontainerapps.io
-#@baseUrl = http://localhost:4567/
+
+# Variables para JWT (actualiza el token después del login)
+@token = eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2lkIjo3LCJlbWFpbCI6IjIwMjI0NTU4QGFsb2UudWxpbWEuZWR1LnBlIiwibm9tYnJlIjoiSGVhZHM5MCIsImV4cCI6MTc1MTU3NzcxNSwiaWF0IjoxNzUwOTcyOTE1fQ.me7W-cis4yHa1uq4xj7zd23258dDSiDpqOUQB0J7s24
 #############################################
 # CREAR CATEGORIA
 POST {{baseUrl}}/categorias/crear
 Content-Type: application/json
+Authorization: Bearer {{token}}
 
 {
   "nombre": "Trabajo",
@@ -11,13 +15,15 @@ Content-Type: application/json
 }
 
 #############################################
-# OBTENER TODAS LAS CATEGORIAS
+# OBTENER TODAS LAS CATEGORIAS [PROTEGIDO]
 GET {{baseUrl}}/categorias
+Authorization: Bearer {{token}}
 
 #############################################
-# ACTUALIZAR CATEGORIA
+# ACTUALIZAR CATEGORIA [PROTEGIDO]
 PUT {{baseUrl}}/categorias/actualizar/1
 Content-Type: application/json
+Authorization: Bearer {{token}}
 
 {
   "nombre": "Trabajo Actualizado",
@@ -25,6 +31,7 @@ Content-Type: application/json
 }
 
 #############################################
-# ELIMINAR CATEGORIA
+# ELIMINAR CATEGORIA [PROTEGIDO]
 DELETE {{baseUrl}}/categorias/eliminar/1
+Authorization: Bearer {{token}}
 

@@ -3,6 +3,7 @@ import 'package:http/http.dart' as http;
 import '../../models/etiqueta.dart';
 import '../../configs/contants.dart';
 import '../../models/service_http_response.dart';
+import 'auth_service.dart';
 
 class EtiquetaService {
   // Crear etiqueta
@@ -14,9 +15,10 @@ class EtiquetaService {
     final responseWrapper = ServiceHttpResponse();
 
     try {
+      final headers = await AuthService.getAuthHeaders();
       final response = await http.post(
         url,
-        headers: {'Content-Type': 'application/json; charset=UTF-8'},
+        headers: headers,
         body: jsonEncode({'nombre': nombre, 'color': color}),
       );
 
@@ -32,6 +34,9 @@ class EtiquetaService {
       } else {
         responseWrapper.body = 'Error: ${response.body}';
       }
+
+      // Manejar respuesta de autenticación
+      AuthService.handleHttpResponse(response);
     } catch (e) {
       responseWrapper.status = 500;
       responseWrapper.body = 'Ocurrió un error al crear la etiqueta: $e';

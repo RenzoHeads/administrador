@@ -5,126 +5,307 @@ require 'concurrent'
 
 # === CONTROLADORES PARA USUARIOS ===
 
-# Validar usuario
+require 'json'
+require 'securerandom'
+require_relative '../models/blob' # Asegúrate de tener la clase AzureBlobService definida
+require_relative '../services/jwt_service'
+require 'concurrent'
+
+# === CONTROLADORES PARA USUARIOS ===
+
+# Validar usuario (Login con JWT)
 post '/usuario/validar' do
-  status = 500
-  resp = ''
-  body = request.body.read
-  data = JSON.parse(body)
-  usuario = data['nombre']
-  contrasena = data['contrasena']
-
+  content_type :json
+  
   begin
-    record = Usuario.where(nombre: usuario, contrasena: contrasena).select(:id).first
-    if record
-      resp = { id: record.id }.to_json
-      status = 200
-    else
-      status = 404
-      resp = 'Usuario y/o contraseña no válidos'
+    # Parsear el cuerpo de la petición
+    body = request.body.read
+    data = JSON.parse(body)
+    
+    nombre = data['nombre']
+    password = data['contrasena'] || data['password']
+    
+    # Validar que se proporcionen nombre y contraseña
+    unless nombre && password
+      return [400, {
+        success: false,
+        error: 'nombre y contraseña son requeridos',
+        message: 'Por favor proporciona nombre y contraseña'
+      }.to_json]
     end
+
+    # Buscar usuario por nombre
+    usuario = Usuario.where(nombre: nombre).first
+    
+    unless usuario
+      puts "🔒 Intento de login fallido: nombre no encontrado - #{nombre}"
+      return [401, {
+        success: false,
+        error: 'Credenciales inválidas',
+        message: 'nombre o contraseña incorrectos'
+      }.to_json]
+    end
+
+    # Verificar contraseña (sin hash)
+    unless usuario.contrasena == password
+      puts "🔒 Intento de login fallido: contraseña incorrecta - #{nombre}"
+      return [401, {
+        success: false,
+        error: 'Credenciales inválidas',
+        message: 'nombre o contraseña incorrectos'
+      }.to_json]
+    end
+
+    # Generar JWT token
+    payload = {
+      user_id: usuario.id,
+      email: usuario.email,
+      nombre: usuario.nombre
+    }
+    
+    token = JWTService.encode_token(payload)
+    
+    unless token
+      puts "❌ Error generando token JWT para usuario: #{nombre}"
+      return [500, {
+        success: false,
+        error: 'Error interno del servidor',
+        message: 'No se pudo generar el token de acceso'
+      }.to_json]
+    end
+
+    puts "✅ Login exitoso para usuario: #{nombre} (ID: #{usuario.id})"
+    
+    # Respuesta exitosa
+    [200, {
+      success: true,
+      message: 'Login exitoso',
+      user: {
+        id: usuario.id,
+        nombre: usuario.nombre,
+        email: usuario.email
+      },
+      token: token
+    }.to_json]
+
+  rescue JSON::ParserError
+    [400, {
+      success: false,
+      error: 'JSON inválido',
+      message: 'El formato de los datos enviados es incorrecto'
+    }.to_json]
   rescue => e
-    status = 500
-    resp = 'Error al validar usuario'
-    puts e.message
+    puts "❌ Error en login: #{e.message}"
+    puts e.backtrace.join("\n")
+    [500, {
+      success: false,
+      error: 'Error interno del servidor',
+      message: 'Ocurrió un error procesando tu solicitud'
+    }.to_json]
   end
-  status status
-  resp
 end
 
-# Crear usuario
+# Crear usuario (sin hash de contraseña)
 post '/usuario/crear-usuario' do
-  status = 500
-  resp = ''
-  nombre = params[:nombre]
-  contrasena = params[:contrasena]
-  email = params[:email]
-
-
+  content_type :json
+  
   begin
-    if Usuario.where(nombre: nombre).count == 0
-      usuario = Usuario.new(nombre: nombre, contrasena: contrasena, email: email)
-      usuario.save
-      resp = 'Usuario creado exitosamente'
-      status = 200
-    else
-      status = 409
-      resp = 'Usuario ya en uso'
+    nombre = params[:nombre]
+    contrasena = params[:contrasena]
+    email = params[:email]
+
+    # Validar que se proporcionen todos los datos requeridos
+    unless nombre && contrasena && email
+      return [400, {
+        success: false,
+        error: 'Datos incompletos',
+        message: 'Nombre, contraseña y email son requeridos'
+      }.to_json]
     end
+
+    # Validar longitud mínima de contraseña
+    if contrasena.length < 6
+      return [400, {
+        success: false,
+        error: 'Contraseña muy corta',
+        message: 'La contraseña debe tener al menos 6 caracteres'
+      }.to_json]
+    end
+
+    # Verificar si el nombre de usuario ya existe
+    if Usuario.where(nombre: nombre).count > 0
+      return [409, {
+        success: false,
+        error: 'Usuario ya existe',
+        message: 'El nombre de usuario ya está en uso'
+      }.to_json]
+    end
+
+    # Verificar si el email ya existe
+    if Usuario.where(email: email).count > 0
+      return [409, {
+        success: false,
+        error: 'Email ya existe',
+        message: 'El email ya está registrado'
+      }.to_json]
+    end
+
+    # Crear el usuario (sin hashear contraseña)
+    usuario = Usuario.new(
+      nombre: nombre, 
+      contrasena: contrasena, 
+      email: email
+    )
+    usuario.save
+
+    puts "✅ Usuario creado exitosamente: #{email} (ID: #{usuario.id})"
+    
+    [200, {
+      success: true,
+      message: 'Usuario creado exitosamente',
+      user: {
+        id: usuario.id,
+        nombre: usuario.nombre,
+        email: usuario.email
+      }
+    }.to_json]
+
   rescue => e
-    resp = 'Error al crear usuario'
-    puts e.message
+    puts "❌ Error creando usuario: #{e.message}"
+    puts e.backtrace.join("\n")
+    [500, {
+      success: false,
+      error: 'Error interno del servidor',
+      message: 'No se pudo crear el usuario'
+    }.to_json]
   end
-  status status
-  resp
 end
 
 
 
 
-# Eliminar usuario
+# Eliminar usuario (requiere autenticación)
 delete '/usuario/eliminar/:id' do
-  status = 500
-  resp = ''
+  authenticate_jwt!
+  content_type :json
+  
   begin
-    usuario = Usuario.first(id: params[:id])
-    if usuario
-      usuario.destroy
-      resp = 'Usuario eliminado'
-      status = 200
-    else
-      status = 404
-      resp = 'Usuario no encontrado'
+    user_id = params[:id].to_i
+    
+    # Solo permitir que el usuario elimine su propia cuenta
+    unless current_user_id == user_id
+      return [403, {
+        success: false,
+        error: 'Acceso denegado',
+        message: 'Solo puedes eliminar tu propia cuenta'
+      }.to_json]
     end
+
+    usuario = Usuario.first(id: user_id)
+    unless usuario
+      return [404, {
+        success: false,
+        error: 'Usuario no encontrado',
+        message: 'El usuario especificado no existe'
+      }.to_json]
+    end
+
+    usuario.destroy
+    puts "✅ Usuario eliminado: #{usuario.email} (ID: #{usuario.id})"
+    
+    [200, {
+      success: true,
+      message: 'Usuario eliminado correctamente'
+    }.to_json]
+
   rescue => e
-    resp = 'Error al eliminar usuario'
-    puts e.message
+    puts "❌ Error eliminando usuario: #{e.message}"
+    [500, {
+      success: false,
+      error: 'Error interno del servidor',
+      message: 'Error al eliminar usuario'
+    }.to_json]
   end
-  status status
-  resp
 end
 
 
-# Verificar si correo existe
+# Verificar si correo existe (público)
 get '/usuario/verificar-correo/:email' do
-  status = 500
-  resp = ''
+  content_type :json
+  
   begin
-    usuario = Usuario.where(email: params[:email]).first
+    email = params[:email]
+    usuario = Usuario.where(email: email).first
+    
     if usuario
-      resp = 'Correo existe'
-      status = 200
+      [200, {
+        success: true,
+        exists: true,
+        message: 'Correo existe'
+      }.to_json]
     else
-      status = 404
-      resp = 'Correo no existe'
+      [404, {
+        success: false,
+        exists: false,
+        message: 'Correo no existe'
+      }.to_json]
     end
   rescue => e
-    resp = 'Error al verificar correo'
-    puts e.message
+    puts "❌ Error verificando correo: #{e.message}"
+    [500, {
+      success: false,
+      error: 'Error interno del servidor',
+      message: 'Error al verificar correo'
+    }.to_json]
   end
-  status status
-  resp
 end
 
-# Obtener usuario por ID
+# Obtener usuario por ID (requiere autenticación)
 get '/usuario/:id' do
-  status = 500
-  resp = ''
+  authenticate_jwt!
+  content_type :json
+  
   begin
-    usuario = Usuario.first(id: params[:id])
-    if usuario
-      resp = usuario.to_json
-      status = 200
-    else
-      status = 404
-      resp = 'Usuario no encontrado'
+    user_id = params[:id].to_i
+    
+    # Solo permitir que el usuario acceda a su propia información
+    # o implementar verificación de roles si es necesario
+    unless current_user_id == user_id
+      return [403, {
+        success: false,
+        error: 'Acceso denegado',
+        message: 'Solo puedes acceder a tu propia información'
+      }.to_json]
     end
+
+    usuario = Usuario.first(id: user_id)
+    
+    unless usuario
+      return [404, {
+        success: false,
+        error: 'Usuario no encontrado',
+        message: 'El usuario solicitado no existe'
+      }.to_json]
+    end
+
+    [200, {
+      success: true,
+      user: {
+        id: usuario.id,
+        nombre: usuario.nombre,
+        email: usuario.email
+        # No incluir la contraseña por seguridad
+      }
+    }.to_json]
+
   rescue => e
-    resp = 'Error al obtener usuario'
-    puts e.message
+    puts "❌ Error obteniendo usuario: #{e.message}"
+    [500, {
+      success: false,
+      error: 'Error interno del servidor',
+      message: 'No se pudo obtener la información del usuario'
+    }.to_json]
   end
-  status status
-  resp
 end
 
 # ================================
@@ -233,35 +414,70 @@ end
 
 # Restablecer contraseña con token
 put '/usuario/restablecer-contrasena' do
-  status = 500
-  resp = ''
+  content_type :json
+  
   begin
     data = JSON.parse(request.body.read)
     token = data['reset_token']
     nueva_contrasena = data['contrasena']
 
+    # Validar que se proporcionen todos los datos
+    unless token && nueva_contrasena
+      return [400, {
+        success: false,
+        error: 'Datos incompletos',
+        message: 'Token y nueva contraseña son requeridos'
+      }.to_json]
+    end
+
+    # Validar longitud mínima de contraseña  
+    if nueva_contrasena.length < 6
+      return [400, {
+        success: false,
+        error: 'Contraseña muy corta',
+        message: 'La contraseña debe tener al menos 6 caracteres'
+      }.to_json]
+    end
+
+    # Buscar usuario por token
     usuario = Usuario.where(reset_token: token).first
 
     if usuario && usuario.reset_token_expira_en > Time.now
-      
-      
+      # Actualizar contraseña sin hashear y limpiar token de recuperación
       usuario.update(
         contrasena: nueva_contrasena,
         reset_token: nil,
         reset_token_expira_en: nil
       )
-      status = 200
-      resp = 'Contraseña actualizada correctamente'
+      
+      puts "✅ Contraseña restablecida para usuario: #{usuario.email} (ID: #{usuario.id})"
+      
+      [200, {
+        success: true,
+        message: 'Contraseña actualizada correctamente'
+      }.to_json]
     else
-      status = 400
-      resp = 'Token inválido o expirado'
+      [400, {
+        success: false,
+        error: 'Token inválido o expirado',
+        message: 'El token de recuperación no es válido o ha expirado'
+      }.to_json]
     end
+
+  rescue JSON::ParserError
+    [400, {
+      success: false,
+      error: 'JSON inválido',
+      message: 'El formato de los datos enviados es incorrecto'
+    }.to_json]
   rescue => e
-    resp = 'Error al restablecer contraseña'
-    puts e.message
+    puts "❌ Error al restablecer contraseña: #{e.message}"
+    [500, {
+      success: false,
+      error: 'Error interno del servidor',
+      message: 'Error al restablecer contraseña'
+    }.to_json]
   end
-  status status
-  resp
 end
 
 # ================================Verificar token
@@ -287,27 +503,50 @@ get '/usuario/verificar-token/:token' do
   resp
 end
 
-# Subir foto de perfil
+# Subir foto de perfil (requiere autenticación)
 post '/usuario/:id/foto-perfil' do
+  authenticate_jwt!
+  content_type :json
+  
   begin
+    user_id = params[:id].to_i
+    
+    # Solo permitir que el usuario suba su propia foto
+    unless current_user_id == user_id
+      return [403, {
+        success: false,
+        error: 'Acceso denegado',
+        message: 'Solo puedes actualizar tu propia foto de perfil'
+      }.to_json]
+    end
+
     # Verificar que el usuario existe
-    usuario = Usuario.first(id: params[:id])
+    usuario = Usuario.first(id: user_id)
     unless usuario
-      status 404
-      return { error: 'Usuario no encontrado' }.to_json
+      return [404, {
+        success: false,
+        error: 'Usuario no encontrado',
+        message: 'El usuario especificado no existe'
+      }.to_json]
     end
 
     # Validar que se ha subido un archivo
     unless params[:file]
-      status 400
-      return { error: 'Se requiere un archivo de imagen' }.to_json
+      return [400, {
+        success: false,
+        error: 'Archivo requerido',
+        message: 'Se requiere un archivo de imagen'
+      }.to_json]
     end
 
     # Validar tipo de archivo (debe ser imagen)
     file_type = determine_file_type(params[:file][:filename])
     unless file_type == 'IMAGEN'
-      status 400
-      return { error: 'El archivo debe ser una imagen (JPG, PNG, etc.)' }.to_json
+      return [400, {
+        success: false,
+        error: 'Tipo de archivo inválido',
+        message: 'El archivo debe ser una imagen (JPG, PNG, etc.)'
+      }.to_json]
     end
 
     # Procesar el archivo subido
@@ -349,65 +588,119 @@ post '/usuario/:id/foto-perfil' do
           # Guardar la URL completa en la base de datos
           usuario.update(imagen_perfil: sas_result[:sas_url])
           
-          status 200
-          return {
+          puts "✅ Foto de perfil actualizada para usuario: #{usuario.email} (ID: #{usuario.id})"
+          
+          [200, {
+            success: true,
             message: 'Foto de perfil actualizada correctamente',
             imagen_perfil: sas_result[:sas_url]
-          }.to_json
+          }.to_json]
         else
-          status 500
-          return { error: "Error al generar URL de acceso: #{sas_result[:error]}" }.to_json
+          [500, {
+            success: false,
+            error: 'Error generando URL',
+            message: "Error al generar URL de acceso: #{sas_result[:error]}"
+          }.to_json]
         end
       else
-        status 500
-        return { error: "Error al subir imagen a Azure: #{blob_result[:error]}" }.to_json
+        [500, {
+          success: false,
+          error: 'Error subiendo archivo',
+          message: "Error al subir imagen a Azure: #{blob_result[:error]}"
+        }.to_json]
       end
     else
-      status 400
-      return { error: upload_result[:error] }.to_json
+      [400, {
+        success: false,
+        error: 'Error procesando archivo',
+        message: upload_result[:error]
+      }.to_json]
     end
   rescue => e
-    puts "Error al subir foto de perfil: #{e.message}"
+    puts "❌ Error al subir foto de perfil: #{e.message}"
     puts e.backtrace.join("\n")
-    status 500
-    return { error: 'Error interno al procesar la solicitud' }.to_json
+    [500, {
+      success: false,
+      error: 'Error interno del servidor',
+      message: 'Error interno al procesar la solicitud'
+    }.to_json]
   end
 end
 
-# Obtener URL de la foto de perfil
+# Obtener URL de la foto de perfil (requiere autenticación)
 get '/usuario/:id/foto-perfil' do
+  authenticate_jwt!
+  content_type :json
+  
   begin
-    usuario = Usuario.first(id: params[:id])
+    user_id = params[:id].to_i
+    
+    # Solo permitir que el usuario acceda a su propia foto (o podríamos permitir acceso público)
+    unless current_user_id == user_id
+      return [403, {
+        success: false,
+        error: 'Acceso denegado',
+        message: 'Solo puedes ver tu propia foto de perfil'
+      }.to_json]
+    end
+
+    usuario = Usuario.first(id: user_id)
 
     unless usuario
-      status 404
-      return { error: 'Usuario no encontrado' }.to_json
+      return [404, {
+        success: false,
+        error: 'Usuario no encontrado',
+        message: 'El usuario especificado no existe'
+      }.to_json]
     end
 
     if usuario.imagen_perfil && !usuario.imagen_perfil.empty?
-      status 200
-      return {
+      [200, {
+        success: true,
         imagen_perfil: usuario.imagen_perfil
-      }.to_json
+      }.to_json]
     else
-      status 404
-      return { error: 'El usuario no tiene foto de perfil' }.to_json
+      [404, {
+        success: false,
+        error: 'Sin foto de perfil',
+        message: 'El usuario no tiene foto de perfil'
+      }.to_json]
     end
   rescue => e
-    puts "Error al obtener URL de foto de perfil: #{e.message}"
-    status 500
-    return { error: 'Error al obtener URL de la foto de perfil' }.to_json
+    puts "❌ Error al obtener URL de foto de perfil: #{e.message}"
+    [500, {
+      success: false,
+      error: 'Error interno del servidor',
+      message: 'Error al obtener URL de la foto de perfil'
+    }.to_json]
   end
 end
 
-# Eliminar foto de perfil
+# Eliminar foto de perfil (requiere autenticación)
 delete '/usuario/:id/foto-perfil' do
+  authenticate_jwt!
+  content_type :json
+  
   begin
-    usuario = Usuario.first(id: params[:id])
+    user_id = params[:id].to_i
+    
+    # Solo permitir que el usuario elimine su propia foto
+    unless current_user_id == user_id
+      return [403, {
+        success: false,
+        error: 'Acceso denegado',
+        message: 'Solo puedes eliminar tu propia foto de perfil'
+      }.to_json]
+    end
+
+    usuario = Usuario.first(id: user_id)
     
     unless usuario
-      status 404
-      return { error: 'Usuario no encontrado' }.to_json
+      return [404, {
+        success: false,
+        error: 'Usuario no encontrado',
+        message: 'El usuario especificado no existe'
+      }.to_json]
     end
     
     if usuario.imagen_perfil
@@ -417,115 +710,268 @@ delete '/usuario/:id/foto-perfil' do
       # Actualizar usuario para eliminar la referencia
       usuario.update(imagen_perfil: nil)
       
-      status 200
-      return { message: 'Foto de perfil eliminada correctamente' }.to_json
+      puts "✅ Foto de perfil eliminada para usuario: #{usuario.email} (ID: #{usuario.id})"
+      
+      [200, {
+        success: true,
+        message: 'Foto de perfil eliminada correctamente'
+      }.to_json]
     else
-      status 400
-      return { error: 'El usuario no tiene foto de perfil' }.to_json
+      [400, {
+        success: false,
+        error: 'Sin foto de perfil',
+        message: 'El usuario no tiene foto de perfil'
+      }.to_json]
     end
   rescue => e
-    puts "Error al eliminar foto de perfil: #{e.message}"
-    status 500
-    return { error: 'Error al eliminar foto de perfil' }.to_json
+    puts "❌ Error al eliminar foto de perfil: #{e.message}"
+    [500, {
+      success: false,
+      error: 'Error interno del servidor',
+      message: 'Error al eliminar foto de perfil'
+    }.to_json]
   end
 end
 
 
-#Actualizar nombre de usuario que no exista
+# Actualizar nombre de usuario (requiere autenticación)
 put '/usuario/actualizar-nombre/:id' do
-  status = 500
-  resp = ''
+  authenticate_jwt!
+  content_type :json
+  
   begin
+    user_id = params[:id].to_i
+    
+    # Solo permitir que el usuario actualice su propio nombre
+    unless current_user_id == user_id
+      return [403, {
+        success: false,
+        error: 'Acceso denegado',
+        message: 'Solo puedes actualizar tu propio nombre'
+      }.to_json]
+    end
+
     data = JSON.parse(request.body.read)
     nuevo_nombre = data['nombre']
-    usuario = Usuario.first(id: params[:id])
-    if usuario
-      if Usuario.where(nombre: nuevo_nombre).count == 0
-        usuario.update(
-          nombre: nuevo_nombre
-        )
-        resp = usuario.to_json
-        status = 200
-      else
-        status = 409
-        resp = 'Nombre de usuario ya en uso'
-      end
-    else
-      status = 404
-      resp = 'Usuario no encontrado'
+    
+    # Validar que se proporcione el nuevo nombre
+    unless nuevo_nombre && !nuevo_nombre.strip.empty?
+      return [400, {
+        success: false,
+        error: 'Nombre requerido',
+        message: 'Debes proporcionar un nombre válido'
+      }.to_json]
     end
+
+    nuevo_nombre = nuevo_nombre.strip
+
+    usuario = Usuario.first(id: user_id)
+    unless usuario
+      return [404, {
+        success: false,
+        error: 'Usuario no encontrado',
+        message: 'El usuario especificado no existe'
+      }.to_json]
+    end
+
+    # Verificar que el nombre no esté en uso por otro usuario
+    if Usuario.where(nombre: nuevo_nombre).exclude(id: user_id).count > 0
+      return [409, {
+        success: false,
+        error: 'Nombre en uso',
+        message: 'El nombre de usuario ya está en uso'
+      }.to_json]
+    end
+
+    # Actualizar el nombre
+    usuario.update(nombre: nuevo_nombre)
+    
+    puts "✅ Nombre actualizado para usuario: #{usuario.email} (ID: #{usuario.id}) - Nuevo nombre: #{nuevo_nombre}"
+    
+    [200, {
+      success: true,
+      message: 'Nombre actualizado correctamente',
+      user: {
+        id: usuario.id,
+        nombre: usuario.nombre,
+        email: usuario.email
+      }
+    }.to_json]
+
+  rescue JSON::ParserError
+    [400, {
+      success: false,
+      error: 'JSON inválido',
+      message: 'El formato de los datos enviados es incorrecto'
+    }.to_json]
   rescue => e
-    resp = 'Error al actualizar nombre de usuario'
-    puts e.message
+    puts "❌ Error al actualizar nombre de usuario: #{e.message}"
+    [500, {
+      success: false,
+      error: 'Error interno del servidor',
+      message: 'Error al actualizar nombre de usuario'
+    }.to_json]
   end
-  status status
-  resp
 end
 
-
-#Actualizar correo de usuario que no exista 
+# Actualizar correo de usuario (requiere autenticación)
 put '/usuario/actualizar-correo/:id' do
-  status = 500
-  resp = ''
+  authenticate_jwt!
+  content_type :json
+  
   begin
+    user_id = params[:id].to_i
+    
+    # Solo permitir que el usuario actualice su propio correo
+    unless current_user_id == user_id
+      return [403, {
+        success: false,
+        error: 'Acceso denegado',
+        message: 'Solo puedes actualizar tu propio correo'
+      }.to_json]
+    end
+
     data = JSON.parse(request.body.read)
     nuevo_correo = data['email']
-    usuario = Usuario.first(id: params[:id])
-    if usuario
-      if Usuario.where(email: nuevo_correo).count == 0
-        usuario.update(
-          email: nuevo_correo
-        )
-        resp = usuario.to_json
-        status = 200
-      else
-        status = 409
-        resp = 'Correo ya en uso'
-      end
-    else
-      status = 404
-      resp = 'Usuario no encontrado'
+    
+    # Validar que se proporcione el nuevo email
+    unless nuevo_correo && !nuevo_correo.strip.empty?
+      return [400, {
+        success: false,
+        error: 'Email requerido',
+        message: 'Debes proporcionar un email válido'
+      }.to_json]
     end
+
+    nuevo_correo = nuevo_correo.strip.downcase
+
+    # Validar formato de email básico
+    unless nuevo_correo.match?(/\A[\w+\-.]+@[a-z\d\-]+(\.[a-z\d\-]+)*\.[a-z]+\z/i)
+      return [400, {
+        success: false,
+        error: 'Email inválido',
+        message: 'El formato del email no es válido'
+      }.to_json]
+    end
+
+    usuario = Usuario.first(id: user_id)
+    unless usuario
+      return [404, {
+        success: false,
+        error: 'Usuario no encontrado',
+        message: 'El usuario especificado no existe'
+      }.to_json]
+    end
+
+    # Verificar que el email no esté en uso por otro usuario
+    if Usuario.where(email: nuevo_correo).exclude(id: user_id).count > 0
+      return [409, {
+        success: false,
+        error: 'Email en uso',
+        message: 'El email ya está registrado por otro usuario'
+      }.to_json]
+    end
+
+    # Actualizar el email
+    usuario.update(email: nuevo_correo)
+    
+    puts "✅ Email actualizado para usuario: ID #{usuario.id} - Nuevo email: #{nuevo_correo}"
+    
+    [200, {
+      success: true,
+      message: 'Email actualizado correctamente',
+      user: {
+        id: usuario.id,
+        nombre: usuario.nombre,
+        email: usuario.email
+      }
+    }.to_json]
+
+  rescue JSON::ParserError
+    [400, {
+      success: false,
+      error: 'JSON inválido',
+      message: 'El formato de los datos enviados es incorrecto'
+    }.to_json]
   rescue => e
-    resp = 'Error al actualizar correo de usuario'
-    puts e.message
+    puts "❌ Error al actualizar correo de usuario: #{e.message}"
+    [500, {
+      success: false,
+      error: 'Error interno del servidor',
+      message: 'Error al actualizar correo de usuario'
+    }.to_json]
   end
-  status status
-  resp
 end
 
 
 
-# Asignar un token FCM a un usuario
+# Asignar un token FCM a un usuario (requiere autenticación)
 post '/usuario/:id/token-fcm' do
+  authenticate_jwt!
   content_type :json
+  
   begin
+    user_id = params[:id].to_i
+    
+    # Solo permitir que el usuario actualice su propio token FCM
+    unless current_user_id == user_id
+      return [403, {
+        success: false,
+        error: 'Acceso denegado',
+        message: 'Solo puedes actualizar tu propio token FCM'
+      }.to_json]
+    end
+
     # Obtener el usuario por ID
-    usuario = Usuario.first(id: params[:id])
+    usuario = Usuario.first(id: user_id)
     unless usuario
-      halt 404, { error: 'Usuario no encontrado' }.to_json
+      return [404, {
+        success: false,
+        error: 'Usuario no encontrado',
+        message: 'El usuario especificado no existe'
+      }.to_json]
     end
 
     # Obtener el token FCM del cuerpo de la solicitud
     request_data = JSON.parse(request.body.read) rescue {}
     token_fcm = request_data['token_fcm'] || params[:token_fcm]
     
-    if token_fcm.nil? || token_fcm.empty?
-      halt 400, { error: 'Token FCM no proporcionado' }.to_json
+    unless token_fcm && !token_fcm.strip.empty?
+      return [400, {
+        success: false,
+        error: 'Token FCM requerido',
+        message: 'Debes proporcionar un token FCM válido'
+      }.to_json]
     end
 
     # Actualizar el token FCM del usuario
     if usuario.respond_to?(:update)
-      usuario.update(token_fcm: token_fcm)
+      usuario.update(token_fcm: token_fcm.strip)
     else
-      usuario.token_fcm = token_fcm
+      usuario.token_fcm = token_fcm.strip
       usuario.save
     end
 
-    { message: 'Token FCM actualizado correctamente' }.to_json
+    puts "✅ Token FCM actualizado para usuario: #{usuario.email} (ID: #{usuario.id})"
+
+    [200, {
+      success: true,
+      message: 'Token FCM actualizado correctamente'
+    }.to_json]
+
+  rescue JSON::ParserError
+    [400, {
+      success: false,
+      error: 'JSON inválido',
+      message: 'El formato de los datos enviados es incorrecto'
+    }.to_json]
   rescue => e
-    logger.error "Error al asignar token FCM: #{e.message}"
-    halt 500, { error: 'Error interno al procesar la solicitud' }.to_json
+    puts "❌ Error al asignar token FCM: #{e.message}"
+    [500, {
+      success: false,
+      error: 'Error interno del servidor',
+      message: 'Error interno al procesar la solicitud'
+    }.to_json]
   end
 end
 
@@ -547,6 +993,7 @@ DATOS_REFERENCIA_CACHE = {
 }
 
 get '/usuarios/:usuario_id/datos_completos' do
+  authenticate_jwt!
   usuario_id = params[:usuario_id]
 
   pool = Concurrent::FixedThreadPool.new(3)

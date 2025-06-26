@@ -3,6 +3,7 @@ import 'package:http/http.dart' as http;
 import '../../models/categoria.dart';
 import '../../configs/contants.dart';
 import '../../models/service_http_response.dart';
+import 'auth_service.dart';
 
 class CategoriaService {
   // Crear categoría
@@ -14,9 +15,10 @@ class CategoriaService {
     final responseWrapper = ServiceHttpResponse();
 
     try {
+      final headers = await AuthService.getAuthHeaders();
       final response = await http.post(
         url,
-        headers: {'Content-Type': 'application/json; charset=UTF-8'},
+        headers: headers,
         body: jsonEncode({'nombre': nombre, 'color': color}),
       );
 
@@ -32,6 +34,9 @@ class CategoriaService {
       } else {
         responseWrapper.body = 'Error: ${response.body}';
       }
+
+      // Manejar respuesta de autenticación
+      AuthService.handleHttpResponse(response);
     } catch (e) {
       responseWrapper.status = 500;
       responseWrapper.body = 'Ocurrió un error al crear la categoría: $e';
@@ -46,7 +51,8 @@ class CategoriaService {
     final responseWrapper = ServiceHttpResponse();
 
     try {
-      final response = await http.get(url);
+      final headers = await AuthService.getAuthHeaders();
+      final response = await http.get(url, headers: headers);
       responseWrapper.status = response.statusCode;
 
       if (response.statusCode == 200) {
@@ -61,6 +67,9 @@ class CategoriaService {
       } else {
         responseWrapper.body = 'Error: ${response.body}';
       }
+
+      // Manejar respuesta de autenticación
+      AuthService.handleHttpResponse(response);
     } catch (e) {
       responseWrapper.status = 500;
       responseWrapper.body = 'Ocurrió un error al obtener las categorías: $e';
@@ -79,9 +88,10 @@ class CategoriaService {
     final responseWrapper = ServiceHttpResponse();
 
     try {
+      final headers = await AuthService.getAuthHeaders();
       final response = await http.put(
         url,
-        headers: {'Content-Type': 'application/json; charset=UTF-8'},
+        headers: headers,
         body: jsonEncode({'nombre': nombre, 'color': color}),
       );
 
@@ -97,6 +107,9 @@ class CategoriaService {
       } else {
         responseWrapper.body = 'Error: ${response.body}';
       }
+
+      // Manejar respuesta de autenticación
+      AuthService.handleHttpResponse(response);
     } catch (e) {
       responseWrapper.status = 500;
       responseWrapper.body = 'Ocurrió un error al actualizar la categoría: $e';
@@ -111,7 +124,9 @@ class CategoriaService {
     final responseWrapper = ServiceHttpResponse();
 
     try {
-      final response = await http.delete(url);
+      final headers = await AuthService.getAuthHeaders();
+      final response = await http.delete(url, headers: headers);
+
       responseWrapper.status = response.statusCode;
 
       if (response.statusCode == 200) {
@@ -119,6 +134,9 @@ class CategoriaService {
       } else {
         responseWrapper.body = 'Error: ${response.body}';
       }
+
+      // Manejar respuesta de autenticación
+      AuthService.handleHttpResponse(response);
     } catch (e) {
       responseWrapper.status = 500;
       responseWrapper.body = 'Ocurrió un error al eliminar la categoría: $e';

@@ -2,6 +2,7 @@ import 'package:get/get.dart';
 import 'dart:convert';
 import '../models/usuario.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'auth_service.dart';
 
 class ControladorSesionUsuario extends GetxController {
   Rx<Usuario?> usuarioActual = Rx<Usuario?>(null);
@@ -13,15 +14,16 @@ class ControladorSesionUsuario extends GetxController {
     verificarEstadoSesion();
   }
 
-  // Iniciar sesión
+  // Iniciar sesión con JWT
   Future<void> iniciarSesion(
     int? id,
     String nombre,
     String contrasena,
     String email,
     String? foto,
-    String? tokenFCM,
-  ) async {
+    String? tokenFCM, {
+    String? jwtToken,
+  }) async {
     usuarioActual.value = Usuario(
       id: id,
       nombre: nombre,
@@ -31,6 +33,11 @@ class ControladorSesionUsuario extends GetxController {
       tokenFCM: tokenFCM,
     );
     sesionIniciada.value = true;
+
+    // Guardar JWT token si se proporciona
+    if (jwtToken != null && jwtToken.isNotEmpty) {
+      await AuthService.saveJwtToken(jwtToken);
+    }
 
     // Guardar en SharedPreferences
     final prefs = await SharedPreferences.getInstance();
@@ -53,7 +60,10 @@ class ControladorSesionUsuario extends GetxController {
     final prefs = await SharedPreferences.getInstance();
     bool? sesionActiva = prefs.getBool('sesionActiva');
 
-    if (sesionActiva == true) {
+    // Verificar si hay token JWT válido
+    bool hasJWT = await AuthService.hasValidToken();
+
+    if (sesionActiva == true && hasJWT) {
       String? usuarioJson = prefs.getString('usuarioData');
       if (usuarioJson != null) {
         try {
@@ -61,8 +71,13 @@ class ControladorSesionUsuario extends GetxController {
           sesionIniciada.value = true;
         } catch (e) {
           print('Error al reconstruir usuario desde JSON: $e');
+          // Si hay error, cerrar sesión
+          await cerrarSesion();
         }
       }
+    } else {
+      // Si no hay token válido, cerrar sesión
+      await cerrarSesion();
     }
   }
 
@@ -76,15 +91,27 @@ class ControladorSesionUsuario extends GetxController {
   }
 
   // Obtener el usuario actual
-
   Usuario? obtenerUsuarioActual() {
     return usuarioActual.value;
+  }
+
+  // Obtener JWT token
+  Future<String?> obtenerJwtToken() async {
+    return await AuthService.getJwtToken();
+  }
+
+  // Verificar si la sesión es válida (con JWT)
+  Future<bool> esSesionValida() async {
+    return sesionIniciada.value && await AuthService.hasValidToken();
   }
 
   // Cerrar sesión
   Future<void> cerrarSesion() async {
     usuarioActual.value = null;
     sesionIniciada.value = false;
+
+    // Eliminar JWT token
+    await AuthService.removeJwtToken();
 
     // Borrar datos de SharedPreferences
     final prefs = await SharedPreferences.getInstance();

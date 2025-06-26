@@ -1,60 +1,43 @@
+#@baseUrl = http://localhost:4567
 @baseUrl = https://rubysinatra.agreeableisland-1cef4d7f.eastus2.azurecontainerapps.io
-#@baseUrl = http://localhost:4567/
+
+# Variables para JWT (actualiza el token después del login)
+@token = eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2lkIjo3LCJlbWFpbCI6IjIwMjI0NTU4QGFsb2UudWxpbWEuZWR1LnBlIiwibm9tYnJlIjoiSGVhZHM5MCIsImV4cCI6MTc1MTU3NzcxNSwiaWF0IjoxNzUwOTcyOTE1fQ.me7W-cis4yHa1uq4xj7zd23258dDSiDpqOUQB0J7s24
+# 1. CREAR USUARIO [PÚBLICO]
+POST {{baseUrl}}/usuario/crear-usuario
+Content-Type: application/x-www-form-urlencoded
+
+nombre=TestJWT&contrasena=password123&email=testjwt@email.com
+
 #############################################
-# VALIDAR USUARIO
+# 2. LOGIN CON JWT (obtener token) [PÚBLICO]
 POST {{baseUrl}}/usuario/validar
 Content-Type: application/json
 
 {
-  "nombre": "renzo455",
-  "contrasena": "12345678renzo"
+  "nombre": "Heads90",
+  "contrasena": "123456789m"
 }
 
-#############################################
-# CREAR USUARIO
-POST {{baseUrl}}/usuario/crear-usuario
-Content-Type: application/x-www-form-urlencoded
-
-nombre=Prueba3&contrasena=password123&email=renzoedgar68@gmail.com
 
 #############################################
-# ELIMINAR USUARIO
-DELETE {{baseUrl}}/usuario/eliminar/12
+# 3. VERIFICAR SI CORREO EXISTE [PÚBLICO]
+GET {{baseUrl}}/usuario/verificar-correo/testjwt@email.com
 
 #############################################
-# VERIFICAR SI CORREO EXISTE
-GET {{baseUrl}}/usuario/verificar-correo/renzoedgar68@gmail.com
+# 4. OBTENER USUARIO POR ID [PROTEGIDO]
+GET {{baseUrl}}/usuario/7
+Authorization: Bearer {{token}}
 
 #############################################
-# OBTENER USUARIO POR ID
-GET {{baseUrl}}/usuario/1
+# 5. ELIMINAR USUARIO [PROTEGIDO]
+DELETE {{baseUrl}}/usuario/eliminar/1
+Authorization: Bearer {{token}}
 
 #############################################
-# SOLICITAR RECUPERACIÓN DE CONTRASEÑA
-POST {{baseUrl}}/usuario/solicitar-recuperacion
-Content-Type: application/json
-
-{
-  "email": "ana@example.com"
-}
-
-#############################################
-# RESTABLECER CONTRASEÑA CON TOKEN
-PUT {{baseUrl}}/usuario/restablecer-contrasena
-Content-Type: application/json
-
-{
-  "reset_token": "1cee00f753830752cf82826cdc2e5572",
-  "contrasena": "nueva_password123"
-}
-
-#############################################
-# VERIFICAR TOKEN DE RECUPERACIÓN
-GET {{baseUrl}}/usuario/verificar-token/abc123def456
-
-#############################################
-# SUBIR FOTO DE PERFIL
-POST {{baseUrl}}/usuario/1/foto-perfil
+# 6. SUBIR FOTO DE PERFIL [PROTEGIDO]
+POST {{baseUrl}}/usuario/7/foto-perfil
+Authorization: Bearer {{token}}
 Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
 
 ------WebKitFormBoundary7MA4YWxkTrZu0gW
@@ -65,16 +48,19 @@ Content-Type: image/jpeg
 ------WebKitFormBoundary7MA4YWxkTrZu0gW--
 
 #############################################
-# OBTENER URL DE FOTO DE PERFIL
-GET {{baseUrl}}/usuario/1/foto-perfil
+# 7. OBTENER URL DE FOTO DE PERFIL [PROTEGIDO]
+GET {{baseUrl}}/usuario/7/foto-perfil
+Authorization: Bearer {{token}}
 
 #############################################
-# ELIMINAR FOTO DE PERFIL
-DELETE {{baseUrl}}/usuario/1/foto-perfil
+# 8. ELIMINAR FOTO DE PERFIL [PROTEGIDO]
+DELETE {{baseUrl}}/usuario/7/foto-perfil
+Authorization: Bearer {{token}}
 
 #############################################
-# ACTUALIZAR NOMBRE DE USUARIO
+# 9. ACTUALIZAR NOMBRE DE USUARIO [PROTEGIDO]
 PUT {{baseUrl}}/usuario/actualizar-nombre/1
+Authorization: Bearer {{token}}
 Content-Type: application/json
 
 {
@@ -82,18 +68,19 @@ Content-Type: application/json
 }
 
 #############################################
-# ACTUALIZAR CORREO DE USUARIO
+# 10. ACTUALIZAR CORREO DE USUARIO [PROTEGIDO]
 PUT {{baseUrl}}/usuario/actualizar-correo/1
+Authorization: Bearer {{token}}
 Content-Type: application/json
 
 {
   "email": "nuevo_email@ejemplo.com"
 }
 
-
 #############################################
-# ASIGNAR TOKEN FCM A USUARIO
+# 11. ASIGNAR TOKEN FCM A USUARIO [PROTEGIDO]
 POST {{baseUrl}}/usuario/1/token-fcm
+Authorization: Bearer {{token}}
 Content-Type: application/json
 
 {
@@ -101,7 +88,30 @@ Content-Type: application/json
 }
 
 #############################################
-# OBTENER DATOS COMPLETOS DE USUARIO
-GET {{baseUrl}}/usuarios/1/datos_completos
+# 12. OBTENER DATOS COMPLETOS DE USUARIO [PROTEGIDO]
+GET {{baseUrl}}/usuarios/7/datos_completos
+Authorization: Bearer {{token}}
 
 #############################################
+# 13. SOLICITAR RECUPERACIÓN DE CONTRASEÑA [PÚBLICO]
+POST {{baseUrl}}/usuario/solicitar-recuperacion
+Content-Type: application/json
+
+{
+  "email": "testjwt@email.com"
+}
+
+#############################################
+# 14. RESTABLECER CONTRASEÑA CON TOKEN [PÚBLICO]
+PUT {{baseUrl}}/usuario/restablecer-contrasena
+Content-Type: application/json
+
+{
+  "reset_token": "1cee00f753830752cf82826cdc2e5572",
+  "contrasena": "nueva_password123"
+}
+
+#############################################
+# 15. VERIFICAR TOKEN DE RECUPERACIÓN [PÚBLICO]
+GET {{baseUrl}}/usuario/verificar-token/abc123def456
+

@@ -16,3 +16,4 @@ gem 'rufus-scheduler'
 gem 'google-apis-fcm_v1'  # <- Firebase Admin SDK
 gem 'googleauth'           # <- Para autenticación
 gem 'tzinfo-data'          # <- Necesario para Windows
+gem 'jwt'                  # <- JSON Web Tokens

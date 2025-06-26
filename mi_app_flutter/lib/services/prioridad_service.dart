@@ -3,6 +3,7 @@ import 'package:http/http.dart' as http;
 import '../models/prioridad.dart';
 import '../configs/contants.dart';
 import '../models/service_http_response.dart';
+import 'auth_service.dart';
 
 class PrioridadService {
   // Obtener todas las prioridades
@@ -11,7 +12,8 @@ class PrioridadService {
     final responseWrapper = ServiceHttpResponse();
 
     try {
-      final response = await http.get(url);
+      final headers = await AuthService.getAuthHeaders();
+      final response = await http.get(url, headers: headers);
       responseWrapper.status = response.statusCode;
 
       if (response.statusCode == 200) {
@@ -26,6 +28,9 @@ class PrioridadService {
       } else {
         responseWrapper.body = 'Error: ${response.body}';
       }
+
+      // Manejar respuesta de autenticación
+      AuthService.handleHttpResponse(response);
     } catch (e) {
       responseWrapper.status = 500;
       responseWrapper.body = 'Ocurrió un error al obtener las prioridades: $e';
@@ -40,7 +45,8 @@ class PrioridadService {
     final responseWrapper = ServiceHttpResponse();
 
     try {
-      final response = await http.get(url);
+      final headers = await AuthService.getAuthHeaders();
+      final response = await http.get(url, headers: headers);
       responseWrapper.status = response.statusCode;
 
       if (response.statusCode == 200) {
@@ -56,6 +62,9 @@ class PrioridadService {
       } else {
         responseWrapper.body = 'Error: ${response.body}';
       }
+
+      // Manejar respuesta de autenticación
+      AuthService.handleHttpResponse(response);
     } catch (e) {
       responseWrapper.status = 500;
       responseWrapper.body = 'Ocurrió un error al obtener la prioridad: $e';

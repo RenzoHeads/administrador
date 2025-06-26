@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import '../../models/recordatorio.dart';
 import '../../configs/contants.dart';
+import '../../services/auth_service.dart';
 
 class NotificacionController extends ChangeNotifier {
   List<Recordatorio> _recordatorios = [];
@@ -14,9 +15,17 @@ class NotificacionController extends ChangeNotifier {
 
   Future<void> cargarRecordatoriosDelDia() async {
     try {
-      final response = await http.get(
-        Uri.parse('${BASE_URL}tareas/$usuarioId'),
-      );
+      // Verificar si hay token antes de hacer la petición
+      final token = await AuthService.getJwtToken();
+      if (token == null || token.isEmpty) {
+        _recordatorios = [];
+        notifyListeners();
+        return;
+      }
+
+      final headers = await AuthService.getAuthHeaders();
+      final url = '${BASE_URL}tareas/$usuarioId';
+      final response = await http.get(Uri.parse(url), headers: headers);
 
       if (response.statusCode == 200) {
         List<dynamic> data = json.decode(response.body);
@@ -47,15 +56,17 @@ class NotificacionController extends ChangeNotifier {
 
         _recordatorios = tareasHoy;
         notifyListeners();
+      } else if (response.statusCode == 401) {
+        AuthService.handleUnauthorized();
+        _recordatorios = [];
+        notifyListeners();
       } else {
-        // Si falla, vaciar lista y notificar
         _recordatorios = [];
         notifyListeners();
       }
     } catch (e) {
       _recordatorios = [];
       notifyListeners();
-      print('Excepción al cargar tareas: $e');
     }
   }
 

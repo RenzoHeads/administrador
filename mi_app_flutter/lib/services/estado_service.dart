@@ -3,6 +3,7 @@ import 'package:http/http.dart' as http;
 import '../models/estado.dart';
 import '../configs/contants.dart';
 import '../models/service_http_response.dart';
+import 'auth_service.dart';
 
 class EstadoService {
   // Obtener todos los estados
@@ -11,7 +12,8 @@ class EstadoService {
     final responseWrapper = ServiceHttpResponse();
 
     try {
-      final response = await http.get(url);
+      final headers = await AuthService.getAuthHeaders();
+      final response = await http.get(url, headers: headers);
       responseWrapper.status = response.statusCode;
 
       if (response.statusCode == 200) {
@@ -25,6 +27,9 @@ class EstadoService {
       } else {
         responseWrapper.body = 'Error: ${response.body}';
       }
+
+      // Manejar respuesta de autenticación
+      AuthService.handleHttpResponse(response);
     } catch (e) {
       responseWrapper.status = 500;
       responseWrapper.body = 'Ocurrió un error al obtener los estados: $e';
@@ -39,7 +44,8 @@ class EstadoService {
     final responseWrapper = ServiceHttpResponse();
 
     try {
-      final response = await http.get(url);
+      final headers = await AuthService.getAuthHeaders();
+      final response = await http.get(url, headers: headers);
       responseWrapper.status = response.statusCode;
 
       if (response.statusCode == 200) {
@@ -55,6 +61,9 @@ class EstadoService {
       } else {
         responseWrapper.body = 'Error: ${response.body}';
       }
+
+      // Manejar respuesta de autenticación
+      AuthService.handleHttpResponse(response);
     } catch (e) {
       responseWrapper.status = 500;
       responseWrapper.body = 'Ocurrió un error al obtener el estado: $e';
