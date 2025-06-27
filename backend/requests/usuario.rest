@@ -98,7 +98,7 @@ POST {{baseUrl}}/usuario/solicitar-recuperacion
 Content-Type: application/json
 
 {
-  "email": "testjwt@email.com"
+  "email": "20224558@aloe.ulima.edu.pe"
 }
 
 #############################################
