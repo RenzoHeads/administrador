@@ -13,9 +13,6 @@
 # Used by dotenv library to load environment variables.
 .env
 
-# Firebase credentials
-firebase-credentials.json
-firebase-adminsdk-*.json
 
 
 # Ignore Byebug command history file.

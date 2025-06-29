@@ -3,10 +3,21 @@
 -- ===================================================
 
 -- 1. CREAR RECORDATORIO
--- POST /recordatorios/crear
+-- POST-- 15. ACTIVAR RECORDATORIOS DE TAREAS DE PRIORIDAD ALTA PARA UN USUARIO
+-- PUT /recordatorios/activar-prioridad-alta/:usuario_id
+-- SEQUEL: DB[:recordatorios].where(tarea_id: DB[:tareas].where(usuario_id: usuario_id).where(prioridad_id: 3).select(:id)).update(activado: true)
 
-INSERT INTO recordatorios (tarea_id, fecha_hora, token_fcm, mensaje) 
-VALUES ($1, $2, $3, $4) 
+UPDATE recordatorios 
+SET activado = TRUE 
+WHERE tarea_id IN (
+    SELECT id 
+    FROM tareas 
+    WHERE usuario_id = $1 
+    AND prioridad_id = 3  -- Solo tareas con prioridad ID = 3
+);os/crear
+
+INSERT INTO recordatorios (tarea_id, fecha_hora, token_fcm, mensaje, activado) 
+VALUES ($1, $2, $3, $4, $5) 
 RETURNING *;
 
 -- ===================================================
@@ -32,8 +43,9 @@ UPDATE recordatorios SET
     tarea_id = $1,
     fecha_hora = $2,
     token_fcm = $3,
-    mensaje = $4
-WHERE id = $5 
+    mensaje = $4,
+    activado = $5
+WHERE id = $6 
 RETURNING *;
 
 -- ===================================================
@@ -165,3 +177,72 @@ LEFT JOIN tareas t ON u.id = t.usuario_id
 LEFT JOIN recordatorios r ON t.id = r.tarea_id
 WHERE u.id = $1
 GROUP BY u.id, u.nombre;
+
+-- ===================================================
+-- NUEVOS ENDPOINTS PARA ACTIVAR/DESACTIVAR RECORDATORIOS
+-- ===================================================
+
+-- 13. DESACTIVAR TODOS LOS RECORDATORIOS DE UN USUARIO
+-- PUT /recordatorios/desactivar-usuario/:usuario_id
+-- SEQUEL: DB[:recordatorios].where(tarea_id: DB[:tareas].where(usuario_id: usuario_id).select(:id)).update(activado: false)
+
+UPDATE recordatorios 
+SET activado = FALSE 
+WHERE tarea_id IN (
+    SELECT id FROM tareas WHERE usuario_id = $1
+);
+
+-- ===================================================
+
+-- 14. ACTIVAR TODOS LOS RECORDATORIOS DE UN USUARIO
+-- PUT /recordatorios/activar-usuario/:usuario_id
+-- SEQUEL: DB[:recordatorios].where(tarea_id: DB[:tareas].where(usuario_id: usuario_id).select(:id)).update(activado: true)
+
+UPDATE recordatorios 
+SET activado = TRUE 
+WHERE tarea_id IN (
+    SELECT id FROM tareas WHERE usuario_id = $1
+);
+
+-- ===================================================
+
+-- 15. ACTIVAR RECORDATORIOS DE TAREAS DE PRIORIDAD ALTA PARA UN USUARIO
+-- PUT /recordatorios/activar-prioridad-alta/:usuario_id
+-- SEQUEL: DB[:recordatorios].where(tarea_id: DB[:tareas].join(:prioridades, id: :prioridad_id).where(usuario_id: usuario_id).where(Sequel[:prioridades][:nivel] >= 3).select(Sequel[:tareas][:id])).update(activado: true)
+
+UPDATE recordatorios 
+SET activado = TRUE 
+WHERE tarea_id IN (
+    SELECT t.id 
+    FROM tareas t 
+    JOIN prioridades p ON t.prioridad_id = p.id 
+    WHERE t.usuario_id = $1 
+    AND p.nivel >= 3  -- Asumiendo que nivel 3+ es prioridad alta
+);
+
+-- ===================================================
+
+-- 16. OBTENER ESTADO DE RECORDATORIOS DE UN USUARIO
+-- GET /recordatorios/estado-usuario/:usuario_id
+-- SEQUEL: DB[:recordatorios].join(:tareas, id: :tarea_id).where(Sequel[:tareas][:usuario_id] => usuario_id).group(:activado).select(:activado, Sequel.lit('COUNT(*)').as(:cantidad))
+
+SELECT 
+    activado, 
+    COUNT(*) as cantidad 
+FROM recordatorios r 
+JOIN tareas t ON r.tarea_id = t.id 
+WHERE t.usuario_id = $1 
+GROUP BY activado;
+
+-- ===================================================
+
+-- 17. OBTENER RECORDATORIOS ACTIVOS PARA EL SCHEDULER
+-- (Consulta actualizada para el scheduler)
+
+SELECT r.*, t.titulo as tarea_titulo, t.usuario_id
+FROM recordatorios r
+JOIN tareas t ON r.tarea_id = t.id
+WHERE DATE_TRUNC('minute', r.fecha_hora) = $1
+AND r.enviado = FALSE
+AND r.activado = TRUE  -- Solo recordatorios activados
+ORDER BY r.fecha_hora ASC;

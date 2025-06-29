@@ -38,9 +38,10 @@ class ReminderScheduler
         0
       )
 
-      # Buscar recordatorios que coincidan con el minuto actual de Lima y no hayan sido enviados
+      # Buscar recordatorios que coincidan con el minuto actual de Lima, no hayan sido enviados Y estén activados
       recordatorios_pendientes = DB[:recordatorios]
         .where(enviado: false)
+        .where(activado: true)  # Solo recordatorios activados
         .where(Sequel.function(:date_trunc, 'minute', :fecha_hora) => lima_current_minute)
         .all
 

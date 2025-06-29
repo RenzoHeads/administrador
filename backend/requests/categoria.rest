@@ -10,10 +10,9 @@ Content-Type: application/json
 Authorization: Bearer {{token}}
 
 {
-  "nombre": "Trabajo",
-  "color": "#FF5722"
+  "nombre": "Viajes",
+  "color": "#00BCD4"
 }
-
 #############################################
 # OBTENER TODAS LAS CATEGORIAS [PROTEGIDO]
 GET {{baseUrl}}/categorias

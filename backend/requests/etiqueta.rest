@@ -10,13 +10,13 @@ Content-Type: application/json
 Authorization: Bearer {{token}}
 
 {
-  "nombre": "Urgente",
+  "nombre": "Urgente y bueno",
   "color": "#F44336"
 }
 
 #############################################
 # ACTUALIZAR ETIQUETA [PROTEGIDO]
-PUT {{baseUrl}}/etiquetas/actualizar/1
+PUT {{baseUrl}}/etiquetas/actualizar/105
 Content-Type: application/json
 Authorization: Bearer {{token}}
 
@@ -27,7 +27,7 @@ Authorization: Bearer {{token}}
 
 #############################################
 # ELIMINAR ETIQUETA [PROTEGIDO]
-DELETE {{baseUrl}}/etiquetas/eliminar/1
+DELETE {{baseUrl}}/etiquetas/eliminar/105
 Authorization: Bearer {{token}}
 
 #############################################

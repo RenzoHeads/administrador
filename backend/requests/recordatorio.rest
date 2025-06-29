@@ -10,10 +10,11 @@ Content-Type: application/json
 Authorization: Bearer {{token}}
 
 {
-  "tarea_id": 426,
-  "fecha_hora": "2025-06-26T17:22:00",
+  "tarea_id": 540,
+  "fecha_hora": "2025-06-29T12:59:00",
   "token_fcm": "e8ep0QXLTyq_iX-7cgJ0iy:APA91bFZ29M5oE26x-2HEcXvABJyiHbvMFzevPClUwfYNMgFnd99kRIXP3kQtLQxin_9vAEpa8aXNQj4S1sHYWmlVSTbyQ3cr7sNwhWYSxjZ6FdE8y0lO-I",
-  "mensaje": "Renzo listo"
+  "mensaje": "Renzo listo",
+  "activado": true
 }
 
 #############################################
@@ -23,11 +24,12 @@ Content-Type: application/json
 Authorization: Bearer {{token}}
 
 {
-  "id": 1,
-  "tarea_id": 1,
+  "id": 29,
+  "tarea_id": 426,
   "fecha_hora": "2025-06-25T01:47:00",
   "token_fcm": "e8ep0QXLTyq_iX-7cgJ0iy:APA91bFZ29M5oE26x-2HEcXvABJyiHbvMFzevPClUwfYNMgFnd99kRIXP3kQtLQxin_9vAEpa8aXNQj4S1sHYWmlVSTbyQ3cr7sNwhWYSxjZ6FdE8y0lO-I",
-  "mensaje": "Recordatorio actualizado: No olvides la tarea"
+  "mensaje": "Recordatorio actualizado: No olvides la tarea",
+  "activado": false
 }
 
 #############################################
@@ -37,6 +39,31 @@ Authorization: Bearer {{token}}
 
 #############################################
 # OBTENER RECORDATORIOS POR TAREA [PROTEGIDO]
-GET {{baseUrl}}/recordatorios/426
+GET {{baseUrl}}/recordatorios/540
+Authorization: Bearer {{token}}
+
+#############################################
+# DESACTIVAR TODOS LOS RECORDATORIOS DEL USUARIO [PROTEGIDO]
+PUT {{baseUrl}}/recordatorios/desactivar-usuario/7
+Authorization: Bearer {{token}}
+
+#############################################
+# ACTIVAR TODOS LOS RECORDATORIOS DEL USUARIO [PROTEGIDO]
+PUT {{baseUrl}}/recordatorios/activar-usuario/7
+Authorization: Bearer {{token}}
+
+#############################################
+# ACTIVAR RECORDATORIOS DE PRIORIDAD ALTA [PROTEGIDO]
+PUT {{baseUrl}}/recordatorios/activar-prioridad-alta/7
+Authorization: Bearer {{token}}
+
+#############################################
+# OBTENER ESTADO DE RECORDATORIOS DEL USUARIO [PROTEGIDO]
+GET {{baseUrl}}/recordatorios/estado-usuario/7
+Authorization: Bearer {{token}}
+
+#############################################
+# OBTENER recordatorios de tarea
+GET {{baseUrl}}/recordatorios/tarea/540
 Authorization: Bearer {{token}}
 
