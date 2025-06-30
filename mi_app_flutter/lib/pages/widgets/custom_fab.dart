@@ -6,12 +6,14 @@ import '../../models/tarea.dart';
 import '../../pages/listas/lista_crear.dart';
 import '../../pages/listas/lista_ia_modal.dart';
 import '../../services/lista_service.dart';
+import '../../services/recordatorio_service.dart';
 import '../../services/controladorsesion.dart';
 import '../../pages/home/home_controler.dart';
 import '../principal/principal_controller.dart';
 import '../calendario/calendario_controller_page.dart';
 import '../buscador/buscador_controller_page.dart';
 import '../notificaciones/notificacion_controller_page.dart';
+import '../home/tabs/perfil_tab/profile_tab_controller.dart';
 
 class CustomFAB extends StatelessWidget {
   final Function()? onTapTask;
@@ -236,6 +238,10 @@ class CustomFAB extends StatelessWidget {
                                     await principal.AgregarLista(lista);
                                     for (Tarea tarea in tareas) {
                                       await principal.AgregarTarea(tarea);
+                                      // Crear recordatorio para cada tarea generada por IA
+                                      await _crearRecordatorioParaTareaIA(
+                                        tarea,
+                                      );
                                     }
 
                                     // Recargar todas las páginas
@@ -341,5 +347,51 @@ class CustomFAB extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  // Método estático para crear recordatorio para tareas generadas por IA
+  static Future<void> _crearRecordatorioParaTareaIA(Tarea tarea) async {
+    try {
+      final sesion = Get.find<ControladorSesionUsuario>();
+      final profileController = Get.find<ProfileTabController>();
+      final recordatorioService = RecordatorioService();
+
+      final usuario = sesion.usuarioActual.value;
+      if (usuario?.tokenFCM == null || usuario!.tokenFCM!.isEmpty) {
+        print(
+          'No se puede crear recordatorio para IA: token FCM no disponible',
+        );
+        return;
+      }
+
+      // Determinar el estado del recordatorio basado en las preferencias del usuario
+      bool activo = true;
+
+      // Si las notificaciones del sistema están desactivadas, el recordatorio estará inactivo
+      if (!profileController.notificacionesSistema.value) {
+        activo = false;
+      } else if (profileController.notificacionesUrgentes.value) {
+        // Si solo notificaciones urgentes está activado, verificar la prioridad
+        // Consideramos urgente si la prioridad es "Alta" (asumiendo id 3) o "Crítica" (asumiendo id 4)
+        activo = tarea.prioridadId >= 3;
+      }
+
+      final respuesta = await recordatorioService.crearRecordatorio(
+        tareaId: tarea.id!,
+        fechaHora: tarea.fechaCreacion,
+        tokenFCM: usuario.tokenFCM!,
+        mensaje: 'Recordatorio para: ${tarea.titulo}',
+        activado: activo,
+      );
+
+      if (respuesta.status == 200) {
+        print('Recordatorio creado exitosamente para la tarea IA ${tarea.id}');
+      } else {
+        print('Error al crear recordatorio para IA: ${respuesta.body}');
+      }
+    } catch (e) {
+      print('Error al crear recordatorio para tarea IA: $e');
+      // No mostrar snackbar para no interrumpir el flujo principal
+    }
   }
 }

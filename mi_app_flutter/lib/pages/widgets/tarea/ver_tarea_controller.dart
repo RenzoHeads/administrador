@@ -7,7 +7,9 @@ import '../../../models/tarea.dart';
 import '../../../models/categoria.dart';
 import '../../../models/etiqueta.dart';
 import '../../../models/lista.dart';
+import '../../../models/recordatorio.dart';
 import '../../../services/tarea_service.dart';
+import '../../../services/recordatorio_service.dart';
 import '../../../models/prioridad.dart';
 import '../../../models/estado.dart';
 import '../../widgets/lista/lista_item_controller.dart';
@@ -18,6 +20,7 @@ import '../../calendario/calendario_controller_page.dart';
 
 class VerTareaController extends GetxController {
   final TareaService _tareaService = TareaService();
+  final RecordatorioService _recordatorioService = RecordatorioService();
   final PrincipalController _principalController =
       Get.find<PrincipalController>();
   final HomeController _homeController = Get.find<HomeController>();
@@ -199,6 +202,9 @@ class VerTareaController extends GetxController {
 
       // Si la eliminación fue exitosa
       if (resultado.status == 200) {
+        // Eliminar recordatorios asociados antes de eliminar la tarea del controlador
+        await _eliminarRecordatoriosDeTarea(tareaId);
+
         // Actualizar la lista en PrincipalController
         await _principalController.EliminarTarea(tareaId);
         await ListaItemController.actualizarLista(tarea!.listaId!);
@@ -242,6 +248,29 @@ class VerTareaController extends GetxController {
       return false;
     } finally {
       print('Proceso de eliminación finalizado');
+    }
+  }
+
+  // Método helper para eliminar recordatorios de una tarea
+  Future<void> _eliminarRecordatoriosDeTarea(int tareaId) async {
+    try {
+      final respuesta = await _recordatorioService
+          .obtenerRecordatoriosDeUnaTarea(tareaId);
+
+      if (respuesta.status == 200) {
+        final recordatorios = respuesta.body as List<Recordatorio>;
+
+        for (final recordatorio in recordatorios) {
+          if (recordatorio.id != null) {
+            await _recordatorioService.eliminarRecordatorio(recordatorio.id!);
+          }
+        }
+
+        print('Recordatorios eliminados para la tarea $tareaId');
+      }
+    } catch (e) {
+      print('Error al eliminar recordatorios de la tarea $tareaId: $e');
+      // No mostrar snackbar para no interrumpir el flujo principal
     }
   }
 

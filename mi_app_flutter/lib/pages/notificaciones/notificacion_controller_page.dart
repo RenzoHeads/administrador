@@ -29,6 +29,7 @@ class NotificacionController extends ChangeNotifier {
   Future<void> cargarRecordatoriosDelDia() async {
     try {
       final uid = _ctrlSesion.usuarioActual.value?.id;
+
       if (uid == null) {
         _recordatorios = [];
         notifyListeners();
@@ -36,7 +37,7 @@ class NotificacionController extends ChangeNotifier {
       }
 
       // Usar principal controller en lugar de servicio directo
-      final todasLasTareas = await _principalController.ObtenerTareasUsuario();
+      final todasLasTareas = _principalController.tareas;
 
       // Obtener fecha y hora actual en hora local
       final DateTime ahora = DateTime.now().toLocal();

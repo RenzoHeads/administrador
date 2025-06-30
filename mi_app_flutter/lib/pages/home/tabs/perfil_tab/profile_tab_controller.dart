@@ -232,7 +232,7 @@ class ProfileTabController extends GetxController {
 
     try {
       if (value) {
-        // Activar todos los recordatorios del usuario
+        // Botón 1 activado: servicio de activar todo
         final respuesta = await _recordatorioService
             .activarRecordatoriosUsuario(usuario!.id!);
 
@@ -256,7 +256,7 @@ class ProfileTabController extends GetxController {
           );
         }
       } else {
-        // Desactivar todos los recordatorios del usuario
+        // Botón 1 desactivado: servicio de desactivar todo
         final respuesta = await _recordatorioService
             .desactivarRecordatoriosUsuario(usuario!.id!);
 
@@ -299,9 +299,11 @@ class ProfileTabController extends GetxController {
 
     try {
       if (value) {
-        // Activar solo recordatorios de prioridad alta
+        // Botón 2 activado: primero desactivar todo, después activar solo prioridad alta
+        await _recordatorioService.desactivarRecordatoriosUsuario(usuario!.id!);
+
         final respuesta = await _recordatorioService
-            .activarRecordatoriosPrioridadAlta(usuario!.id!);
+            .activarRecordatoriosPrioridadAlta(usuario.id!);
 
         if (respuesta.status == 200) {
           notificacionesUrgentes.value = true;
@@ -309,7 +311,7 @@ class ProfileTabController extends GetxController {
 
           Get.snackbar(
             'Éxito',
-            'Recordatorios urgentes activados',
+            'Mostrando solo notificaciones urgentes',
             snackPosition: SnackPosition.BOTTOM,
             backgroundColor: Colors.green,
             colorText: Colors.white,
@@ -317,14 +319,14 @@ class ProfileTabController extends GetxController {
         } else {
           Get.snackbar(
             'Error',
-            'No se pudieron activar los recordatorios urgentes',
+            'No se pudieron activar solo los recordatorios urgentes',
             snackPosition: SnackPosition.BOTTOM,
             backgroundColor: Colors.red,
             colorText: Colors.white,
           );
         }
       } else {
-        // Activar todos los recordatorios (volver al estado normal)
+        // Botón 2 desactivado: servicio de activar todo
         final respuesta = await _recordatorioService
             .activarRecordatoriosUsuario(usuario!.id!);
 

@@ -6,8 +6,10 @@ import '../../../models/categoria.dart';
 import '../../../models/prioridad.dart';
 import '../../../models/etiqueta.dart';
 import '../../../models/tarea.dart';
+import '../../../models/recordatorio.dart';
 import '../../../services/tarea_service.dart';
 import '../../../services/etiqueta_service.dart';
+import '../../../services/recordatorio_service.dart';
 import '../../../services/controladorsesion.dart';
 
 import '../../widgets/tarea/ver_tarea_controller.dart';
@@ -15,15 +17,19 @@ import '../../home/home_controler.dart';
 import '../../principal/principal_controller.dart';
 import '../../widgets/lista/lista_item_controller.dart';
 import '../../buscador/buscador_controller_page.dart';
+import '../../home/tabs/perfil_tab/profile_tab_controller.dart';
 
 class TaskFormController extends GetxController {
   final TareaService _tareaService = TareaService();
   final EtiquetaService _etiquetaService = EtiquetaService();
+  final RecordatorioService _recordatorioService = RecordatorioService();
   final ControladorSesionUsuario _sesion = Get.find<ControladorSesionUsuario>();
   final HomeController _homeController = Get.find<HomeController>();
   final PrincipalController _principalController =
       Get.find<PrincipalController>();
   final BuscadorController _buscadorController = Get.find<BuscadorController>();
+  final ProfileTabController _profileController =
+      Get.find<ProfileTabController>();
 
   // TextEditingControllers
   final tituloController = TextEditingController();
@@ -57,6 +63,10 @@ class TaskFormController extends GetxController {
 
   // Modo edición o creación
   RxBool isEditing = false.obs;
+
+  // Variables para comparar cambios en edición
+  String? _tituloOriginal;
+  DateTime? _fechaCreacionOriginal;
 
   @override
   void onInit() {
@@ -118,6 +128,10 @@ class TaskFormController extends GetxController {
     // Establecer datos de la tarea
     tituloController.text = tarea.titulo;
     descripcionController.text = tarea.descripcion;
+
+    // Almacenar datos originales para comparar cambios
+    _tituloOriginal = tarea.titulo;
+    _fechaCreacionOriginal = tarea.fechaCreacion.toLocal();
 
     // Convertir fechas a hora local
     DateTime fechaCreacionLocal = tarea.fechaCreacion.toLocal();
@@ -503,6 +517,10 @@ class TaskFormController extends GetxController {
 
       await _homeController.recargarTodo();
       await _buscadorController.recargarBuscador();
+
+      // Crear recordatorio basado en la configuración del usuario
+      await _crearRecordatorio(tareita);
+
       // Volver a la pantalla anterior con resultado exitoso
       Get.back(result: true);
 
@@ -660,6 +678,9 @@ class TaskFormController extends GetxController {
       await _homeController.recargarTodo();
       await _buscadorController.recargarBuscador();
 
+      // Actualizar recordatorio si hubo cambios en título o fecha
+      await _actualizarRecordatorioSiEsNecesario(tareaActualizada);
+
       // Volver a la pantalla anterior con resultado exitoso
       Get.back(result: true);
 
@@ -683,5 +704,148 @@ class TaskFormController extends GetxController {
     } finally {
       cargando.value = false;
     }
+  }
+
+  // Método helper para crear recordatorio después de crear una tarea
+  Future<void> _crearRecordatorio(Tarea tarea) async {
+    try {
+      final usuario = _sesion.usuarioActual.value;
+      if (usuario?.tokenFCM == null || usuario!.tokenFCM!.isEmpty) {
+        print('No se puede crear recordatorio: token FCM no disponible');
+        return;
+      }
+
+      // Determinar el estado del recordatorio basado en las preferencias
+      final activo = _determinarEstadoRecordatorio(tarea);
+
+      final respuesta = await _recordatorioService.crearRecordatorio(
+        tareaId: tarea.id!,
+        fechaHora: tarea.fechaCreacion,
+        tokenFCM: usuario.tokenFCM!,
+        mensaje: 'Recordatorio para: ${tarea.titulo}',
+        activado: activo,
+      );
+
+      if (respuesta.status == 200) {
+        print('Recordatorio creado exitosamente para la tarea ${tarea.id}');
+      } else {
+        print('Error al crear recordatorio: ${respuesta.body}');
+      }
+    } catch (e) {
+      print('Error al crear recordatorio: $e');
+      // No mostrar snackbar para no interrumpir el flujo principal
+    }
+  }
+
+  // Método helper para actualizar recordatorio si es necesario
+  Future<void> _actualizarRecordatorioSiEsNecesario(Tarea tarea) async {
+    try {
+      // Verificar si hubo cambios en título o fecha de creación
+      final tituloChanged = _tituloOriginal != tarea.titulo;
+      final fechaChanged = _fechaCreacionOriginal != tarea.fechaCreacion;
+
+      if (!tituloChanged && !fechaChanged) {
+        return; // No hay cambios relevantes
+      }
+
+      final usuario = _sesion.usuarioActual.value;
+      if (usuario?.tokenFCM == null || usuario!.tokenFCM!.isEmpty) {
+        print('No se puede actualizar recordatorio: token FCM no disponible');
+        return;
+      }
+
+      // Obtener el recordatorio existente
+      final respuestaRecordatorios = await _recordatorioService
+          .obtenerRecordatoriosDeUnaTarea(tarea.id!);
+
+      if (respuestaRecordatorios.status != 200) {
+        // No hay recordatorio existente, crear uno nuevo
+        await _crearRecordatorio(tarea);
+        return;
+      }
+
+      final recordatorios = respuestaRecordatorios.body as List<Recordatorio>;
+      if (recordatorios.isEmpty) {
+        // No hay recordatorio existente, crear uno nuevo
+        await _crearRecordatorio(tarea);
+        return;
+      }
+
+      final recordatorio = recordatorios.first;
+      final fechaActual = DateTime.now();
+
+      // Verificar si la fecha original era del pasado y ahora es actual/futura
+      final fechaOriginalEraPasado = _fechaCreacionOriginal!.isBefore(
+        fechaActual,
+      );
+      final fechaNuevaEsActualOFutura =
+          !tarea.fechaCreacion.isBefore(fechaActual);
+
+      // Si la nueva fecha es en el pasado, eliminar el recordatorio
+      if (tarea.fechaCreacion.isBefore(fechaActual)) {
+        await _recordatorioService.eliminarRecordatorio(recordatorio.id!);
+        print('Recordatorio eliminado porque la nueva fecha está en el pasado');
+        return;
+      }
+
+      // Si la fecha original era del pasado y ahora es actual/futura,
+      // eliminar el recordatorio anterior y crear uno nuevo
+      if (fechaOriginalEraPasado && fechaNuevaEsActualOFutura) {
+        await _recordatorioService.eliminarRecordatorio(recordatorio.id!);
+        print(
+          'Recordatorio eliminado porque la fecha cambió de pasado a actual/futura',
+        );
+        await _crearRecordatorio(tarea);
+        return;
+      }
+
+      // Actualizar el recordatorio existente
+      final respuestaActualizacion = await _recordatorioService
+          .actualizarRecordatorio(
+            id: recordatorio.id!,
+            tareaId: tarea.id!,
+            fechaHora: tarea.fechaCreacion,
+            tokenFCM: usuario.tokenFCM!,
+            mensaje: 'Recordatorio para: ${tarea.titulo}',
+            activado: _determinarEstadoRecordatorio(tarea),
+          );
+
+      if (respuestaActualizacion.status == 200) {
+        print(
+          'Recordatorio actualizado exitosamente para la tarea ${tarea.id}',
+        );
+      } else {
+        print(
+          'Error al actualizar recordatorio: ${respuestaActualizacion.body}',
+        );
+      }
+    } catch (e) {
+      print('Error al actualizar recordatorio: $e');
+      Get.snackbar(
+        'Advertencia',
+        'La tarea se actualizó pero hubo un problema con el recordatorio',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.orange,
+        colorText: Colors.white,
+      );
+    }
+  }
+
+  // Método helper para determinar el estado del recordatorio
+  bool _determinarEstadoRecordatorio(Tarea tarea) {
+    // Si las notificaciones del sistema están desactivadas, el recordatorio estará inactivo
+    if (!_profileController.notificacionesSistema.value) {
+      return false;
+    }
+
+    // Si solo notificaciones urgentes está activado, verificar la prioridad
+    if (_profileController.notificacionesUrgentes.value) {
+      // Consideramos urgente si la prioridad es "Alta" (asumiendo id 3) o "Crítica" (asumiendo id 4)
+      // Esto podría necesitar ajustarse según los IDs reales de prioridades en tu sistema
+      return tarea.prioridadId >= 3;
+    }
+
+    // Si las notificaciones están activadas y no es solo urgentes, activar el recordatorio
+    return true;
   }
 }

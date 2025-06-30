@@ -111,37 +111,56 @@ class _NotificacionPageState extends State<NotificacionPage>
       child: Scaffold(
         body: Consumer<NotificacionController>(
           builder: (context, controller, _) {
-            if (controller.recordatorios.isEmpty) {
-              return Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      'Todo está en orden',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    SizedBox(height: 8),
-                    Text('No tienes notificaciones pendientes'),
-                    SizedBox(height: 8),
-                    Icon(Icons.check_circle, color: Colors.green, size: 48),
-                  ],
-                ),
-              );
-            }
             return RefreshIndicator(
               onRefresh: controller.cargarRecordatoriosDelDia,
-              child: ListView.builder(
-                padding: EdgeInsets.symmetric(vertical: 16),
-                itemCount: controller.recordatorios.length,
-                itemBuilder: (context, index) {
-                  return RecordatorioTile(
-                    recordatorio: controller.recordatorios[index],
-                  );
-                },
-              ),
+              child:
+                  controller.recordatorios.isEmpty
+                      ? ListView(
+                        children: [
+                          Container(
+                            height: MediaQuery.of(context).size.height - 200,
+                            child: Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Text(
+                                    'Todo está en orden',
+                                    style: TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  SizedBox(height: 8),
+                                  Text('No tienes notificaciones pendientes'),
+                                  SizedBox(height: 8),
+                                  Icon(
+                                    Icons.check_circle,
+                                    color: Colors.green,
+                                    size: 48,
+                                  ),
+                                  SizedBox(height: 16),
+                                  Text(
+                                    'Desliza hacia abajo para actualizar',
+                                    style: TextStyle(
+                                      color: Colors.grey[600],
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      )
+                      : ListView.builder(
+                        padding: EdgeInsets.symmetric(vertical: 16),
+                        itemCount: controller.recordatorios.length,
+                        itemBuilder: (context, index) {
+                          return RecordatorioTile(
+                            recordatorio: controller.recordatorios[index],
+                          );
+                        },
+                      ),
             );
           },
         ),

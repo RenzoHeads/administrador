@@ -3,16 +3,19 @@ import 'package:get/get.dart';
 import '../../../models/tarea.dart';
 import '../../../services/lista_service.dart';
 import '../../../services/tarea_service.dart';
+import '../../../services/recordatorio_service.dart';
 import '../../buscador/buscador_controller_page.dart';
 import '../../calendario/calendario_controller_page.dart';
 import '../../home/home_controler.dart';
 import '../../principal/principal_controller.dart';
 import '../../widgets/lista/lista_item_controller.dart';
+import '../../../models/recordatorio.dart';
 
 class VisualizarListaController extends GetxController {
   final int listaId;
   final ListaService _listaService = ListaService();
   final TareaService _tareaService = TareaService();
+  final RecordatorioService _recordatorioService = RecordatorioService();
   final HomeController _homeController = Get.find<HomeController>();
   final BuscadorController _buscadorController = Get.find<BuscadorController>();
   final CalendarioController _calendarioController =
@@ -28,6 +31,9 @@ class VisualizarListaController extends GetxController {
   }
 
   Future<bool> eliminarLista() async {
+    // Primero eliminar recordatorios de todas las tareas de la lista
+    await _eliminarRecordatoriosDeListaCompleta();
+
     final response = await _listaService.eliminarLista(listaId);
     if (response.status != 200) {
       // Obtener el mensaje de error específico del servidor si está disponible
@@ -88,11 +94,63 @@ class VisualizarListaController extends GetxController {
   }
 
   Future<bool> eliminarTarea(int tareaId) async {
+    // Eliminar recordatorios asociados a la tarea
+    await _eliminarRecordatoriosDeTarea(tareaId);
+
     await _principalController.EliminarTarea(tareaId);
     await ListaItemController.actualizarLista(listaId);
     await _homeController.recargarTodo();
     await _buscadorController.recargarBuscador();
     await _calendarioController.recargarCalendario();
     return true;
+  }
+
+  // Método helper para eliminar recordatorios de una tarea específica
+  Future<void> _eliminarRecordatoriosDeTarea(int tareaId) async {
+    try {
+      final respuesta = await _recordatorioService
+          .obtenerRecordatoriosDeUnaTarea(tareaId);
+
+      if (respuesta.status == 200) {
+        final recordatorios = respuesta.body as List<Recordatorio>;
+
+        for (final recordatorio in recordatorios) {
+          if (recordatorio.id != null) {
+            await _recordatorioService.eliminarRecordatorio(recordatorio.id!);
+          }
+        }
+
+        print('Recordatorios eliminados para la tarea $tareaId');
+      }
+    } catch (e) {
+      print('Error al eliminar recordatorios de la tarea $tareaId: $e');
+    }
+  }
+
+  // Método helper para eliminar recordatorios de todas las tareas de una lista
+  Future<void> _eliminarRecordatoriosDeListaCompleta() async {
+    try {
+      // Obtener todas las tareas de la lista
+      final listaConTareas = await _principalController.ObtenerListaConTareas(
+        listaId,
+      );
+
+      if (listaConTareas != null && listaConTareas['tareas'] != null) {
+        final tareas = listaConTareas['tareas'] as List<Tarea>;
+
+        // Eliminar recordatorios de cada tarea
+        for (final tarea in tareas) {
+          if (tarea.id != null) {
+            await _eliminarRecordatoriosDeTarea(tarea.id!);
+          }
+        }
+
+        print(
+          'Recordatorios eliminados para todas las tareas de la lista $listaId',
+        );
+      }
+    } catch (e) {
+      print('Error al eliminar recordatorios de la lista $listaId: $e');
+    }
   }
 }
