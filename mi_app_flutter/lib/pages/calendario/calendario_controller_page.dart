@@ -1,8 +1,8 @@
 import 'package:get/get.dart';
 
 import '../../models/tarea.dart';
-import '../../services/tarea_service.dart';
 import '../../services/controladorsesion.dart';
+import '../principal/principal_controller.dart';
 
 class CalendarioController extends GetxController {
   final focusedDay = DateTime.now().obs;
@@ -10,6 +10,7 @@ class CalendarioController extends GetxController {
   final tareasDelDia = <Tarea>[].obs;
 
   final _ctrlSesion = Get.find<ControladorSesionUsuario>();
+  final _principalController = Get.find<PrincipalController>();
 
   @override
   void onInit() {
@@ -47,18 +48,20 @@ class CalendarioController extends GetxController {
   Future<void> _loadTareasDelDia(DateTime day) async {
     final uid = _ctrlSesion.usuarioActual.value?.id;
     if (uid == null) return;
-    final resp = await TareaService().obtenerTareasPorUsuario(uid);
-    if (resp.status == 200 && resp.body is List<Tarea>) {
-      final todas = resp.body as List<Tarea>;
-      tareasDelDia.value =
-          todas.where((t) {
-            final f = t.fechaCreacion;
-            return f.year == day.year &&
-                f.month == day.month &&
-                f.day == day.day;
-          }).toList();
-    } else {
-      tareasDelDia.clear();
-    }
+
+    // Usar principal controller en lugar de servicio directo
+    final todasLasTareas = await _principalController.ObtenerTareasUsuario();
+
+    // Crear rango del día seleccionado en hora local
+    DateTime diaInicio = DateTime(day.year, day.month, day.day);
+    DateTime diaFin = diaInicio.add(Duration(days: 1));
+
+    tareasDelDia.value =
+        todasLasTareas.where((tarea) {
+          // Convertir la fecha de creación a hora local antes de filtrar
+          final fechaCreacionLocal = tarea.fechaCreacion.toLocal();
+          return fechaCreacionLocal.isAfter(diaInicio) &&
+              fechaCreacionLocal.isBefore(diaFin);
+        }).toList();
   }
 }

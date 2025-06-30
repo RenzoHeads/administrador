@@ -352,34 +352,4 @@ class VerTareaController extends GetxController {
   Future<String> obtenerNombreEstadoPorTareaId(int tareaId) async {
     return _principalController.obtenerNombreEstadoPorTareaId(tareaId);
   }
-
-  // Método para obtener texto de fecha relativa
-  String obtenerTextoFechaRelativa(DateTime fecha) {
-    final DateTime ahora = DateTime.now().toLocal();
-    final DateTime hoy = DateTime(ahora.year, ahora.month, ahora.day);
-    final DateTime fechaSinHora = DateTime(fecha.year, fecha.month, fecha.day);
-    final DateTime fechaLocal = fecha.toLocal();
-
-    // Calcular diferencia en días
-    final diferencia = fechaSinHora.difference(hoy).inDays;
-
-    // Formatear hora
-    final hora = DateFormat('HH:mm').format(fechaLocal);
-
-    switch (diferencia) {
-      case 0:
-        return 'Hoy, $hora';
-      case 1:
-        return 'Mañana, $hora';
-      case 2:
-        return 'Pasado mañana, $hora';
-      case -1:
-        return 'Ayer, $hora';
-      case -2:
-        return 'Anteayer, $hora';
-      default:
-        // Si es una fecha más lejana, mostrar fecha completa con hora
-        return '${DateFormat('dd/MM/yyyy').format(fechaLocal)}, $hora';
-    }
-  }
 }

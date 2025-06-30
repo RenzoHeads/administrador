@@ -4,13 +4,14 @@ import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 
 import './calendario_controller_page.dart';
+import '../widgets/tarea/tarea_item.dart';
 
 class CalendarioPage extends StatelessWidget {
   final CalendarioController controller = Get.put(CalendarioController());
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Padding(
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
@@ -160,36 +161,22 @@ class CalendarioPage extends StatelessWidget {
                   ),
                 );
               } else {
-                return Expanded(
-                  child: ListView.builder(
-                    itemCount: tareas.length,
-                    itemBuilder: (_, i) {
-                      final t = tareas[i];
-                      return Card(
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        color: Colors.green[50],
-                        margin: const EdgeInsets.symmetric(vertical: 6),
-                        child: ListTile(
-                          leading: const Icon(
-                            Icons.radio_button_unchecked,
-                            color: Colors.green,
-                          ),
-                          title: Text(t.titulo),
-                          subtitle: Text(
-                            t.descripcion,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          trailing: Text(
-                            DateFormat('HH:mm').format(t.fechaVencimiento),
-                            style: const TextStyle(color: Colors.grey),
-                          ),
-                        ),
-                      );
-                    },
-                  ),
+                return Column(
+                  children:
+                      tareas
+                          .map(
+                            (tarea) => Padding(
+                              padding: const EdgeInsets.symmetric(
+                                vertical: 4.0,
+                                horizontal: 16.0,
+                              ),
+                              child: TareaItem(
+                                key: ValueKey(tarea.id),
+                                tareaId: tarea.id!,
+                              ),
+                            ),
+                          )
+                          .toList(),
                 );
               }
             }),

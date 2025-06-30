@@ -6,12 +6,15 @@ class Recordatorio {
   final DateTime fechaHora;
   final String? tokenFCM;
   final String? mensaje;
+  final bool activado;
+
   Recordatorio({
     this.id,
     required this.tareaId,
     required this.fechaHora,
     this.tokenFCM,
     this.mensaje,
+    this.activado = true,
   });
 
   // Factory para crear desde un mapa (JSON)
@@ -25,6 +28,7 @@ class Recordatorio {
               : DateTime.now(),
       tokenFCM: map['token_fcm'],
       mensaje: map['mensaje'],
+      activado: map['activado'] ?? true,
     );
   }
 
@@ -36,17 +40,26 @@ class Recordatorio {
       'fecha_hora': fechaHora.toIso8601String(),
       'token_fcm': tokenFCM,
       'mensaje': mensaje,
+      'activado': activado,
     };
   }
 
   // Método para crear una copia del objeto con algunos cambios
-  Recordatorio copyWith({int? id, int? tareaId, DateTime? fechaHora}) {
+  Recordatorio copyWith({
+    int? id,
+    int? tareaId,
+    DateTime? fechaHora,
+    String? tokenFCM,
+    String? mensaje,
+    bool? activado,
+  }) {
     return Recordatorio(
       id: id ?? this.id,
       tareaId: tareaId ?? this.tareaId,
       fechaHora: fechaHora ?? this.fechaHora,
       tokenFCM: tokenFCM ?? this.tokenFCM,
       mensaje: mensaje ?? this.mensaje,
+      activado: activado ?? this.activado,
     );
   }
 
@@ -59,7 +72,7 @@ class Recordatorio {
 
   @override
   String toString() {
-    return 'Recordatorio(id: $id, tareaId: $tareaId, fechaHora: $fechaHora, tokenFCM: $tokenFCM, mensaje: $mensaje)';
+    return 'Recordatorio(id: $id, tareaId: $tareaId, fechaHora: $fechaHora, tokenFCM: $tokenFCM, mensaje: $mensaje, activado: $activado)';
   }
 
   @override
@@ -70,6 +83,7 @@ class Recordatorio {
         other.tareaId == tareaId &&
         other.fechaHora == fechaHora &&
         other.tokenFCM == tokenFCM &&
-        other.mensaje == mensaje;
+        other.mensaje == mensaje &&
+        other.activado == activado;
   }
 }

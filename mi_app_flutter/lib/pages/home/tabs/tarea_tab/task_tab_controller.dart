@@ -20,12 +20,18 @@ class TaskTabController extends GetxController {
     if (_homeController == null) return;
 
     final todasLasTareas = await _homeController!.obtenerTareasUsuario();
+
+    // Obtener fecha actual en hora local
+    DateTime hoy = DateTime.now();
+    DateTime hoyInicio = DateTime(hoy.year, hoy.month, hoy.day);
+    DateTime hoyFin = hoyInicio.add(Duration(days: 1));
+
     tareasDeHoy.value =
         todasLasTareas.where((tarea) {
-          final fechaLimite = tarea.fechaCreacion;
-          return fechaLimite.year == DateTime.now().year &&
-              fechaLimite.month == DateTime.now().month &&
-              fechaLimite.day == DateTime.now().day;
+          // Convertir la fecha de creación a hora local antes de filtrar
+          final fechaCreacionLocal = tarea.fechaCreacion.toLocal();
+          return fechaCreacionLocal.isAfter(hoyInicio) &&
+              fechaCreacionLocal.isBefore(hoyFin);
         }).toList();
   }
 }

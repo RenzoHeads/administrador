@@ -1,70 +1,65 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
+import 'package:get/get.dart';
 import '../../models/recordatorio.dart';
-import '../../configs/contants.dart';
-import '../../services/auth_service.dart';
+import '../../models/tarea.dart';
+import '../principal/principal_controller.dart';
+import '../../services/controladorsesion.dart';
 
 class NotificacionController extends ChangeNotifier {
   List<Recordatorio> _recordatorios = [];
   List<Recordatorio> get recordatorios => _recordatorios;
 
   final int usuarioId; // Id del usuario para filtrar
+  final _principalController = Get.find<PrincipalController>();
+  final _ctrlSesion = Get.find<ControladorSesionUsuario>();
 
   NotificacionController({required this.usuarioId});
 
   Future<void> cargarRecordatoriosDelDia() async {
     try {
-      // Verificar si hay token antes de hacer la petición
-      final token = await AuthService.getJwtToken();
-      if (token == null || token.isEmpty) {
+      final uid = _ctrlSesion.usuarioActual.value?.id;
+      if (uid == null) {
         _recordatorios = [];
         notifyListeners();
         return;
       }
 
-      final headers = await AuthService.getAuthHeaders();
-      final url = '${BASE_URL}tareas/$usuarioId';
-      final response = await http.get(Uri.parse(url), headers: headers);
+      // Usar principal controller en lugar de servicio directo
+      final todasLasTareas = await _principalController.ObtenerTareasUsuario();
 
-      if (response.statusCode == 200) {
-        List<dynamic> data = json.decode(response.body);
+      // Obtener fecha y hora actual en hora local
+      final DateTime ahora = DateTime.now().toLocal();
+      final DateTime hoyInicio = DateTime(ahora.year, ahora.month, ahora.day);
+      final DateTime hoyFin = hoyInicio.add(Duration(days: 1));
 
-        DateTime hoy = DateTime.now();
-        DateTime hoyInicio = DateTime(hoy.year, hoy.month, hoy.day);
-        DateTime hoyFin = hoyInicio.add(Duration(days: 1));
+      List<Recordatorio> tareasHoy = [];
 
-        List<Recordatorio> tareasHoy = [];
+      for (Tarea tarea in todasLasTareas) {
+        // Convertir la fecha de creación a hora local
+        final fechaCreacionLocal = tarea.fechaCreacion.toLocal();
 
-        for (var tareaJson in data) {
-          // La fecha_vencimiento viene en formato "YYYY-MM-DD HH:MM:SS"
-          String fechaVencStr = tareaJson['fecha_creacion'];
-          DateTime fechaVenc = DateTime.parse(fechaVencStr).toLocal();
-
-          // Filtrar solo tareas que vencen hoy
-          if (fechaVenc.isAfter(hoyInicio) && fechaVenc.isBefore(hoyFin)) {
-            tareasHoy.add(
-              Recordatorio(
-                id: tareaJson['id'],
-                tareaId: tareaJson['id'],
-                fechaHora: fechaVenc,
-                mensaje: tareaJson['titulo'] ?? 'Sin título',
-              ),
-            );
-          }
+        // Filtrar solo tareas creadas hoy que aún no han pasado su hora
+        if (fechaCreacionLocal.isAfter(hoyInicio) &&
+            fechaCreacionLocal.isBefore(hoyFin) &&
+            fechaCreacionLocal.isAfter(ahora)) {
+          tareasHoy.add(
+            Recordatorio(
+              id: tarea.id!,
+              tareaId: tarea.id!,
+              fechaHora: fechaCreacionLocal,
+              mensaje: tarea.titulo,
+            ),
+          );
         }
-
-        _recordatorios = tareasHoy;
-        notifyListeners();
-      } else if (response.statusCode == 401) {
-        AuthService.handleUnauthorized();
-        _recordatorios = [];
-        notifyListeners();
-      } else {
-        _recordatorios = [];
-        notifyListeners();
       }
+
+      // Ordenar la lista por fecha de creación (más próximas primero)
+      tareasHoy.sort((a, b) => a.fechaHora.compareTo(b.fechaHora));
+
+      _recordatorios = tareasHoy;
+      notifyListeners();
     } catch (e) {
+      print('Error al cargar recordatorios: $e');
       _recordatorios = [];
       notifyListeners();
     }
