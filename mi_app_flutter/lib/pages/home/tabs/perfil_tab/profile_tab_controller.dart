@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../../services/controladorsesion.dart';
 import '../../../../services/usuario_service.dart';
+import '../../../../services/recordatorio_service.dart';
 import '../../../../models/usuario.dart';
 import '../../home_controler.dart';
 import '../../../principal/principal_controller.dart';
@@ -12,6 +13,7 @@ import '../../../principal/principal_controller.dart';
 class ProfileTabController extends GetxController {
   final ControladorSesionUsuario _sesion = Get.find<ControladorSesionUsuario>();
   final UsuarioService _usuarioService = UsuarioService();
+  final RecordatorioService _recordatorioService = RecordatorioService();
 
   // Obtener el PrincipalController
   final PrincipalController _principalController =
@@ -28,7 +30,8 @@ class ProfileTabController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    // Ya no necesitamos cargar la foto aquí, se hace en PrincipalController
+    // Cargar el estado actual de los recordatorios
+    cargarEstadoRecordatorios();
   }
 
   void setHomeController(HomeController controller) {
@@ -223,21 +226,168 @@ class ProfileTabController extends GetxController {
   }
 
   // Métodos para manejar los switches de notificaciones
-  void toggleNotificacionesSistema(bool value) {
-    notificacionesSistema.value = value;
+  Future<void> toggleNotificacionesSistema(bool value) async {
+    final usuario = _sesion.usuarioActual.value;
+    if (usuario?.id == null) return;
 
-    // Si se desactiva notificaciones del sistema, también desactivar notificaciones urgentes
-    if (!value) {
-      notificacionesUrgentes.value = false;
+    try {
+      if (value) {
+        // Activar todos los recordatorios del usuario
+        final respuesta = await _recordatorioService
+            .activarRecordatoriosUsuario(usuario!.id!);
+
+        if (respuesta.status == 200) {
+          notificacionesSistema.value = true;
+
+          Get.snackbar(
+            'Éxito',
+            'Recordatorios del sistema activados',
+            snackPosition: SnackPosition.BOTTOM,
+            backgroundColor: Colors.green,
+            colorText: Colors.white,
+          );
+        } else {
+          Get.snackbar(
+            'Error',
+            'No se pudieron activar los recordatorios',
+            snackPosition: SnackPosition.BOTTOM,
+            backgroundColor: Colors.red,
+            colorText: Colors.white,
+          );
+        }
+      } else {
+        // Desactivar todos los recordatorios del usuario
+        final respuesta = await _recordatorioService
+            .desactivarRecordatoriosUsuario(usuario!.id!);
+
+        if (respuesta.status == 200) {
+          notificacionesSistema.value = false;
+          notificacionesUrgentes.value = false; // También desactivar urgentes
+
+          Get.snackbar(
+            'Éxito',
+            'Recordatorios del sistema desactivados',
+            snackPosition: SnackPosition.BOTTOM,
+            backgroundColor: Colors.orange,
+            colorText: Colors.white,
+          );
+        } else {
+          Get.snackbar(
+            'Error',
+            'No se pudieron desactivar los recordatorios',
+            snackPosition: SnackPosition.BOTTOM,
+            backgroundColor: Colors.red,
+            colorText: Colors.white,
+          );
+        }
+      }
+    } catch (e) {
+      print('Error al cambiar estado de notificaciones del sistema: $e');
+      Get.snackbar(
+        'Error',
+        'Ocurrió un error al cambiar las notificaciones',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
     }
   }
 
-  void toggleNotificacionesUrgentes(bool value) {
-    notificacionesUrgentes.value = value;
+  Future<void> toggleNotificacionesUrgentes(bool value) async {
+    final usuario = _sesion.usuarioActual.value;
+    if (usuario?.id == null) return;
 
-    // Si se activa notificaciones urgentes, activar notificaciones del sistema
-    if (value) {
-      notificacionesSistema.value = true;
+    try {
+      if (value) {
+        // Activar solo recordatorios de prioridad alta
+        final respuesta = await _recordatorioService
+            .activarRecordatoriosPrioridadAlta(usuario!.id!);
+
+        if (respuesta.status == 200) {
+          notificacionesUrgentes.value = true;
+          notificacionesSistema.value = true; // También activar sistema
+
+          Get.snackbar(
+            'Éxito',
+            'Recordatorios urgentes activados',
+            snackPosition: SnackPosition.BOTTOM,
+            backgroundColor: Colors.green,
+            colorText: Colors.white,
+          );
+        } else {
+          Get.snackbar(
+            'Error',
+            'No se pudieron activar los recordatorios urgentes',
+            snackPosition: SnackPosition.BOTTOM,
+            backgroundColor: Colors.red,
+            colorText: Colors.white,
+          );
+        }
+      } else {
+        // Activar todos los recordatorios (volver al estado normal)
+        final respuesta = await _recordatorioService
+            .activarRecordatoriosUsuario(usuario!.id!);
+
+        if (respuesta.status == 200) {
+          notificacionesUrgentes.value = false;
+
+          Get.snackbar(
+            'Éxito',
+            'Mostrando todas las notificaciones',
+            snackPosition: SnackPosition.BOTTOM,
+            backgroundColor: Colors.blue,
+            colorText: Colors.white,
+          );
+        } else {
+          Get.snackbar(
+            'Error',
+            'No se pudo cambiar el filtro de notificaciones',
+            snackPosition: SnackPosition.BOTTOM,
+            backgroundColor: Colors.red,
+            colorText: Colors.white,
+          );
+        }
+      }
+    } catch (e) {
+      print('Error al cambiar estado de notificaciones urgentes: $e');
+      Get.snackbar(
+        'Error',
+        'Ocurrió un error al cambiar las notificaciones urgentes',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+    }
+  }
+
+  // Método para obtener el estado actual de los recordatorios
+  Future<void> cargarEstadoRecordatorios() async {
+    final usuario = _sesion.usuarioActual.value;
+    if (usuario?.id == null) return;
+
+    try {
+      final respuesta = await _recordatorioService
+          .obtenerEstadoRecordatoriosUsuario(usuario!.id!);
+
+      if (respuesta.status == 200) {
+        final Map<String, dynamic> estado =
+            respuesta.body as Map<String, dynamic>;
+
+        // Determinar el estado de los switches basado en la respuesta
+        final int recordatoriosActivados =
+            estado['recordatorios_activados'] ?? 0;
+        final int totalRecordatorios = estado['total_recordatorios'] ?? 0;
+
+        if (totalRecordatorios > 0) {
+          // Si hay recordatorios y algunos están activados
+          notificacionesSistema.value = recordatoriosActivados > 0;
+
+          // Para notificaciones urgentes, necesitaríamos lógica adicional
+          // Por ahora, mantener el estado actual
+        }
+      }
+    } catch (e) {
+      print('Error al cargar estado de recordatorios: $e');
     }
   }
 }
