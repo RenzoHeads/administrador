@@ -57,19 +57,23 @@ class ProfileTab extends StatelessWidget {
             ),
             const SizedBox(height: 6),
             // Opciones de notificaciones
-            _buildSwitchItem(
-              'Notificaciones del sistema',
-              'Recibir notificaciones a tu dispositivo',
-              true,
-              (value) {},
+            Obx(
+              () => _buildSwitchItem(
+                'Notificaciones del sistema',
+                'Recibir notificaciones a tu dispositivo',
+                controller.notificacionesSistema.value,
+                controller.toggleNotificacionesSistema,
+              ),
             ),
             _buildDivider(),
 
-            _buildSwitchItem(
-              'Mostrar solo notificaciones urgentes',
-              'Filtra las alertas para tareas de alta prioridad',
-              true,
-              (value) {},
+            Obx(
+              () => _buildSwitchItem(
+                'Mostrar solo notificaciones urgentes',
+                'Filtra las alertas para tareas de alta prioridad',
+                controller.notificacionesUrgentes.value,
+                controller.toggleNotificacionesUrgentes,
+              ),
             ),
           ],
         ),

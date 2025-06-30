@@ -17,6 +17,10 @@ class ProfileTabController extends GetxController {
   final PrincipalController _principalController =
       Get.find<PrincipalController>();
 
+  // Estados para los switches de notificaciones
+  final RxBool notificacionesSistema = true.obs;
+  final RxBool notificacionesUrgentes = false.obs;
+
   // Usar las variables del PrincipalController para la foto
   RxString get profilePhotoUrl => _principalController.profilePhotoUrl;
   RxBool get loadingPhoto => _principalController.loadingPhoto;
@@ -216,5 +220,24 @@ class ProfileTabController extends GetxController {
       }
     }
     return false;
+  }
+
+  // Métodos para manejar los switches de notificaciones
+  void toggleNotificacionesSistema(bool value) {
+    notificacionesSistema.value = value;
+
+    // Si se desactiva notificaciones del sistema, también desactivar notificaciones urgentes
+    if (!value) {
+      notificacionesUrgentes.value = false;
+    }
+  }
+
+  void toggleNotificacionesUrgentes(bool value) {
+    notificacionesUrgentes.value = value;
+
+    // Si se activa notificaciones urgentes, activar notificaciones del sistema
+    if (value) {
+      notificacionesSistema.value = true;
+    }
   }
 }

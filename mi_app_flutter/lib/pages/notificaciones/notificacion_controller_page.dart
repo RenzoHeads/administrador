@@ -4,16 +4,27 @@ import '../../models/recordatorio.dart';
 import '../../models/tarea.dart';
 import '../principal/principal_controller.dart';
 import '../../services/controladorsesion.dart';
+import '../home/tabs/perfil_tab/profile_tab_controller.dart';
 
 class NotificacionController extends ChangeNotifier {
   List<Recordatorio> _recordatorios = [];
+  List<Recordatorio> _recordatoriosCompletos = []; // Lista completa sin filtrar
   List<Recordatorio> get recordatorios => _recordatorios;
 
   final int usuarioId; // Id del usuario para filtrar
   final _principalController = Get.find<PrincipalController>();
   final _ctrlSesion = Get.find<ControladorSesionUsuario>();
+  final _profileController = Get.find<ProfileTabController>();
 
-  NotificacionController({required this.usuarioId});
+  NotificacionController({required this.usuarioId}) {
+    // Escuchar cambios en los switches del ProfileTabController
+    _profileController.notificacionesSistema.listen(
+      (_) => _aplicarFiltrosYNotificar(),
+    );
+    _profileController.notificacionesUrgentes.listen(
+      (_) => _aplicarFiltrosYNotificar(),
+    );
+  }
 
   Future<void> cargarRecordatoriosDelDia() async {
     try {
@@ -56,7 +67,8 @@ class NotificacionController extends ChangeNotifier {
       // Ordenar la lista por fecha de creación (más próximas primero)
       tareasHoy.sort((a, b) => a.fechaHora.compareTo(b.fechaHora));
 
-      _recordatorios = tareasHoy;
+      _recordatoriosCompletos = tareasHoy;
+      _aplicarFiltros();
       notifyListeners();
     } catch (e) {
       print('Error al cargar recordatorios: $e');
@@ -68,5 +80,43 @@ class NotificacionController extends ChangeNotifier {
   //metodo para recargar pagina desde cualquier lugar
   Future<void> recargarNotificaciones() async {
     await cargarRecordatoriosDelDia();
+  }
+
+  void _aplicarFiltros() {
+    if (!_profileController.notificacionesSistema.value) {
+      // Botón 1 desactivado: no mostrar notificaciones
+      _recordatorios = [];
+      return;
+    }
+
+    if (_profileController.notificacionesUrgentes.value) {
+      // Botón 2 activado: mostrar solo notificaciones de prioridad alta (prioridadId = 3)
+      _filtrarPorPrioridadAlta();
+    } else {
+      // Botón 2 desactivado: mostrar todas las notificaciones
+      _recordatorios = List.from(_recordatoriosCompletos);
+    }
+  }
+
+  void _aplicarFiltrosYNotificar() {
+    _aplicarFiltros();
+    notifyListeners();
+  }
+
+  Future<void> _filtrarPorPrioridadAlta() async {
+    try {
+      final todasLasTareas = await _principalController.ObtenerTareasUsuario();
+
+      _recordatorios =
+          _recordatoriosCompletos.where((recordatorio) {
+            final tarea = todasLasTareas.firstWhereOrNull(
+              (t) => t.id == recordatorio.tareaId,
+            );
+            return tarea?.prioridadId == 3;
+          }).toList();
+    } catch (e) {
+      print('Error al filtrar por prioridad alta: $e');
+      _recordatorios = List.from(_recordatoriosCompletos);
+    }
   }
 }
