@@ -123,21 +123,65 @@ class _NotificacionPageState extends State<NotificacionPage>
                               child: Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  Text(
-                                    'Todo está en orden',
-                                    style: TextStyle(
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.bold,
+                                  // Mostrar diferentes mensajes según el estado
+                                  if (controller
+                                      .notificacionesDesactivadas) ...[
+                                    Icon(
+                                      Icons.notifications_off,
+                                      color: Colors.orange,
+                                      size: 48,
                                     ),
-                                  ),
-                                  SizedBox(height: 8),
-                                  Text('No tienes notificaciones pendientes'),
-                                  SizedBox(height: 8),
-                                  Icon(
-                                    Icons.check_circle,
-                                    color: Colors.green,
-                                    size: 48,
-                                  ),
+                                    SizedBox(height: 16),
+                                    Text(
+                                      'Notificaciones desactivadas',
+                                      style: TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.orange,
+                                      ),
+                                    ),
+                                    SizedBox(height: 8),
+                                    Text(
+                                      'Has desactivado las notificaciones del sistema',
+                                      textAlign: TextAlign.center,
+                                      style: TextStyle(
+                                        color: Colors.grey[600],
+                                        fontSize: 14,
+                                      ),
+                                    ),
+                                    SizedBox(height: 16),
+                                    Text(
+                                      'Ve a tu perfil para activarlas nuevamente',
+                                      textAlign: TextAlign.center,
+                                      style: TextStyle(
+                                        color: Colors.grey[600],
+                                        fontSize: 14,
+                                      ),
+                                    ),
+                                  ] else ...[
+                                    Icon(
+                                      Icons.check_circle,
+                                      color: Colors.green,
+                                      size: 48,
+                                    ),
+                                    SizedBox(height: 16),
+                                    Text(
+                                      'Todo está en orden',
+                                      style: TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    SizedBox(height: 8),
+                                    Text(
+                                      'No tienes notificaciones pendientes',
+                                      textAlign: TextAlign.center,
+                                      style: TextStyle(
+                                        color: Colors.grey[600],
+                                        fontSize: 14,
+                                      ),
+                                    ),
+                                  ],
                                   SizedBox(height: 16),
                                   Text(
                                     'Desliza hacia abajo para actualizar',

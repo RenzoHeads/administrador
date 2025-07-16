@@ -130,27 +130,25 @@ class VisualizarListaController extends GetxController {
   // Método helper para eliminar recordatorios de todas las tareas de una lista
   Future<void> _eliminarRecordatoriosDeListaCompleta() async {
     try {
-      // Obtener todas las tareas de la lista
-      final listaConTareas = await _principalController.ObtenerListaConTareas(
+      // Usar el nuevo servicio para eliminar todos los recordatorios de la lista
+      final respuesta = await _recordatorioService.eliminarRecordatoriosLista(
         listaId,
       );
 
-      if (listaConTareas != null && listaConTareas['tareas'] != null) {
-        final tareas = listaConTareas['tareas'] as List<Tarea>;
-
-        // Eliminar recordatorios de cada tarea
-        for (final tarea in tareas) {
-          if (tarea.id != null) {
-            await _eliminarRecordatoriosDeTarea(tarea.id!);
-          }
-        }
+      if (respuesta.status == 200) {
+        final data = respuesta.body as Map<String, dynamic>;
+        final recordatoriosEliminados = data['recordatorios_eliminados'] ?? 0;
 
         print(
-          'Recordatorios eliminados para todas las tareas de la lista $listaId',
+          '✅ Eliminados $recordatoriosEliminados recordatorios de la lista $listaId',
+        );
+      } else {
+        print(
+          '⚠️ Error al eliminar recordatorios de la lista $listaId: ${respuesta.body}',
         );
       }
     } catch (e) {
-      print('Error al eliminar recordatorios de la lista $listaId: $e');
+      print('❌ Error al eliminar recordatorios de la lista $listaId: $e');
     }
   }
 }

@@ -11,6 +11,10 @@ class NotificacionController extends ChangeNotifier {
   List<Recordatorio> _recordatoriosCompletos = []; // Lista completa sin filtrar
   List<Recordatorio> get recordatorios => _recordatorios;
 
+  // Nuevo getter para saber si las notificaciones están desactivadas
+  bool get notificacionesDesactivadas =>
+      !_profileController.notificacionesSistema.value;
+
   final int usuarioId; // Id del usuario para filtrar
   final _principalController = Get.find<PrincipalController>();
   final _ctrlSesion = Get.find<ControladorSesionUsuario>();

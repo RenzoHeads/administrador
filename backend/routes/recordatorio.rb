@@ -327,3 +327,55 @@ get '/recordatorios/tarea/:tarea_id' do
     }.to_json]
   end
 end
+
+#Borrar recordatorios de lista
+delete '/recordatorios/eliminar-lista/:lista_id' do
+  authenticate_jwt!
+  content_type :json
+  
+  begin
+    lista_id = params[:lista_id].to_i
+    
+    # Verificar que la lista existe
+    lista = Lista.first(id: lista_id)
+    unless lista
+      return [404, {
+        success: false,
+        error: 'Lista no encontrada',
+        message: 'La lista especificada no existe'
+      }.to_json]
+    end
+    
+    # Verificar que el usuario sea propietario de la lista
+    unless current_user_id == lista.usuario_id
+      return [403, {
+        success: false,
+        error: 'Acceso denegado',
+        message: 'No tienes permisos para acceder a esta lista'
+      }.to_json]
+    end
+    
+    # Obtener todas las tareas de la lista
+    tareas_ids = DB[:tareas].where(lista_id: lista_id).select(:id)
+    
+    # Eliminar todos los recordatorios de las tareas de esta lista
+    recordatorios_eliminados = DB[:recordatorios].where(tarea_id: tareas_ids).delete
+    
+    puts "✅ Eliminados #{recordatorios_eliminados} recordatorios de la lista #{lista_id} por usuario ID: #{current_user_id}"
+    
+    [200, {
+      success: true,
+      message: 'Recordatorios de la lista eliminados exitosamente',
+      recordatorios_eliminados: recordatorios_eliminados,
+      lista_id: lista_id
+    }.to_json]
+    
+  rescue => e
+    puts "❌ Error eliminando recordatorios de lista: #{e.message}"
+    [500, {
+      success: false,
+      error: 'Error interno del servidor',
+      message: 'Error al eliminar recordatorios de la lista'
+    }.to_json]
+  end
+end

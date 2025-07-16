@@ -398,4 +398,45 @@ class RecordatorioService {
 
     return responseWrapper;
   }
+
+  // Eliminar recordatorios de lista
+  Future<ServiceHttpResponse> eliminarRecordatoriosLista(int listaId) async {
+    final url = Uri.parse('${BASE_URL}recordatorios/eliminar-lista/$listaId');
+    final responseWrapper = ServiceHttpResponse();
+
+    try {
+      final headers = await AuthService.getAuthHeaders();
+      final response = await http.delete(url, headers: headers);
+      responseWrapper.status = response.statusCode;
+
+      if (response.statusCode == 200) {
+        try {
+          final jsonData = json.decode(response.body);
+          responseWrapper.body = {
+            'success': jsonData['success'],
+            'message': jsonData['message'],
+            'recordatorios_eliminados': jsonData['recordatorios_eliminados'],
+            'lista_id': jsonData['lista_id'],
+          };
+        } catch (e) {
+          responseWrapper.body =
+              'Recordatorios de la lista eliminados correctamente';
+        }
+      } else if (response.statusCode == 404) {
+        responseWrapper.body = 'Lista no encontrada';
+      } else if (response.statusCode == 403) {
+        responseWrapper.body = 'No tienes permisos para acceder a esta lista';
+      } else {
+        responseWrapper.body = 'Error: ${response.body}';
+      }
+
+      AuthService.handleHttpResponse(response);
+    } catch (e) {
+      responseWrapper.status = 500;
+      responseWrapper.body =
+          'Ocurrió un error al eliminar los recordatorios de la lista: $e';
+    }
+
+    return responseWrapper;
+  }
 }

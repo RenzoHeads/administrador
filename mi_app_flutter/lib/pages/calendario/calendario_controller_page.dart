@@ -15,6 +15,19 @@ class CalendarioController extends GetxController {
   @override
   void onInit() {
     super.onInit();
+    // Asegurar que el día seleccionado sea hoy por defecto
+    final hoy = DateTime.now();
+    selectedDay.value = hoy;
+    focusedDay.value = hoy;
+
+    ever(_principalController.datosCargados, (bool cargados) {
+      if (cargados) {
+        cargarTodasLasListasYtareas();
+      }
+    });
+  }
+
+  void cargarTodasLasListasYtareas() {
     _loadTareasDelDia(selectedDay.value);
   }
 
@@ -46,22 +59,27 @@ class CalendarioController extends GetxController {
   }
 
   Future<void> _loadTareasDelDia(DateTime day) async {
-    final uid = _ctrlSesion.usuarioActual.value?.id;
-    if (uid == null) return;
+    try {
+      final uid = _ctrlSesion.usuarioActual.value?.id;
+      if (uid == null) return;
 
-    // Usar principal controller en lugar de servicio directo
-    final todasLasTareas = await _principalController.ObtenerTareasUsuario();
+      // Usar principal controller en lugar de servicio directo
+      final todasLasTareas = await _principalController.ObtenerTareasUsuario();
 
-    // Crear rango del día seleccionado en hora local
-    DateTime diaInicio = DateTime(day.year, day.month, day.day);
-    DateTime diaFin = diaInicio.add(Duration(days: 1));
+      // Crear rango del día seleccionado en hora local
+      DateTime diaInicio = DateTime(day.year, day.month, day.day);
+      DateTime diaFin = diaInicio.add(Duration(days: 1));
 
-    tareasDelDia.value =
-        todasLasTareas.where((tarea) {
-          // Convertir la fecha de creación a hora local antes de filtrar
-          final fechaCreacionLocal = tarea.fechaCreacion.toLocal();
-          return fechaCreacionLocal.isAfter(diaInicio) &&
-              fechaCreacionLocal.isBefore(diaFin);
-        }).toList();
+      tareasDelDia.value =
+          todasLasTareas.where((tarea) {
+            // Convertir la fecha de creación a hora local antes de filtrar
+            final fechaCreacionLocal = tarea.fechaCreacion.toLocal();
+            return fechaCreacionLocal.isAfter(diaInicio) &&
+                fechaCreacionLocal.isBefore(diaFin);
+          }).toList();
+    } catch (e) {
+      print('Error al cargar tareas del día: $e');
+      tareasDelDia.value = [];
+    }
   }
 }
