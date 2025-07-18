@@ -1,5 +1,5 @@
 
-# 📱 Proyecto de Aplicación Móvil - Asignación 1
+# 📱 Proyecto de Aplicación Móvil - Asignación Final
 
 **Integrantes del grupo:**
 
